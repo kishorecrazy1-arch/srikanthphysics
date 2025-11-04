@@ -23,7 +23,21 @@ export function Login() {
     try {
       await signIn(email, password);
       const selectedCourse = localStorage.getItem('selectedCourse') || 'ap-physics';
-      navigate(`/${selectedCourse}`);
+      
+      // Navigate to course-specific page based on selected course
+      if (selectedCourse.startsWith('ap-physics')) {
+        navigate('/ap-physics');
+      } else if (selectedCourse === 'igcse') {
+        navigate('/course/igcse');
+      } else if (selectedCourse === 'sat') {
+        navigate('/course/sat');
+      } else if (selectedCourse === 'iit-jee') {
+        navigate('/course/iit-jee');
+      } else if (selectedCourse === 'neet') {
+        navigate('/course/neet');
+      } else {
+        navigate('/ap-physics');
+      }
     } catch (err: any) {
       setError(err.message || 'Failed to sign in');
     } finally {

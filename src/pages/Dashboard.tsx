@@ -1,3 +1,4 @@
+import { useEffect } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { Flame, Target, Clock, CheckCircle, TrendingUp, BookOpen, ArrowRight } from 'lucide-react';
 import { useAuthStore } from '../store/authStore';
@@ -7,6 +8,11 @@ export function Dashboard() {
   const navigate = useNavigate();
   const user = useAuthStore(state => state.user);
   const startQuiz = useQuizStore(state => state.startQuiz);
+
+  // Redirect to AP Physics 1 page since Dashboard is not being used
+  useEffect(() => {
+    navigate('/ap-physics', { replace: true });
+  }, [navigate]);
 
   if (!user) return null;
 

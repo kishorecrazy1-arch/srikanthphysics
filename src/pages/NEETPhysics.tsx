@@ -493,7 +493,7 @@ export default function NEETPhysics() {
               Start Your NEET Journey
             </button>
             <button
-              onClick={() => navigate('/dashboard')}
+              onClick={() => navigate('/ap-physics')}
               className="px-8 py-4 bg-slate-800 border border-slate-700 rounded-xl font-semibold hover:bg-slate-700 transition-all duration-300"
             >
               View Sample Content

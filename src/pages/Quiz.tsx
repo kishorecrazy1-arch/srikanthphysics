@@ -22,7 +22,7 @@ export function Quiz() {
 
   useEffect(() => {
     if (questions.length === 0) {
-      navigate('/dashboard');
+      navigate('/ap-physics');
       return;
     }
 

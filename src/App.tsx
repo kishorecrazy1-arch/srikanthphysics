@@ -3,6 +3,7 @@ import { SrikanthLanding } from './pages/SrikanthLanding';
 import { Landing } from './pages/Landing';
 import { Login } from './pages/Login';
 import { Signup } from './pages/Signup';
+import { ResetPassword } from './pages/ResetPassword';
 import { Dashboard } from './pages/Dashboard';
 import { Quiz } from './pages/Quiz';
 import { Progress } from './pages/Progress';
@@ -38,6 +39,12 @@ function App() {
         <Route path="/course/neet" element={<NEETPhysics />} />
         <Route path="/login" element={<Login />} />
         <Route path="/signup" element={<Signup />} />
+        <Route path="/reset-password" element={<ResetPassword />} />
+        {/* Redirect routes for course shortcuts */}
+        <Route path="/igcse" element={<Navigate to="/course/igcse" replace />} />
+        <Route path="/sat" element={<Navigate to="/course/sat" replace />} />
+        <Route path="/iit-jee" element={<Navigate to="/course/iit-jee" replace />} />
+        <Route path="/neet" element={<Navigate to="/course/neet" replace />} />
         <Route
           path="/dashboard"
           element={

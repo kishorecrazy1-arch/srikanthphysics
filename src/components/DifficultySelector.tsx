@@ -65,120 +65,79 @@ export function DifficultySelector({ selectedLevel, onLevelChange, showStats = f
 
   return (
     <div className="space-y-6">
-      <div className="text-center mb-6">
-        <h3 className="text-3xl font-bold text-white mb-2">Choose your challenge level</h3>
-        <p className="text-slate-300">Select a difficulty level to begin practice</p>
-      </div>
-
-      <div className="bg-gradient-to-br from-slate-800/50 to-slate-900/50 rounded-2xl backdrop-blur-sm border-2 border-slate-700/50">
-        <div className="flex flex-col md:flex-row border-b-2 border-slate-700/50">
-          {levels.map((level, index) => {
-            const isSelected = selectedLevel === level.id;
-            const levelStats = stats ? {
-              completed: stats[`${level.id}_completed` as keyof typeof stats] as number,
-              correct: stats[`${level.id}_correct` as keyof typeof stats] as number
-            } : null;
-
-            return (
-              <button
-                key={level.id}
-                onClick={() => onLevelChange(level.id)}
-                className={`flex-1 px-6 py-6 transition-all relative ${
-                  index !== 0 ? 'md:border-l-2 border-slate-700/50' : ''
-                } ${
-                  isSelected
-                    ? `bg-gradient-to-br ${level.color.replace('from-', 'from-')}/20 border-b-4`
-                    : `bg-slate-900/30 hover:bg-slate-800/50`
-                }`}
-                style={isSelected ? {
-                  borderBottomColor: level.color.includes('green') ? '#10b981' :
-                                    level.color.includes('orange') ? '#f97316' : '#a855f7'
-                } : {}}
-              >
-                {isSelected && (
-                  <div className="absolute top-2 right-2">
-                    <div className={`w-8 h-8 rounded-full bg-gradient-to-r ${level.color} flex items-center justify-center shadow-lg`}>
-                      <svg className="w-5 h-5 text-white" fill="none" viewBox="0 0 24 24" stroke="currentColor">
-                        <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={3} d="M5 13l4 4L19 7" />
-                      </svg>
-                    </div>
-                  </div>
-                )}
-
-                <div className="flex flex-col items-center gap-3">
-                  <div className={`w-16 h-16 rounded-xl flex items-center justify-center ${
-                    isSelected ? `bg-gradient-to-br ${level.color}/30` : 'bg-slate-800/50'
-                  }`}>
-                    <level.icon className={`w-8 h-8 ${isSelected ? level.iconColor : 'text-slate-400'}`} />
-                  </div>
-
-                  <div className="text-center">
-                    <h4 className={`text-xl font-bold ${isSelected ? 'text-white' : 'text-slate-300'}`}>
-                      {level.label}
-                    </h4>
-                    <p className={`text-sm ${isSelected ? level.textColor.replace('text-', 'text-') + '-300' : 'text-slate-400'}`}>
-                      {level.subtitle}
-                    </p>
-                  </div>
-
-                  <p className="text-xs text-slate-400 text-center">
-                    {level.description}
-                  </p>
-
-                  {showStats && levelStats && levelStats.completed > 0 && (
-                    <div className="w-full pt-3 border-t border-slate-700/50">
-                      <div className="flex items-center justify-between text-xs mb-1">
-                        <span className="text-slate-400">Progress:</span>
-                        <span className={`font-bold text-white`}>
-                          {levelStats.completed} questions
-                        </span>
-                      </div>
-                      <div className="flex items-center justify-between text-xs">
-                        <span className="text-slate-400">Accuracy:</span>
-                        <span className={`font-bold text-white`}>
-                          {getAccuracy(levelStats.correct, levelStats.completed)}%
-                        </span>
-                      </div>
-                      <div className="mt-2 w-full bg-slate-700/50 rounded-full h-2 overflow-hidden">
-                        <div
-                          className={`h-full rounded-full bg-gradient-to-r ${level.color} transition-all`}
-                          style={{ width: `${getAccuracy(levelStats.correct, levelStats.completed)}%` }}
-                        ></div>
-                      </div>
-                    </div>
-                  )}
-                </div>
-              </button>
-            );
-          })}
+      <div className="flex items-center justify-between gap-4 mb-4">
+        <div>
+          <h3 className="text-xl font-bold text-white mb-1">Choose your challenge level</h3>
+          <p className="text-sm text-slate-400">Select a difficulty level to begin practice</p>
         </div>
 
-        {showStats && stats && (
-          <div className="px-6 py-4 bg-slate-900/30 rounded-b-2xl">
-            <h4 className="text-base font-bold text-white mb-3 text-center">Overall Progress</h4>
-            <div className="grid grid-cols-3 gap-4">
-              <div className="text-center">
-                <div className="text-2xl font-bold text-green-400">
-                  {stats.level_1_completed}
-                </div>
-                <div className="text-xs text-slate-400">Level 1 Done</div>
+        {/* Tab-style level selector */}
+        <div className="flex gap-2 border-b border-slate-700/50">
+        {levels.map((level) => {
+          const isSelected = selectedLevel === level.id;
+          const levelStats = stats ? {
+            completed: stats[`${level.id}_completed` as keyof typeof stats] as number,
+            correct: stats[`${level.id}_correct` as keyof typeof stats] as number
+          } : null;
+
+          return (
+            <button
+              key={level.id}
+              onClick={() => onLevelChange(level.id)}
+              className={`flex flex-col items-start gap-1 px-4 py-3 rounded-t-xl font-semibold transition-all relative ${
+                isSelected
+                  ? `bg-gradient-to-br ${level.color} text-white shadow-lg`
+                  : 'bg-slate-800/50 text-slate-300 hover:bg-slate-700/50 border border-slate-700/50'
+              }`}
+            >
+              <div className="flex items-center gap-2 w-full">
+                <level.icon className={`w-4 h-4 ${isSelected ? 'text-white' : 'text-slate-400'}`} />
+                <span>{level.label}</span>
+                <span className="text-xs opacity-80">({level.subtitle})</span>
+                {showStats && levelStats && levelStats.completed > 0 && (
+                  <span className={`ml-auto text-xs ${isSelected ? 'text-white/80' : 'text-slate-400'}`}>
+                    ({getAccuracy(levelStats.correct, levelStats.completed)}%)
+                  </span>
+                )}
               </div>
-              <div className="text-center">
-                <div className="text-2xl font-bold text-orange-400">
-                  {stats.level_2_completed}
-                </div>
-                <div className="text-xs text-slate-400">Level 2 Done</div>
+              {isSelected && (
+                <>
+                  <p className="text-xs text-white/90 mt-1">{level.description}</p>
+                  <div className="absolute bottom-0 left-0 right-0 h-0.5 bg-white"></div>
+                </>
+              )}
+            </button>
+          );
+        })}
+        </div>
+      </div>
+
+
+      {showStats && stats && (
+        <div className="px-6 py-4 bg-slate-900/30 rounded-xl backdrop-blur-sm border border-slate-700/50">
+          <h4 className="text-base font-bold text-white mb-3 text-center">Overall Progress</h4>
+          <div className="grid grid-cols-3 gap-4">
+            <div className="text-center">
+              <div className="text-2xl font-bold text-green-400">
+                {stats.level_1_completed}
               </div>
-              <div className="text-center">
-                <div className="text-2xl font-bold text-purple-400">
-                  {stats.level_3_completed}
-                </div>
-                <div className="text-xs text-slate-400">Level 3 Done</div>
+              <div className="text-xs text-slate-400">Level 1 Done</div>
+            </div>
+            <div className="text-center">
+              <div className="text-2xl font-bold text-orange-400">
+                {stats.level_2_completed}
               </div>
+              <div className="text-xs text-slate-400">Level 2 Done</div>
+            </div>
+            <div className="text-center">
+              <div className="text-2xl font-bold text-purple-400">
+                {stats.level_3_completed}
+              </div>
+              <div className="text-xs text-slate-400">Level 3 Done</div>
             </div>
           </div>
-        )}
-      </div>
+        </div>
+      )}
 
       {children && (
         <div className="mt-8">

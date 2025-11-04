@@ -1,10 +1,11 @@
 import { useNavigate } from 'react-router-dom';
 import {
-  Award, TrendingUp, Target, Zap, CheckCircle, Star, BookOpen,
+  Award, TrendingUp, Target, Zap, CheckCircle, Star,
   Flame, Users, Trophy, ArrowRight, Play, Facebook, Instagram,
   Youtube, Linkedin, Mail, Phone, MapPin, Clock, Brain, Rocket,
   BarChart3, Medal, Activity, Lightbulb, FileText, Globe
 } from 'lucide-react';
+import { Logo } from '../components/Logo';
 import { useEffect, useState } from 'react';
 import { CourseNavigation } from '../components/CourseNavigation';
 
@@ -56,9 +57,9 @@ export function SrikanthLanding() {
           <div className="grid lg:grid-cols-2 gap-12 items-center">
             <div>
               <div className="inline-block mb-6">
-                <div className="flex items-center gap-2 bg-blue-700 bg-opacity-50 px-4 py-2 rounded-full text-white text-sm font-medium">
-                  <Star className="w-4 h-4 fill-yellow-400 text-yellow-400" />
-                  <span>Trusted by 2,500+ Students</span>
+                <div className="flex items-center gap-3 bg-blue-600 px-6 py-3 rounded-xl text-white font-semibold shadow-lg">
+                  <Star className="w-5 h-5 fill-yellow-400 text-yellow-400" />
+                  <span className="text-base">Trusted by 2,500+ Students</span>
                 </div>
               </div>
 
@@ -516,14 +517,8 @@ export function SrikanthLanding() {
         <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
           <div className="grid md:grid-cols-4 gap-12 mb-12">
             <div>
-              <div className="flex items-center gap-3 mb-4">
-                <div className="w-10 h-10 bg-gradient-to-br from-blue-600 to-cyan-500 rounded-xl flex items-center justify-center">
-                  <BookOpen className="w-6 h-6 text-white" />
-                </div>
-                <div>
-                  <h3 className="text-xl font-bold">Srikanth's Academy</h3>
-                  <p className="text-sm text-gray-400">Excellence in Physics</p>
-                </div>
+              <div className="mb-4">
+                <Logo size="md" showText={true} textColor="white" />
               </div>
               <p className="text-gray-400 mb-4 leading-relaxed">
                 Empowering students to master physics and achieve their academic dreams through AI-powered personalized learning.

@@ -1,5 +1,5 @@
 import { NavLink, useNavigate } from 'react-router-dom';
-import { LayoutDashboard, BookOpen, TrendingUp, Calendar, Trophy, LogOut, BookOpenCheck } from 'lucide-react';
+import { LayoutDashboard, BookOpen, TrendingUp, Calendar, Trophy, LogOut, BookOpenCheck, BarChart3 } from 'lucide-react';
 import { useAuthStore } from '../store/authStore';
 
 export function Layout({ children }: { children: React.ReactNode }) {
@@ -12,9 +12,10 @@ export function Layout({ children }: { children: React.ReactNode }) {
   };
 
   const navItems = [
-    { to: '/dashboard', icon: LayoutDashboard, label: 'Dashboard' },
+    { to: '/ap-physics', icon: LayoutDashboard, label: 'Dashboard' },
     { to: '/quiz', icon: BookOpen, label: 'Quiz' },
     { to: '/progress', icon: TrendingUp, label: 'Progress' },
+    { to: '/analytics', icon: BarChart3, label: 'Analytics' },
     { to: '/schedule', icon: Calendar, label: 'Schedule' },
     { to: '/achievements', icon: Trophy, label: 'Achievements' },
   ];

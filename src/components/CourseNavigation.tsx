@@ -1,6 +1,7 @@
 import { useState } from 'react';
 import { useNavigate } from 'react-router-dom';
-import { BookOpen, Info, GraduationCap, Sparkles, HeadphonesIcon, ChevronDown } from 'lucide-react';
+import { Info, GraduationCap, Sparkles, HeadphonesIcon, ChevronDown } from 'lucide-react';
+import { Logo } from './Logo';
 
 export function CourseNavigation() {
   const navigate = useNavigate();
@@ -45,14 +46,8 @@ export function CourseNavigation() {
         <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
           <div className="flex items-center justify-between h-16">
             {/* Logo */}
-            <div className="flex items-center gap-3 cursor-pointer" onClick={() => navigate('/')}>
-              <div className="w-10 h-10 bg-gradient-to-br from-blue-800 to-blue-600 rounded-xl flex items-center justify-center">
-                <BookOpen className="w-6 h-6 text-white" />
-              </div>
-              <div>
-                <h1 className="text-lg font-bold text-gray-900">Srikanth's Academy</h1>
-                <p className="text-xs text-gray-600 hidden sm:block">Excellence in Physics</p>
-              </div>
+            <div className="cursor-pointer" onClick={() => navigate('/')}>
+              <Logo size="md" showText={true} />
             </div>
 
             {/* Main Navigation Tabs */}
@@ -63,7 +58,7 @@ export function CourseNavigation() {
                   href={tab.path}
                   className="flex items-center gap-2 px-4 py-2 rounded-lg text-gray-700 hover:bg-white hover:text-blue-600 transition-all font-medium"
                 >
-                  <tab.icon className="w-4 h-4" />
+                  {tab.id !== 'about' && <tab.icon className="w-4 h-4" />}
                   <span>{tab.label}</span>
                 </a>
               ))}
@@ -131,7 +126,7 @@ export function CourseNavigation() {
                 href={tab.path}
                 className="flex flex-col items-center gap-1 text-gray-600 hover:text-blue-600"
               >
-                <tab.icon className="w-5 h-5" />
+                {tab.id !== 'about' && <tab.icon className="w-5 h-5" />}
                 <span>{tab.label}</span>
               </a>
             ))}

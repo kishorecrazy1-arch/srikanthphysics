@@ -4,16 +4,16 @@ import { useNavigate } from 'react-router-dom';
 import { supabase } from '../../lib/supabase';
 import { useAuthStore } from '../../store/authStore';
 import { QuestionCard } from './QuestionCard';
-import { DifficultySelector } from '../DifficultySelector';
 import type { Topic, TopicProgress, Question, UserAnswer } from '../../types/topics';
 
 interface PracticeSectionProps {
   topic: Topic;
   progress: TopicProgress | null;
   onProgressUpdate: () => void;
+  selectedLevel?: string;
 }
 
-export function PracticeSection({ topic, progress, onProgressUpdate }: PracticeSectionProps) {
+export function PracticeSection({ topic, progress, onProgressUpdate, selectedLevel = 'level_1' }: PracticeSectionProps) {
   const navigate = useNavigate();
   const user = useAuthStore((state) => state.user);
   const [questions, setQuestions] = useState<Question[]>([]);
@@ -21,9 +21,7 @@ export function PracticeSection({ topic, progress, onProgressUpdate }: PracticeS
   const [userAnswers, setUserAnswers] = useState<Map<string, UserAnswer>>(new Map());
   const [loading, setLoading] = useState(true);
   const [practiceMode, setPracticeMode] = useState<string | null>(null);
-  const [selectedLevel, setSelectedLevel] = useState('level_1');
-  const [showLevelSelector, setShowLevelSelector] = useState(true);
-  const [subTab, setSubTab] = useState<'normal' | 'club' | 'random'>('normal');
+  const [subTab, setSubTab] = useState<'normal' | 'club' | 'random' | 'exam-simulator'>('normal');
 
   const [filters, setFilters] = useState({
     difficulty: 'all',
@@ -230,146 +228,98 @@ export function PracticeSection({ topic, progress, onProgressUpdate }: PracticeS
     );
   }
 
-  if (showLevelSelector) {
-    return (
-      <div>
-        <div className="bg-gradient-to-br from-blue-950 via-blue-900 to-slate-900 rounded-2xl p-6 md:p-8 text-white mb-8 border border-blue-500/20">
-          <h2 className="text-3xl font-bold mb-2 flex items-center gap-3">
-            <Zap className="w-8 h-8" />
-            Topic-Based Questions
-          </h2>
-          <p className="text-blue-50 text-lg">
-            Comprehensive practice bank for {topic.name}
-          </p>
-        </div>
-
-        <div className="bg-gradient-to-br from-slate-800/50 to-slate-900/50 backdrop-blur-sm rounded-xl border border-slate-700/50 p-6 mb-8">
-          <h3 className="text-xl font-bold text-white mb-4">Your Progress</h3>
-          <div className="grid grid-cols-2 md:grid-cols-4 gap-4">
-            <div className="text-center p-4 bg-green-500/20 border border-green-500/30 rounded-lg">
-              <div className="text-3xl font-bold text-green-400">{stats.correct}</div>
-              <div className="text-sm text-slate-300">Correct</div>
-            </div>
-            <div className="text-center p-4 bg-red-500/20 border border-red-500/30 rounded-lg">
-              <div className="text-3xl font-bold text-red-400">{stats.incorrect}</div>
-              <div className="text-sm text-slate-300">Incorrect</div>
-            </div>
-            <div className="text-center p-4 bg-slate-700/50 border border-slate-600/50 rounded-lg">
-              <div className="text-3xl font-bold text-slate-300">{stats.notAttempted}</div>
-              <div className="text-sm text-slate-400">Not Attempted</div>
-            </div>
-            <div className="text-center p-4 bg-blue-500/20 border border-blue-500/30 rounded-lg">
-              <div className="text-3xl font-bold text-blue-400">
-                {stats.attempted > 0 ? Math.round((stats.correct / stats.attempted) * 100) : 0}%
-              </div>
-              <div className="text-sm text-slate-300">Accuracy</div>
-            </div>
-          </div>
-        </div>
-
-        <DifficultySelector
-          selectedLevel={selectedLevel}
-          onLevelChange={(level) => {
-            setSelectedLevel(level);
-            setShowLevelSelector(false);
-          }}
-          showStats={true}
-          stats={progress ? {
-            level_1_completed: progress.level_1_completed || 0,
-            level_1_correct: progress.level_1_correct || 0,
-            level_2_completed: progress.level_2_completed || 0,
-            level_2_correct: progress.level_2_correct || 0,
-            level_3_completed: progress.level_3_completed || 0,
-            level_3_correct: progress.level_3_correct || 0
-          } : undefined}
-        />
-      </div>
-    );
-  }
-
   if (!practiceMode) {
     return (
       <div>
-        <button
-          onClick={() => setShowLevelSelector(true)}
-          className="mb-6 px-4 py-2 bg-slate-700 text-white rounded-lg hover:bg-slate-600 transition-colors"
-        >
-          Back to Level Selection
-        </button>
-
-        <div className="bg-gradient-to-br from-emerald-600 to-teal-600 rounded-2xl p-8 mb-8 border-2 border-emerald-400/30 shadow-2xl">
-          <div className="flex flex-col md:flex-row items-center justify-between gap-6">
-            <div className="flex-1">
-              <div className="flex items-center gap-3 mb-3">
-                <div className="w-14 h-14 bg-white/20 rounded-xl flex items-center justify-center backdrop-blur-sm">
-                  <BookCheck className="w-8 h-8 text-white" />
-                </div>
-                <div>
-                  <h3 className="text-3xl font-bold text-white">AP Exam Simulator</h3>
-                  <p className="text-emerald-100">Full-length practice test with AP-style questions</p>
-                </div>
-              </div>
-              <p className="text-white/90 text-lg">
-                Experience a real AP Physics exam with 50 MCQs, strict timing, and detailed performance analytics.
-              </p>
-            </div>
-            <button
-              onClick={() => navigate('/mock-test')}
-              className="px-8 py-4 bg-white text-emerald-600 rounded-xl font-bold text-lg hover:bg-emerald-50 transition-all shadow-xl hover:shadow-2xl hover:scale-105 whitespace-nowrap"
-            >
-              Start Mock Test →
-            </button>
-          </div>
-        </div>
-
         <div className="mb-8">
-          <div className="flex items-center gap-4 mb-6">
+          <div className="flex items-center gap-3 mb-6 overflow-x-auto">
             <button
               onClick={() => setSubTab('normal')}
-              className={`px-6 py-3 rounded-xl font-semibold transition-all ${
+              className={`px-5 py-2.5 rounded-xl font-semibold transition-all whitespace-nowrap flex items-center gap-2 ${
                 subTab === 'normal'
                   ? 'bg-blue-600 text-white shadow-lg'
-                  : 'bg-gray-100 text-gray-700 hover:bg-gray-200'
+                  : 'bg-slate-800/50 text-slate-300 hover:bg-slate-700/50 border border-slate-700/50'
               }`}
             >
-              <Target className="w-5 h-5 inline mr-2" />
+              <Target className="w-4 h-4" />
               Normal Mix
             </button>
             <button
               onClick={() => setSubTab('club')}
-              className={`px-6 py-3 rounded-xl font-semibold transition-all ${
+              className={`px-5 py-2.5 rounded-xl font-semibold transition-all whitespace-nowrap flex items-center gap-2 ${
                 subTab === 'club'
                   ? 'bg-purple-600 text-white shadow-lg'
-                  : 'bg-gray-100 text-gray-700 hover:bg-gray-200'
+                  : 'bg-slate-800/50 text-slate-300 hover:bg-slate-700/50 border border-slate-700/50'
               }`}
             >
-              <Users className="w-5 h-5 inline mr-2" />
+              <Users className="w-4 h-4" />
               Club Matrix
             </button>
             <button
               onClick={() => setSubTab('random')}
-              className={`px-6 py-3 rounded-xl font-semibold transition-all ${
+              className={`px-5 py-2.5 rounded-xl font-semibold transition-all whitespace-nowrap flex items-center gap-2 ${
                 subTab === 'random'
                   ? 'bg-green-600 text-white shadow-lg'
-                  : 'bg-gray-100 text-gray-700 hover:bg-gray-200'
+                  : 'bg-slate-800/50 text-slate-300 hover:bg-slate-700/50 border border-slate-700/50'
               }`}
             >
-              <Shuffle className="w-5 h-5 inline mr-2" />
+              <Shuffle className="w-4 h-4" />
               Random Mix
+            </button>
+            <button
+              onClick={() => setSubTab('exam-simulator')}
+              className={`px-5 py-2.5 rounded-xl font-semibold transition-all whitespace-nowrap flex items-center gap-2 ${
+                subTab === 'exam-simulator'
+                  ? 'bg-emerald-600 text-white shadow-lg'
+                  : 'bg-slate-800/50 text-slate-300 hover:bg-slate-700/50 border border-slate-700/50'
+              }`}
+            >
+              <BookCheck className="w-4 h-4" />
+              AP Exam Simulator
             </button>
           </div>
 
-          <h3 className="text-2xl font-bold text-white mb-4">
-            {subTab === 'club' ? 'Club Matrix' : subTab === 'random' ? 'Random Mix' : 'Normal Mix Practice'}
-          </h3>
-          {subTab === 'club' && (
-            <p className="text-slate-300 mb-6">Practice questions from multiple topics across all difficulty levels for comprehensive review.</p>
+          {subTab === 'exam-simulator' && (
+            <div className="bg-gradient-to-br from-emerald-600 to-teal-600 rounded-2xl p-8 mb-8 border-2 border-emerald-400/30 shadow-2xl">
+              <div className="flex flex-col md:flex-row items-center justify-between gap-6">
+                <div className="flex-1">
+                  <div className="flex items-center gap-3 mb-3">
+                    <div className="w-14 h-14 bg-white/20 rounded-xl flex items-center justify-center backdrop-blur-sm">
+                      <BookCheck className="w-8 h-8 text-white" />
+                    </div>
+                    <div>
+                      <h3 className="text-3xl font-bold text-white">AP Exam Simulator</h3>
+                      <p className="text-emerald-100">Full-length practice test with AP-style questions</p>
+                    </div>
+                  </div>
+                  <p className="text-white/90 text-lg">
+                    Experience a real AP Physics exam with 50 MCQs, strict timing, and detailed performance analytics.
+                  </p>
+                </div>
+                <button
+                  onClick={() => navigate('/mock-test')}
+                  className="px-8 py-4 bg-white text-emerald-600 rounded-xl font-bold text-lg hover:bg-emerald-50 transition-all shadow-xl hover:shadow-2xl hover:scale-105 whitespace-nowrap"
+                >
+                  Start Mock Test →
+                </button>
+              </div>
+            </div>
           )}
-          {subTab === 'random' && (
-            <p className="text-slate-300 mb-6">Get a random mix of questions from this topic to challenge yourself.</p>
-          )}
-          <div className="grid md:grid-cols-3 gap-4">
-            {subTab === 'normal' && (
+
+          {subTab !== 'exam-simulator' && (
+            <div>
+              <h3 className="text-2xl font-bold text-white mb-4">
+                {subTab === 'club' ? 'Club Matrix' : subTab === 'random' ? 'Random Mix' : 'Normal Mix Practice'}
+              </h3>
+              {subTab === 'club' && (
+                <p className="text-slate-300 mb-6">Practice questions from multiple topics across all difficulty levels for comprehensive review.</p>
+              )}
+              {subTab === 'random' && (
+                <p className="text-slate-300 mb-6">Get a random mix of questions from this topic to challenge yourself.</p>
+              )}
+
+              <div className="grid md:grid-cols-3 gap-4">
+              {subTab === 'normal' && (
               <>
                 <button
                   onClick={() => setPracticeMode('practice')}
@@ -476,7 +426,9 @@ export function PracticeSection({ topic, progress, onProgressUpdate }: PracticeS
                 </button>
               </>
             )}
-          </div>
+              </div>
+            </div>
+          )}
         </div>
       </div>
     );

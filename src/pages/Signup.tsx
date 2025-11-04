@@ -1,9 +1,10 @@
-import { useState } from 'react';
+import { useState, useEffect } from 'react';
 import { Link, useNavigate } from 'react-router-dom';
-import { BookOpen, Phone, Mail, Lock, User, GraduationCap, BookText } from 'lucide-react';
+import { Phone, Mail, Lock, User, GraduationCap, BookText } from 'lucide-react';
 import { useAuthStore } from '../store/authStore';
 import { CourseType } from '../types';
 import { supabase } from '../lib/supabase';
+import { Logo } from '../components/Logo';
 
 const COUNTRY_CODES = [
   { code: '+91', country: 'India', flag: '🇮🇳' },
@@ -53,6 +54,27 @@ export function Signup() {
   const navigate = useNavigate();
   const signUp = useAuthStore(state => state.signUp);
 
+  // Load selected course from localStorage if available
+  useEffect(() => {
+    const selectedCourse = localStorage.getItem('selectedCourse');
+    if (selectedCourse) {
+      // Map localStorage course IDs to course types
+      const courseTypeMap: Record<string, CourseType> = {
+        'ap-physics': 'ap_physics_1',
+        'ap-physics-1': 'ap_physics_1',
+        'ap-physics-2': 'ap_physics_2',
+        'igcse': 'igcse',
+        'sat': 'sat',
+        'iit-jee': 'iit_jee',
+        'neet': 'neet',
+      };
+      const mappedCourseType = courseTypeMap[selectedCourse];
+      if (mappedCourseType) {
+        setFormData(prev => ({ ...prev, courseType: mappedCourseType }));
+      }
+    }
+  }, []);
+
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
     setError('');
@@ -60,7 +82,21 @@ export function Signup() {
 
     try {
       await signUp(formData.email, formData.password, formData);
-      navigate('/dashboard');
+      
+      // Navigate to course-specific page based on selected course
+      if (formData.courseType.startsWith('ap_physics')) {
+        navigate('/ap-physics');
+      } else if (formData.courseType === 'igcse') {
+        navigate('/course/igcse');
+      } else if (formData.courseType === 'sat') {
+        navigate('/course/sat');
+      } else if (formData.courseType === 'iit_jee') {
+        navigate('/course/iit-jee');
+      } else if (formData.courseType === 'neet') {
+        navigate('/course/neet');
+      } else {
+        navigate('/ap-physics');
+      }
     } catch (err: any) {
       setError(err.message || 'Failed to create account');
     } finally {
@@ -102,14 +138,8 @@ export function Signup() {
 
       <div className="max-w-6xl w-full relative z-10 grid lg:grid-cols-2 gap-8 items-start">
         <div className="hidden lg:block text-white space-y-6 pt-8">
-          <div className="flex items-center gap-3">
-            <div className="w-16 h-16 bg-white/10 backdrop-blur-lg rounded-2xl flex items-center justify-center border border-white/20">
-              <BookOpen className="w-8 h-8 text-white" />
-            </div>
-            <div>
-              <h1 className="text-4xl font-bold">Srikanth's Academy</h1>
-              <p className="text-blue-200">Excellence in Physics</p>
-            </div>
+          <div>
+            <Logo size="lg" showText={true} textColor="white" className="[&_h1]:text-4xl" />
           </div>
 
           <h2 className="text-3xl font-bold leading-tight">
@@ -155,8 +185,8 @@ export function Signup() {
 
         <div className="bg-white rounded-3xl shadow-2xl p-8 md:p-10">
           <div className="text-center mb-8">
-            <div className="lg:hidden inline-flex items-center justify-center w-16 h-16 bg-gradient-to-r from-blue-600 to-cyan-500 rounded-2xl mb-4">
-              <BookOpen className="w-8 h-8 text-white" />
+            <div className="lg:hidden flex justify-center mb-4">
+              <Logo size="md" showText={false} />
             </div>
             <h2 className="text-3xl font-bold bg-gradient-to-r from-blue-600 via-purple-600 to-pink-600 bg-clip-text text-transparent mb-2">Get Started</h2>
             <p className="text-gray-600">Join thousands of students mastering Physics</p>
