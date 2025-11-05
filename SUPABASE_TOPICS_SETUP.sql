@@ -28,19 +28,19 @@ CREATE TABLE IF NOT EXISTS public.subtopics (
 ALTER TABLE public.topics ENABLE ROW LEVEL SECURITY;
 ALTER TABLE public.subtopics ENABLE ROW LEVEL SECURITY;
 
--- Create policies for topics (all authenticated users can read)
-DROP POLICY IF EXISTS "Topics are viewable by authenticated users" ON public.topics;
-CREATE POLICY "Topics are viewable by authenticated users"
+-- Create policies for topics (public read access for test mode, authenticated for write)
+DROP POLICY IF EXISTS "Topics are viewable by everyone" ON public.topics;
+CREATE POLICY "Topics are viewable by everyone"
   ON public.topics
   FOR SELECT
-  USING (auth.role() = 'authenticated');
+  USING (true);
 
--- Create policies for subtopics (all authenticated users can read)
-DROP POLICY IF EXISTS "Subtopics are viewable by authenticated users" ON public.subtopics;
-CREATE POLICY "Subtopics are viewable by authenticated users"
+-- Create policies for subtopics (public read access for test mode, authenticated for write)
+DROP POLICY IF EXISTS "Subtopics are viewable by everyone" ON public.subtopics;
+CREATE POLICY "Subtopics are viewable by everyone"
   ON public.subtopics
   FOR SELECT
-  USING (auth.role() = 'authenticated');
+  USING (true);
 
 -- Clear existing topics (optional - remove if you want to keep existing data)
 -- DELETE FROM public.subtopics;

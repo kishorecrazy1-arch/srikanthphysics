@@ -5,16 +5,28 @@ import { User } from '../types';
 interface AuthState {
   user: User | null;
   loading: boolean;
+  testMode: boolean;
   signUp: (email: string, password: string, userData: Omit<User, 'id' | 'currentStreak' | 'longestStreak' | 'totalQuestions' | 'correctAnswers' | 'skillLevel' | 'createdAt'>) => Promise<void>;
   signIn: (email: string, password: string) => Promise<void>;
   signOut: () => Promise<void>;
   fetchUserProfile: () => Promise<void>;
   updateUserProfile: (updates: Partial<User>) => Promise<void>;
+  enableTestMode: () => void;
+  disableTestMode: () => void;
 }
+
+// Load test mode from localStorage on initialization
+const getInitialTestMode = () => {
+  if (typeof window !== 'undefined') {
+    return localStorage.getItem('testMode') === 'true';
+  }
+  return false;
+};
 
 export const useAuthStore = create<AuthState>((set, get) => ({
   user: null,
   loading: true,
+  testMode: getInitialTestMode(),
 
   signUp: async (email, password, userData) => {
     const { data: authData, error: authError } = await supabase.auth.signUp({
@@ -72,6 +84,28 @@ export const useAuthStore = create<AuthState>((set, get) => ({
   fetchUserProfile: async () => {
     try {
       set({ loading: true });
+      
+      // Check if test mode is enabled
+      if (get().testMode) {
+        const testUser: User = {
+          id: 'test-user-id',
+          name: 'Test User',
+          email: 'test@example.com',
+          countryCode: '+1',
+          phoneNumber: '1234567890',
+          grade: 11,
+          courseType: 'ap_physics_1',
+          currentStreak: 5,
+          longestStreak: 10,
+          totalQuestions: 150,
+          correctAnswers: 120,
+          skillLevel: 75,
+          createdAt: new Date().toISOString(),
+        };
+        set({ user: testUser, loading: false });
+        return;
+      }
+
       const { data: { user: authUser } } = await supabase.auth.getUser();
 
       if (!authUser) {
@@ -117,6 +151,12 @@ export const useAuthStore = create<AuthState>((set, get) => ({
     const user = get().user;
     if (!user) return;
 
+    // Don't update database in test mode
+    if (get().testMode) {
+      set({ user: { ...user, ...updates } });
+      return;
+    }
+
     const dbUpdates: any = {};
     if (updates.name) dbUpdates.name = updates.name;
     if (updates.countryCode) dbUpdates.country_code = updates.countryCode;
@@ -138,10 +178,38 @@ export const useAuthStore = create<AuthState>((set, get) => ({
 
     set({ user: { ...user, ...updates } });
   },
+
+  enableTestMode: () => {
+    const testUser: User = {
+      id: 'test-user-id',
+      name: 'Test User',
+      email: 'test@example.com',
+      countryCode: '+1',
+      phoneNumber: '1234567890',
+      grade: 11,
+      courseType: 'ap_physics_1',
+      currentStreak: 5,
+      longestStreak: 10,
+      totalQuestions: 150,
+      correctAnswers: 120,
+      skillLevel: 75,
+      createdAt: new Date().toISOString(),
+    };
+    localStorage.setItem('testMode', 'true');
+    set({ user: testUser, testMode: true, loading: false });
+  },
+
+  disableTestMode: () => {
+    localStorage.removeItem('testMode');
+    set({ user: null, testMode: false });
+  },
 }));
 
 supabase.auth.onAuthStateChange((event) => {
   (() => {
+    // Don't interfere with test mode
+    if (useAuthStore.getState().testMode) return;
+    
     if (event === 'SIGNED_IN') {
       useAuthStore.getState().fetchUserProfile();
     } else if (event === 'SIGNED_OUT') {
@@ -150,4 +218,30 @@ supabase.auth.onAuthStateChange((event) => {
   })();
 });
 
-useAuthStore.getState().fetchUserProfile();
+// Initialize - check test mode first, then fetch profile if not in test mode
+const initAuth = () => {
+  const state = useAuthStore.getState();
+  if (state.testMode) {
+    // Test mode is enabled, set up test user
+    const testUser: User = {
+      id: 'test-user-id',
+      name: 'Test User',
+      email: 'test@example.com',
+      countryCode: '+1',
+      phoneNumber: '1234567890',
+      grade: 11,
+      courseType: 'ap_physics_1',
+      currentStreak: 5,
+      longestStreak: 10,
+      totalQuestions: 150,
+      correctAnswers: 120,
+      skillLevel: 75,
+      createdAt: new Date().toISOString(),
+    };
+    useAuthStore.setState({ user: testUser, loading: false });
+  } else {
+    state.fetchUserProfile();
+  }
+};
+
+initAuth();

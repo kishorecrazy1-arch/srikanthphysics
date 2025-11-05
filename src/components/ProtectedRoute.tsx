@@ -2,7 +2,7 @@ import { Navigate } from 'react-router-dom';
 import { useAuthStore } from '../store/authStore';
 
 export function ProtectedRoute({ children }: { children: React.ReactNode }) {
-  const { user, loading } = useAuthStore();
+  const { user, loading, testMode } = useAuthStore();
 
   if (loading) {
     return (
@@ -15,7 +15,8 @@ export function ProtectedRoute({ children }: { children: React.ReactNode }) {
     );
   }
 
-  if (!user) {
+  // Allow access in test mode or if user is authenticated
+  if (!user && !testMode) {
     return <Navigate to="/login" replace />;
   }
 
