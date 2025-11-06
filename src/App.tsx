@@ -23,12 +23,16 @@ import IGCSECourse from './pages/IGCSECourse';
 import SATPhysics from './pages/SATPhysics';
 import IITJEEPhysics from './pages/IITJEEPhysics';
 import NEETPhysics from './pages/NEETPhysics';
+import { AdminGeneratePracticeBank } from './pages/AdminGeneratePracticeBank';
 import { Layout } from './components/Layout';
 import { ProtectedRoute } from './components/ProtectedRoute';
+import { Chatbot } from './components/Chatbot';
 
 function App() {
   return (
     <BrowserRouter>
+      {/* Global Chatbot - Appears on all pages */}
+      <Chatbot />
       <Routes>
         <Route path="/" element={<SrikanthLanding />} />
         <Route path="/old-landing" element={<Landing />} />
@@ -164,6 +168,14 @@ function App() {
           element={
             <ProtectedRoute>
               <SpeedDrill />
+            </ProtectedRoute>
+          }
+        />
+        <Route
+          path="/admin/generate-practice-bank"
+          element={
+            <ProtectedRoute>
+              <AdminGeneratePracticeBank />
             </ProtectedRoute>
           }
         />

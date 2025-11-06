@@ -31,7 +31,7 @@ export function PracticeSection({ topic, progress, onProgressUpdate, selectedLev
 
   useEffect(() => {
     loadQuestions();
-  }, [topic.id, user, subTab]);
+  }, [topic.id, user, subTab, selectedLevel]);
 
   useEffect(() => {
     applyFilters();
@@ -39,34 +39,152 @@ export function PracticeSection({ topic, progress, onProgressUpdate, selectedLev
 
   const loadQuestions = async () => {
     try {
+      setLoading(true);
+      
+      // Map level to difficulty format
+      const difficultyMap: Record<string, string> = {
+        'level_1': 'Foundation',
+        'level_2': 'Intermediate',
+        'level_3': 'Advanced'
+      };
+      const difficultyLevel = difficultyMap[selectedLevel] || 'Foundation';
+
+      console.log('📚 Loading practice bank questions:', {
+        topic: topic.name,
+        difficulty: difficultyLevel,
+        level: selectedLevel
+      });
+
+      // Load practice bank questions (segment_type = 'practice_bank')
       let query = supabase
         .from('questions')
         .select('*')
-        .eq('segment_type', 'practice');
+        .eq('segment_type', 'practice_bank')
+        .eq('topic_id', topic.id)
+        .eq('difficulty_level', difficultyLevel);
 
       if (subTab === 'normal') {
-        query = query.eq('topic_id', topic.id);
+        // Already filtered by topic_id
       } else if (subTab === 'club') {
-        // Load questions from all topics
+        // Load questions from all topics for club mode
+        query = supabase
+          .from('questions')
+          .select('*')
+          .eq('segment_type', 'practice_bank')
+          .eq('difficulty_level', difficultyLevel);
       } else if (subTab === 'random') {
+        // Same as normal, but will shuffle later
         query = query.eq('topic_id', topic.id);
       }
 
       const { data: questionsData, error: questionsError } = await query.order('created_at');
 
-      if (questionsError) throw questionsError;
+      if (questionsError) {
+        console.warn('Error loading practice questions:', questionsError);
+      }
 
       let questionsToUse = questionsData || [];
 
+      // If no questions found, generate them on-demand
       if (!questionsData || questionsData.length === 0) {
-        questionsToUse = await generatePracticeQuestions(topic);
+        console.log('📝 No practice bank questions found. Generating for all subtopics...');
+        try {
+          const { PracticeBankGenerator } = await import('../../services/practiceBankGenerator');
+          const generator = new PracticeBankGenerator();
+          
+          // Get all subtopics for this topic
+          const { data: subtopics } = await supabase
+            .from('subtopics')
+            .select('id, name')
+            .eq('topic_id', topic.id);
+
+          if (subtopics && subtopics.length > 0) {
+            // Generate questions for ALL subtopics (5 questions each)
+            const allGenerated: any[] = [];
+            for (const subtopic of subtopics) {
+              try {
+                const generated = await generator.generatePracticeQuestions({
+                  topicId: topic.id,
+                  topicName: topic.name,
+                  subtopicId: subtopic.id,
+                  subtopicName: subtopic.name,
+                  difficulty: difficultyLevel as 'Foundation' | 'Intermediate' | 'Advanced',
+                  count: 5
+                });
+                allGenerated.push(...generated);
+                console.log(`✅ Generated ${generated.length} questions for ${subtopic.name}`);
+              } catch (subtopicError) {
+                console.error(`Error generating for subtopic ${subtopic.name}:`, subtopicError);
+              }
+            }
+            questionsToUse = allGenerated;
+            console.log(`✅ Total generated: ${allGenerated.length} questions`);
+          } else {
+            console.warn('No subtopics found, using fallback');
+            // Fallback to old method
+            questionsToUse = await generatePracticeQuestions(topic);
+          }
+        } catch (genError) {
+          console.error('Error generating practice questions:', genError);
+          questionsToUse = await generatePracticeQuestions(topic);
+        }
       }
 
-      if (subTab === 'random' && questionsToUse.length > 0) {
-        questionsToUse = [...questionsToUse].sort(() => Math.random() - 0.5);
+      // Transform questions to match expected format
+      const transformedQuestions = questionsToUse.map((q: any) => {
+        let optionsArray: any[] = [];
+        if (q.options) {
+          if (Array.isArray(q.options)) {
+            optionsArray = q.options;
+          } else if (typeof q.options === 'object') {
+            optionsArray = Object.entries(q.options).map(([key, value]) => ({
+              id: key,
+              text: value as string,
+              isCorrect: key === q.correct_answer
+            }));
+          }
+        }
+
+        // Map difficulty_level to difficulty
+        const qDifficultyLevel = q.difficulty_level || q.difficulty || 'intermediate';
+        const difficultyMapLocal: Record<string, string> = {
+          'Foundation': 'easy',
+          'Intermediate': 'medium',
+          'Advanced': 'hard'
+        };
+        const mappedDifficulty = difficultyMapLocal[qDifficultyLevel] || qDifficultyLevel.toLowerCase() || 'medium';
+
+        // Get subtopic name if available
+        let subtopicName = q.subtopic;
+        if (!subtopicName && q.subtopic_id) {
+          // Try to get subtopic name from the questions data or leave as is
+          subtopicName = q.subtopic_id;
+        }
+
+        return {
+          ...q,
+          options: optionsArray,
+          difficulty: mappedDifficulty,
+          subtopic: subtopicName, // Ensure subtopic is set for filtering
+          correctAnswer: q.correct_answer || q.correctAnswer,
+          question_text: q.question_text || q.text || 'Question text not available',
+          explanation: q.explanation || (q.solution_steps ? {
+            steps: q.solution_steps.map((step: string, idx: number) => ({
+              title: `Step ${idx + 1}`,
+              content: step
+            })),
+            keyConcept: q.bloom_taxonomy || 'Physics concept',
+            relatedFormulas: q.formulas_used || []
+          } : null)
+        };
+      });
+
+      if (subTab === 'random' && transformedQuestions.length > 0) {
+        transformedQuestions.sort(() => Math.random() - 0.5);
       }
 
-      setQuestions(questionsToUse);
+      setQuestions(transformedQuestions);
+      console.log('✅ Loaded practice questions:', transformedQuestions.length);
 
       if (user && questionsToUse.length > 0) {
         const questionIds = questionsToUse.map(q => q.id);
@@ -139,12 +257,35 @@ export function PracticeSection({ topic, progress, onProgressUpdate, selectedLev
   const applyFilters = () => {
     let filtered = [...questions];
 
+    console.log('🔍 Applying filters:', {
+      totalQuestions: questions.length,
+      filters,
+      firstQuestion: questions[0] ? {
+        difficulty: questions[0].difficulty,
+        subtopic: questions[0].subtopic
+      } : null
+    });
+
     if (filters.difficulty !== 'all') {
-      filtered = filtered.filter(q => q.difficulty === filters.difficulty);
+      // Map filter difficulty to match question difficulty format
+      const difficultyMap: Record<string, string[]> = {
+        'easy': ['easy', 'foundation'],
+        'medium': ['medium', 'intermediate'],
+        'hard': ['hard', 'advanced']
+      };
+      const allowedDifficulties = difficultyMap[filters.difficulty] || [filters.difficulty];
+      filtered = filtered.filter(q => {
+        const qDifficulty = (q.difficulty || '').toLowerCase();
+        return allowedDifficulties.some(d => qDifficulty.includes(d.toLowerCase()));
+      });
     }
 
     if (filters.subtopic !== 'all') {
-      filtered = filtered.filter(q => q.subtopic === filters.subtopic);
+      filtered = filtered.filter(q => {
+        // Check both subtopic field and subtopic_id
+        const qSubtopic = q.subtopic || q.subtopic_id || '';
+        return qSubtopic === filters.subtopic || qSubtopic.toString() === filters.subtopic;
+      });
     }
 
     if (filters.status !== 'all') {
@@ -157,6 +298,7 @@ export function PracticeSection({ topic, progress, onProgressUpdate, selectedLev
       });
     }
 
+    console.log('✅ Filtered questions:', filtered.length);
     setFilteredQuestions(filtered);
   };
 
@@ -459,11 +601,15 @@ export function PracticeSection({ topic, progress, onProgressUpdate, selectedLev
             onAnswer={handleAnswer}
           />
         ))
-      ) : (
+      ) : questions.length > 0 ? (
+        // If filters are too restrictive but questions exist, show message
         <div className="bg-white rounded-2xl shadow-lg p-12 text-center">
           <div className="text-6xl mb-4">🎯</div>
           <h3 className="text-2xl font-bold text-gray-900 mb-2">No questions match your filters</h3>
-          <p className="text-gray-600 mb-6">
+          <p className="text-gray-600 mb-4">
+            You have {questions.length} questions available, but none match your current filters.
+          </p>
+          <p className="text-gray-500 text-sm mb-6">
             Try adjusting your filters or reset them to see all questions
           </p>
           <button
@@ -472,6 +618,31 @@ export function PracticeSection({ topic, progress, onProgressUpdate, selectedLev
           >
             Reset Filters
           </button>
+        </div>
+      ) : (
+        // No questions at all - show generation message
+        <div className="bg-white rounded-2xl shadow-lg p-12 text-center">
+          <div className="text-6xl mb-4">📚</div>
+          <h3 className="text-2xl font-bold text-gray-900 mb-2">No Practice Questions Available</h3>
+          <p className="text-gray-600 mb-4">
+            Practice bank questions are being generated. This may take a moment.
+          </p>
+          {loading ? (
+            <div className="flex items-center justify-center gap-2 text-blue-600">
+              <div className="animate-spin rounded-full h-5 w-5 border-2 border-blue-600 border-t-transparent"></div>
+              <span>Generating questions...</span>
+            </div>
+          ) : (
+            <button
+              onClick={() => {
+                setLoading(true);
+                loadQuestions();
+              }}
+              className="px-6 py-3 bg-blue-600 text-white rounded-lg font-semibold hover:bg-blue-700 transition-colors"
+            >
+              Generate Questions
+            </button>
+          )}
         </div>
       )}
     </div>

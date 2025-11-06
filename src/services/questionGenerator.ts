@@ -236,28 +236,28 @@ export async function generateMCQQuestions(
 
   const levelConfig = difficultyPrompts[difficulty];
 
-  const prompt = `You are an expert AP Physics instructor. Generate ${count} high-quality multiple-choice questions for daily quizzes.
+  // Enhanced prompt template based on best practices for Daily Practice
+  const prompt = `You are an expert AP Physics instructor. Generate ${count} multiple-choice question${count > 1 ? 's' : ''} for the subtopic: "${subtopic}".
 
-Subtopic: "${subtopic}"
-Difficulty: ${levelConfig.description}
+Difficulty Level: ${difficulty} (Level 1 - Basic; Level 2 - Intermediate; Level 3 - Advanced)
 
-Bloom's Taxonomy Level: ${levelConfig.bloomLevel}
+Bloom's Taxonomy: ${levelConfig.bloomLevel}
 
 ${levelConfig.requirements}
 
-Additional Requirements:
-- Use realistic physics scenarios relevant to AP Physics 1 students
-- Provide exactly 4 answer choices (1 correct, 3 plausible distractors)
-- Include all necessary data with proper SI units
-- Ensure physics accuracy (dimensional consistency, realistic values)
-- For Advanced Level: Questions MUST involve multi-phase motion, variable acceleration, complex scenarios, or require synthesis - NOT simple direct calculations
+Requirements:
+- Provide question text with clear, realistic physics scenario
+- Provide exactly 4 answer choices (A, B, C, D) with one correct answer
+- Include detailed step-by-step explanation showing reasoning
+- Require conceptual rigor suitable for ${difficulty} level
+- Use proper SI units and realistic values
+- Ensure physics accuracy (dimensional consistency, sign conventions)
+${difficulty === 'Advanced' ? '- MUST involve multi-phase motion, variable acceleration, complex scenarios, or synthesis - NOT simple direct calculations' : ''}
 
-Output format (JSON array):
+Output format (JSON object with "questions" array):
 {
   "questions": [
     {
-      "subtopic": "${subtopic}",
-      "difficulty": "${difficulty}",
       "question_text": "Full question with scenario and all given data",
       "options": {
         "A": "Option A text",
@@ -266,26 +266,28 @@ Output format (JSON array):
         "D": "Option D text"
       },
       "correct_answer": "A|B|C|D",
+      "explanation": "Step-by-step solution or reasoning",
+      "solution_steps": [
+        "Step 1: Identify given information and what needs to be found",
+        "Step 2: Select appropriate physics principles/formulas",
+        "Step 3: Apply concepts (show work with calculations)",
+        "Step 4: Solve for unknown",
+        "Step 5: Verify answer has correct units and is reasonable"
+      ],
       "distractor_explanations": {
         "B": "Explanation of why this distractor is wrong (common misconception)",
         "C": "Explanation of why this distractor is wrong",
         "D": "Explanation of why this distractor is wrong"
       },
-      "solution_steps": [
-        "Step 1: Identify given information and what needs to be found",
-        "Step 2: Select appropriate physics principles/formulas",
-        "Step 3: Apply concepts (show work)",
-        "Step 4: Solve for unknown",
-        "Step 5: Verify answer has correct units and is reasonable"
-      ],
       "formulas_used": ["formula1", "formula2", ...],
       "bloom_level": "${levelConfig.bloomLevel}",
       "estimated_time_min": ${difficulty === 'Foundation' ? 1 : difficulty === 'Intermediate' ? 2 : 3},
-      "scenario": "Brief description of the physics scenario",
-      "complexity_check": "${difficulty === 'Advanced' ? 'This question requires multi-step reasoning and synthesis (verified)' : 'N/A'}"
+      "scenario": "Brief description of the physics scenario"
     }
   ]
-}`;
+}
+
+Important: Return valid JSON only. Each question must be pedagogically sound and appropriate for ${difficulty} level.`;
 
   return withRetry(async () => {
     const response = await openaiClient.chat.completions.create({
@@ -356,7 +358,7 @@ Output format (JSON array):
           formulas: q.formulas_used || []
         },
         solution: {
-          steps: q.solution_steps || [],
+          steps: q.solution_steps || (q.explanation ? [q.explanation] : []),
           final_answer: q.correct_answer,
           misconceptions: misconceptions,
           rubric: undefined

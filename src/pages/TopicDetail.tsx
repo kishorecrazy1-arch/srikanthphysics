@@ -199,22 +199,24 @@ export function TopicDetail() {
             </div>
           </div>
 
-          {/* Difficulty Level Selector - Above main tabs */}
-          <div className="mt-6">
-            <DifficultySelector
-              selectedLevel={selectedLevel}
-              onLevelChange={setSelectedLevel}
-              showStats={!!progress}
-              stats={progress ? {
-                level_1_completed: (progress as any).level_1_completed || 0,
-                level_1_correct: (progress as any).level_1_correct || 0,
-                level_2_completed: (progress as any).level_2_completed || 0,
-                level_2_correct: (progress as any).level_2_correct || 0,
-                level_3_completed: (progress as any).level_3_completed || 0,
-                level_3_correct: (progress as any).level_3_correct || 0
-              } : undefined}
-            />
-          </div>
+          {/* Difficulty Level Selector - Only show for Homework and Practice Bank */}
+          {activeTab !== 'daily-practice' && (
+            <div className="mt-6">
+              <DifficultySelector
+                selectedLevel={selectedLevel}
+                onLevelChange={setSelectedLevel}
+                showStats={!!progress}
+                stats={progress ? {
+                  level_1_completed: (progress as any).level_1_completed || 0,
+                  level_1_correct: (progress as any).level_1_correct || 0,
+                  level_2_completed: (progress as any).level_2_completed || 0,
+                  level_2_correct: (progress as any).level_2_correct || 0,
+                  level_3_completed: (progress as any).level_3_completed || 0,
+                  level_3_correct: (progress as any).level_3_correct || 0
+                } : undefined}
+              />
+            </div>
+          )}
 
           <div className="mt-6 border-t border-blue-500/20 pt-4">
             <div className="flex gap-2 overflow-x-auto">
@@ -259,7 +261,14 @@ export function TopicDetail() {
       <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-8">
         {activeTab === 'daily-practice' && (
           <div>
-            <BasicsSection topic={topic} progress={progress} onProgressUpdate={refreshProgress} selectedLevel={selectedLevel} selectedSubtopic={selectedSubtopic} />
+            <BasicsSection 
+              topic={topic} 
+              progress={progress} 
+              onProgressUpdate={refreshProgress} 
+              selectedLevel={selectedLevel} 
+              selectedSubtopic={selectedSubtopic}
+              onLevelChange={setSelectedLevel}
+            />
           </div>
         )}
 
