@@ -1,26 +1,64 @@
 -- Enhanced Database Schema for Question Generation System
 -- Run this in your Supabase SQL Editor
+-- IMPORTANT: Run SUPABASE_TOPICS_SETUP.sql first if topics/subtopics tables don't exist
+
+-- Create user_answers table if it doesn't exist
+CREATE TABLE IF NOT EXISTS public.user_answers (
+  id UUID PRIMARY KEY DEFAULT gen_random_uuid(),
+  user_id UUID REFERENCES auth.users(id) ON DELETE CASCADE,
+  question_id UUID NOT NULL,
+  selected_answer VARCHAR(255) NOT NULL,
+  is_correct BOOLEAN NOT NULL,
+  time_spent INTEGER DEFAULT 0,
+  time_spent_seconds INTEGER,
+  confidence_score NUMERIC(3,2),
+  attempt_number INTEGER DEFAULT 1,
+  answered_at TIMESTAMPTZ DEFAULT NOW()
+);
 
 -- Enhanced Questions table with detailed structure
 CREATE TABLE IF NOT EXISTS public.questions (
   id UUID PRIMARY KEY DEFAULT gen_random_uuid(),
-  topic_id UUID REFERENCES public.topics(id) ON DELETE CASCADE,
-  subtopic_id UUID REFERENCES public.subtopics(id) ON DELETE CASCADE,
+  topic_id UUID,
+  subtopic_id UUID,
   question_type VARCHAR(50) NOT NULL, -- 'MCQ', 'FRQ', 'Graph', 'Diagram'
   difficulty_level VARCHAR(20) NOT NULL, -- 'Foundation', 'Intermediate', 'Advanced'
   question_text TEXT NOT NULL,
   options JSONB, -- For MCQ: {"A": "...", "B": "...", "C": "...", "D": "..."}
   correct_answer VARCHAR(1),
-  solution_steps TEXT[] NOT NULL,
+  solution_steps TEXT[] NOT NULL DEFAULT '{}'::text[],
   misconceptions JSONB DEFAULT '{}'::jsonb,
   formulas_used TEXT[] DEFAULT '{}'::text[],
   bloom_taxonomy VARCHAR(50),
   source_api VARCHAR(20), -- 'GPT-4o', 'Claude-3.5'
   used_count INTEGER DEFAULT 0,
   avg_student_score NUMERIC(5,2) DEFAULT 0,
+  segment_type VARCHAR(50),
+  generated_date DATE,
   created_at TIMESTAMPTZ DEFAULT NOW(),
   last_updated TIMESTAMPTZ DEFAULT NOW()
 );
+
+-- Add foreign key constraints if topics/subtopics tables exist
+DO $$
+BEGIN
+  IF EXISTS (SELECT FROM information_schema.tables WHERE table_schema = 'public' AND table_name = 'topics') THEN
+    -- Drop constraint if it exists, then add it
+    ALTER TABLE public.questions DROP CONSTRAINT IF EXISTS fk_questions_topic;
+    ALTER TABLE public.questions
+    ADD CONSTRAINT fk_questions_topic FOREIGN KEY (topic_id) REFERENCES public.topics(id) ON DELETE CASCADE;
+  END IF;
+  
+  IF EXISTS (SELECT FROM information_schema.tables WHERE table_schema = 'public' AND table_name = 'subtopics') THEN
+    -- Drop constraint if it exists, then add it
+    ALTER TABLE public.questions DROP CONSTRAINT IF EXISTS fk_questions_subtopic;
+    ALTER TABLE public.questions
+    ADD CONSTRAINT fk_questions_subtopic FOREIGN KEY (subtopic_id) REFERENCES public.subtopics(id) ON DELETE CASCADE;
+  END IF;
+EXCEPTION
+  WHEN OTHERS THEN
+    RAISE NOTICE 'Foreign key constraints may already exist or tables not found';
+END $$;
 
 -- Create indexes for performance
 CREATE INDEX IF NOT EXISTS idx_questions_subtopic ON public.questions(subtopic_id);
@@ -60,28 +98,54 @@ CREATE TABLE IF NOT EXISTS public.question_cache (
 CREATE INDEX IF NOT EXISTS idx_cache_key ON public.question_cache(cache_key);
 CREATE INDEX IF NOT EXISTS idx_cache_expires ON public.question_cache(expires_at);
 
--- Enhanced user_answers table (if not exists, add missing columns)
-ALTER TABLE public.user_answers
-ADD COLUMN IF NOT EXISTS time_spent_seconds INTEGER,
-ADD COLUMN IF NOT EXISTS confidence_score NUMERIC(3,2),
-ADD COLUMN IF NOT EXISTS attempt_number INTEGER DEFAULT 1;
+-- Enhanced user_answers table - add missing columns if they don't exist
+DO $$
+BEGIN
+  IF EXISTS (SELECT FROM information_schema.tables WHERE table_schema = 'public' AND table_name = 'user_answers') THEN
+    ALTER TABLE public.user_answers
+    ADD COLUMN IF NOT EXISTS time_spent_seconds INTEGER,
+    ADD COLUMN IF NOT EXISTS confidence_score NUMERIC(3,2),
+    ADD COLUMN IF NOT EXISTS attempt_number INTEGER DEFAULT 1;
+  END IF;
+END $$;
 
 -- Create view for question performance analysis
-CREATE OR REPLACE VIEW public.question_performance_analysis AS
-SELECT
-  q.id,
-  q.subtopic_id,
-  q.difficulty_level,
-  q.question_type,
-  COUNT(ua.id) as attempts,
-  AVG(CASE WHEN ua.is_correct THEN 1.0 ELSE 0.0 END) * 100 as success_rate,
-  AVG(ua.time_spent_seconds) as avg_time_seconds,
-  q.avg_student_score,
-  q.used_count,
-  q.source_api
-FROM public.questions q
-LEFT JOIN public.user_answers ua ON q.id = ua.question_id
-GROUP BY q.id, q.subtopic_id, q.difficulty_level, q.question_type, q.avg_student_score, q.used_count, q.source_api;
+-- Only create if user_answers table exists
+DO $$
+BEGIN
+  IF EXISTS (SELECT FROM information_schema.tables WHERE table_schema = 'public' AND table_name = 'user_answers') THEN
+    CREATE OR REPLACE VIEW public.question_performance_analysis AS
+    SELECT
+      q.id,
+      q.subtopic_id,
+      q.difficulty_level,
+      q.question_type,
+      COUNT(ua.id) as attempts,
+      AVG(CASE WHEN ua.is_correct THEN 1.0 ELSE 0.0 END) * 100 as success_rate,
+      AVG(ua.time_spent_seconds) as avg_time_seconds,
+      q.avg_student_score,
+      q.used_count,
+      q.source_api
+    FROM public.questions q
+    LEFT JOIN public.user_answers ua ON q.id = ua.question_id
+    GROUP BY q.id, q.subtopic_id, q.difficulty_level, q.question_type, q.avg_student_score, q.used_count, q.source_api;
+  ELSE
+    -- Create a simpler view if user_answers doesn't exist yet
+    CREATE OR REPLACE VIEW public.question_performance_analysis AS
+    SELECT
+      q.id,
+      q.subtopic_id,
+      q.difficulty_level,
+      q.question_type,
+      0 as attempts,
+      0 as success_rate,
+      0 as avg_time_seconds,
+      q.avg_student_score,
+      q.used_count,
+      q.source_api
+    FROM public.questions q;
+  END IF;
+END $$;
 
 -- Enable RLS on new tables
 ALTER TABLE public.questions ENABLE ROW LEVEL SECURITY;
@@ -155,12 +219,26 @@ $$ LANGUAGE plpgsql;
 -- Optional: Create a scheduled job to clean cache (requires pg_cron extension)
 -- SELECT cron.schedule('clean-cache', '0 2 * * *', 'SELECT clean_expired_cache();');
 
--- Grant permissions
-GRANT SELECT ON public.questions TO anon, authenticated;
-GRANT INSERT ON public.questions TO authenticated;
-GRANT SELECT ON public.question_performance_analysis TO anon, authenticated;
-GRANT SELECT, INSERT ON public.api_usage_logs TO authenticated;
-GRANT SELECT, INSERT ON public.question_cache TO authenticated;
+-- Grant permissions (with error handling)
+DO $$
+BEGIN
+  GRANT SELECT ON public.questions TO anon, authenticated;
+  GRANT INSERT ON public.questions TO authenticated;
+  
+  IF EXISTS (SELECT FROM information_schema.views WHERE table_schema = 'public' AND table_name = 'question_performance_analysis') THEN
+    GRANT SELECT ON public.question_performance_analysis TO anon, authenticated;
+  END IF;
+  
+  GRANT SELECT, INSERT ON public.api_usage_logs TO authenticated;
+  GRANT SELECT, INSERT ON public.question_cache TO authenticated;
+  
+  IF EXISTS (SELECT FROM information_schema.tables WHERE table_schema = 'public' AND table_name = 'user_answers') THEN
+    GRANT SELECT, INSERT ON public.user_answers TO authenticated;
+  END IF;
+EXCEPTION
+  WHEN OTHERS THEN
+    RAISE NOTICE 'Some grants failed, but continuing...';
+END $$;
 
 -- Verify the setup
 SELECT 
@@ -169,4 +247,6 @@ SELECT
 FROM information_schema.tables 
 WHERE table_schema = 'public' 
   AND table_name IN ('questions', 'api_usage_logs', 'question_cache');
+
+
 

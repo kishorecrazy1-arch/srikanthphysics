@@ -310,3 +310,5 @@ VITE_ANTHROPIC_API_KEY=sk-ant-...
 
 This stack provides a modern, scalable, and feature-rich physics learning platform with AI-powered question generation, comprehensive progress tracking, and an intuitive user interface.
 
+
+

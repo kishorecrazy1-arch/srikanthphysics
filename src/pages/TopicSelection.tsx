@@ -29,8 +29,13 @@ export function TopicSelection() {
   const loadTopics = async () => {
     try {
       setLoading(true);
+      setError(null);
       
-      // Load topics
+      console.log('Loading topics...');
+      console.log('User:', user ? 'Authenticated' : 'Not authenticated');
+      console.log('Test mode:', useAuthStore.getState().testMode);
+      
+      // Load topics (public read access)
       const { data: topicsData, error: topicsError } = await supabase
         .from('topics')
         .select('*')
@@ -38,10 +43,13 @@ export function TopicSelection() {
 
       if (topicsError) {
         console.error('Topics loading error:', topicsError);
+        console.error('Error details:', JSON.stringify(topicsError, null, 2));
+        setError(`Failed to load topics: ${topicsError.message}`);
         throw topicsError;
       }
 
       console.log('Topics loaded:', topicsData?.length || 0, 'topics');
+      console.log('Topics data:', topicsData);
 
       // Load all subtopics
       const { data: allSubtopics, error: subtopicsError } = await supabase

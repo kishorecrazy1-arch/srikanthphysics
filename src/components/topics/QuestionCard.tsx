@@ -17,6 +17,11 @@ export function QuestionCard({
   userAnswer,
   onAnswer
 }: QuestionCardProps) {
+  // Add null/undefined checks
+  if (!question) {
+    return <div className="p-4 text-red-600">Error: Question data is missing</div>;
+  }
+
   const [selectedOption, setSelectedOption] = useState<string | null>(
     userAnswer?.selected_answer || null
   );
@@ -24,18 +29,30 @@ export function QuestionCard({
   const [startTime] = useState(Date.now());
   const [isBookmarked, setIsBookmarked] = useState(false);
 
-  const getDifficultyStars = (difficulty: string) => {
-    const count = difficulty === 'easy' ? 1 : difficulty === 'medium' ? 2 : 3;
+  // Safe difficulty handling with fallback
+  const difficulty = question.difficulty || 'intermediate';
+  const questionText = question.question_text || question.text || 'Question text not available';
+  const options = question.options || [];
+  const questionType = question.question_type || 'MCQ';
+
+  const getDifficultyStars = (diff: string) => {
+    const normalizedDiff = (diff || '').toLowerCase();
+    const count = normalizedDiff === 'easy' || normalizedDiff === 'foundation' ? 1 : 
+                  normalizedDiff === 'medium' || normalizedDiff === 'intermediate' ? 2 : 3;
     return '⭐'.repeat(count);
   };
 
-  const getDifficultyColor = (difficulty: string) => {
-    switch (difficulty) {
+  const getDifficultyColor = (diff: string) => {
+    const normalizedDiff = (diff || '').toLowerCase();
+    switch (normalizedDiff) {
       case 'easy':
+      case 'foundation':
         return 'text-green-600 bg-green-50';
       case 'medium':
+      case 'intermediate':
         return 'text-orange-600 bg-orange-50';
       case 'hard':
+      case 'advanced':
         return 'text-red-600 bg-red-50';
       default:
         return 'text-gray-600 bg-gray-50';
@@ -61,11 +78,13 @@ export function QuestionCard({
           <span className="text-sm font-semibold text-gray-600">
             Question {questionNumber} of {totalQuestions}
           </span>
-          <span className={`px-3 py-1 rounded-full text-sm font-semibold ${getDifficultyColor(question.difficulty)}`}>
-            {getDifficultyStars(question.difficulty)} {question.difficulty.charAt(0).toUpperCase() + question.difficulty.slice(1)}
+          <span className={`px-3 py-1 rounded-full text-sm font-semibold ${getDifficultyColor(difficulty)}`}>
+            {getDifficultyStars(difficulty)} {typeof difficulty === 'string' && difficulty.length > 0 
+              ? difficulty.charAt(0).toUpperCase() + difficulty.slice(1) 
+              : 'Intermediate'}
           </span>
           <span className="px-3 py-1 rounded-full text-sm font-semibold bg-blue-50 text-blue-600">
-            {question.question_type}
+            {questionType}
           </span>
         </div>
 
@@ -96,7 +115,7 @@ export function QuestionCard({
 
       <div className="mb-6">
         <p className="text-lg md:text-xl text-gray-900 leading-relaxed font-medium">
-          {question.question_text}
+          {questionText}
         </p>
       </div>
 
@@ -110,8 +129,14 @@ export function QuestionCard({
         </div>
       )}
 
+      {options.length === 0 && (
+        <div className="mb-6 p-4 bg-yellow-50 border border-yellow-200 rounded-lg">
+          <p className="text-yellow-800">No options available for this question.</p>
+        </div>
+      )}
+
       <div className="space-y-3 mb-6">
-        {question.options.map((option) => {
+        {options.map((option) => {
           const isSelected = selectedOption === option.id;
           const isCorrectAnswer = option.isCorrect;
           const showAsCorrect = showExplanation && isCorrectAnswer;

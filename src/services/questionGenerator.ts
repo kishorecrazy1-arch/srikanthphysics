@@ -115,6 +115,73 @@ function validatePhysicsAccuracy(question: any): { valid: boolean; errors: strin
 }
 
 /**
+ * Validate that Advanced (Level 3) questions are truly complex
+ * Must require multi-step reasoning, not simple calculations
+ */
+function validateAdvancedComplexity(question: any): { isComplex: boolean; reason: string } {
+  const solutionSteps = question.solution_steps || [];
+  const questionText = (question.question_text || '').toLowerCase();
+  
+  // Check 1: Must have at least 3 solution steps
+  if (solutionSteps.length < 3) {
+    return {
+      isComplex: false,
+      reason: `Only ${solutionSteps.length} steps - Advanced questions require at least 3 steps`
+    };
+  }
+
+  // Check 2: Look for complexity indicators in question text
+  const complexityIndicators = [
+    'multi-phase', 'multiple phases', 'rebound', 'collision', 'variable',
+    'changing', 'synthesis', 'combine', 'integrate', 'analyze the system',
+    'consider', 'account for', 'reference frame', 'relative', 'non-inertial'
+  ];
+  
+  const hasComplexityKeywords = complexityIndicators.some(keyword => 
+    questionText.includes(keyword)
+  );
+
+  // Check 3: Solution steps should show reasoning, not just calculation
+  const hasReasoningSteps = solutionSteps.some((step: string) => {
+    const stepLower = step.toLowerCase();
+    return stepLower.includes('identify') || 
+           stepLower.includes('analyze') || 
+           stepLower.includes('consider') ||
+           stepLower.includes('synthesis') ||
+           stepLower.includes('reasoning');
+  });
+
+  // Check 4: Question should not be solvable with a single formula substitution
+  const isSimpleCalculation = questionText.match(/(calculate|find|determine).*?using.*?formula/i);
+  if (isSimpleCalculation && solutionSteps.length < 4) {
+    return {
+      isComplex: false,
+      reason: 'Question appears to be a simple direct calculation, not requiring synthesis'
+    };
+  }
+
+  // Advanced questions must pass at least 2 of these checks
+  const complexityScore = [
+    hasComplexityKeywords,
+    hasReasoningSteps,
+    solutionSteps.length >= 4,
+    !isSimpleCalculation
+  ].filter(Boolean).length;
+
+  if (complexityScore < 2) {
+    return {
+      isComplex: false,
+      reason: `Complexity score too low (${complexityScore}/4). Question needs multi-phase motion, variable acceleration, or synthesis`
+    };
+  }
+
+  return {
+    isComplex: true,
+    reason: 'Question meets Advanced complexity requirements'
+  };
+}
+
+/**
  * Generate MCQ questions using OpenAI GPT-4o
  */
 export async function generateMCQQuestions(
@@ -127,38 +194,98 @@ export async function generateMCQQuestions(
     throw new Error('OpenAI API key not configured');
   }
 
+  // Enhanced difficulty-specific prompts based on Bloom's Taxonomy
   const difficultyPrompts = {
-    Foundation: 'Single-step problems, direct formula application, basic concepts',
-    Intermediate: 'Two-step reasoning, multiple concepts combined, numerical complexity',
-    Advanced: 'Multi-step analysis, complex scenarios, AP exam standard'
+    Foundation: {
+      description: 'Foundation - Level 1 (Remember/Understand)',
+      requirements: `- Single-step problems, direct formula application
+- Basic concepts and definitions
+- Simple calculations with direct substitutions
+- Bloom's Taxonomy: Remember/Understand level
+- Direct recall of physics principles
+- No multi-step reasoning required
+- Estimated time: 1-2 minutes per question`,
+      bloomLevel: 'Remember/Understand'
+    },
+    Intermediate: {
+      description: 'Intermediate - Level 2 (Apply/Analyze)',
+      requirements: `- Two-step reasoning required
+- Multiple concepts combined
+- Numerical complexity with intermediate calculations
+- Bloom's Taxonomy: Apply/Analyze level
+- Requires concept selection and application
+- Some problem-solving strategy needed
+- Estimated time: 2-3 minutes per question`,
+      bloomLevel: 'Apply/Analyze'
+    },
+    Advanced: {
+      description: 'Advanced - Level 3 (Synthesize/Evaluate)',
+      requirements: `- Multi-step analysis required (minimum 3 steps)
+- Complex scenarios with non-trivial context
+- Real-world application and synthesis
+- Bloom's Taxonomy: Synthesize/Evaluate level
+- Requires deep reasoning, not just calculation
+- May involve multi-phase motion, variable acceleration, or conceptual twists
+- Must require synthesis of multiple concepts
+- Options should reflect high-level misconceptions (e.g., signs, reference frames)
+- Estimated time: 3-5 minutes per question
+- CRITICAL: If question can be solved with simple calculation, regenerate with stricter requirements`,
+      bloomLevel: 'Synthesize/Evaluate'
+    }
   };
 
-  const prompt = `Generate ${count} multiple-choice physics questions for the subtopic: "${subtopic}".
+  const levelConfig = difficultyPrompts[difficulty];
 
-Difficulty: ${difficulty} - ${difficultyPrompts[difficulty]}
+  const prompt = `You are an expert AP Physics instructor. Generate ${count} high-quality multiple-choice questions for daily quizzes.
 
-Requirements:
-- Each question must have exactly 4 options (A, B, C, D)
-- Include detailed solution steps
-- List formulas used
-- Identify common misconceptions
-- Classify using Bloom's taxonomy
+Subtopic: "${subtopic}"
+Difficulty: ${levelConfig.description}
+
+Bloom's Taxonomy Level: ${levelConfig.bloomLevel}
+
+${levelConfig.requirements}
+
+Additional Requirements:
+- Use realistic physics scenarios relevant to AP Physics 1 students
+- Provide exactly 4 answer choices (1 correct, 3 plausible distractors)
+- Include all necessary data with proper SI units
 - Ensure physics accuracy (dimensional consistency, realistic values)
+- For Advanced Level: Questions MUST involve multi-phase motion, variable acceleration, complex scenarios, or require synthesis - NOT simple direct calculations
 
-Return as JSON array with this structure:
-[
-  {
-    "question_text": "...",
-    "options": {"A": "...", "B": "...", "C": "...", "D": "..."},
-    "correct_answer": "A|B|C|D",
-    "solution_steps": ["step1", "step2", ...],
-    "formulas_used": ["formula1", "formula2", ...],
-    "misconceptions": {"option": "why wrong"},
-    "bloom_taxonomy": "Apply|Analyze|Evaluate",
-    "scenario": "real-world context",
-    "time_estimate": 120
-  }
-]`;
+Output format (JSON array):
+{
+  "questions": [
+    {
+      "subtopic": "${subtopic}",
+      "difficulty": "${difficulty}",
+      "question_text": "Full question with scenario and all given data",
+      "options": {
+        "A": "Option A text",
+        "B": "Option B text",
+        "C": "Option C text",
+        "D": "Option D text"
+      },
+      "correct_answer": "A|B|C|D",
+      "distractor_explanations": {
+        "B": "Explanation of why this distractor is wrong (common misconception)",
+        "C": "Explanation of why this distractor is wrong",
+        "D": "Explanation of why this distractor is wrong"
+      },
+      "solution_steps": [
+        "Step 1: Identify given information and what needs to be found",
+        "Step 2: Select appropriate physics principles/formulas",
+        "Step 3: Apply concepts (show work)",
+        "Step 4: Solve for unknown",
+        "Step 5: Verify answer has correct units and is reasonable"
+      ],
+      "formulas_used": ["formula1", "formula2", ...],
+      "bloom_level": "${levelConfig.bloomLevel}",
+      "estimated_time_min": ${difficulty === 'Foundation' ? 1 : difficulty === 'Intermediate' ? 2 : 3},
+      "scenario": "Brief description of the physics scenario",
+      "complexity_check": "${difficulty === 'Advanced' ? 'This question requires multi-step reasoning and synthesis (verified)' : 'N/A'}"
+    }
+  ]
+}`;
 
   return withRetry(async () => {
     const response = await openaiClient.chat.completions.create({
@@ -183,42 +310,72 @@ Return as JSON array with this structure:
     const parsed = JSON.parse(content);
     const questions = Array.isArray(parsed) ? parsed : parsed.questions || [];
 
-    // Validate each question
+    // Validate each question with difficulty-specific checks
     const validatedQuestions: Question[] = [];
     for (const q of questions) {
+      // Basic schema validation
       const validation = QuestionSchema.safeParse(q);
-      if (validation.success) {
-        const physicsValidation = validatePhysicsAccuracy(q);
-        if (physicsValidation.valid) {
-          validatedQuestions.push({
-            id: crypto.randomUUID(),
-            subtopic_id: '', // Will be set by caller
-            question_type: 'MCQ',
-            difficulty_level: difficulty,
-            content: {
-              text: q.question_text,
-              options: q.options,
-              scenario: q.scenario || '',
-              formulas: q.formulas_used || []
-            },
-            solution: {
-              steps: q.solution_steps,
-              final_answer: q.correct_answer,
-              misconceptions: q.misconceptions || {},
-              rubric: undefined
-            },
-            metadata: {
-              bloom_taxonomy: q.bloom_taxonomy,
-              time_estimate: q.time_estimate || 120,
-              topic_tags: [subtopic],
-              difficulty_score: difficulty === 'Foundation' ? 1 : difficulty === 'Intermediate' ? 2 : 3,
-              student_success_rate: 0
-            },
-            created_at: new Date().toISOString(),
-            source_api: 'GPT-4o'
-          });
+      if (!validation.success) {
+        console.warn('Question failed schema validation:', validation.error);
+        continue;
+      }
+
+      // Physics accuracy validation
+      const physicsValidation = validatePhysicsAccuracy(q);
+      if (!physicsValidation.valid) {
+        console.warn('Question failed physics validation:', physicsValidation.errors);
+        continue;
+      }
+
+      // Difficulty-specific validation (especially for Advanced)
+      if (difficulty === 'Advanced') {
+        const complexityCheck = validateAdvancedComplexity(q);
+        if (!complexityCheck.isComplex) {
+          console.warn(`Advanced question rejected - too simple: ${complexityCheck.reason}`);
+          continue; // Skip this question if it's not complex enough
         }
       }
+
+      // Convert distractor_explanations to misconceptions format
+      const misconceptions: Record<string, string> = {};
+      if (q.distractor_explanations) {
+        Object.entries(q.distractor_explanations).forEach(([key, value]) => {
+          misconceptions[key] = value as string;
+        });
+      }
+
+      validatedQuestions.push({
+        id: crypto.randomUUID(),
+        subtopic_id: '', // Will be set by caller
+        question_type: 'MCQ',
+        difficulty_level: difficulty,
+        content: {
+          text: q.question_text,
+          options: q.options,
+          scenario: q.scenario || '',
+          formulas: q.formulas_used || []
+        },
+        solution: {
+          steps: q.solution_steps || [],
+          final_answer: q.correct_answer,
+          misconceptions: misconceptions,
+          rubric: undefined
+        },
+        metadata: {
+          bloom_taxonomy: q.bloom_level || q.bloom_taxonomy || levelConfig.bloomLevel,
+          time_estimate: (q.estimated_time_min || q.time_estimate || (difficulty === 'Foundation' ? 60 : difficulty === 'Intermediate' ? 120 : 180)) * 60, // Convert to seconds
+          topic_tags: [subtopic],
+          difficulty_score: difficulty === 'Foundation' ? 1 : difficulty === 'Intermediate' ? 2 : 3,
+          student_success_rate: 0
+        },
+        created_at: new Date().toISOString(),
+        source_api: 'GPT-4o'
+      });
+    }
+
+    // If we don't have enough questions and it's Advanced, log a warning
+    if (validatedQuestions.length < count && difficulty === 'Advanced') {
+      console.warn(`Only generated ${validatedQuestions.length} of ${count} Advanced questions. Some were rejected for being too simple.`);
     }
 
     // Track API usage
