@@ -50,28 +50,40 @@ export function TopicDetail() {
 
   const loadTopicData = async () => {
     try {
+      setLoading(true);
+      console.log('🔍 Loading topic data for:', topicId);
+      
       const { data: topicData, error: topicError } = await supabase
         .from('topics')
         .select('*')
         .eq('id', topicId)
         .maybeSingle();
 
-      if (topicError) throw topicError;
+      if (topicError) {
+        console.error('❌ Error loading topic:', topicError);
+        throw topicError;
+      }
+      
       if (!topicData) {
-        navigate('/ap-physics');
+        console.warn('⚠️ Topic not found:', topicId);
+        // Don't navigate away - show error state instead
+        setLoading(false);
         return;
       }
 
+      console.log('✅ Topic loaded:', topicData.name);
       setTopic(topicData);
 
+      // Load subtopics (don't fail if this errors)
       const { data: subtopicsData, error: subtopicsError } = await supabase
         .from('subtopics')
         .select('*')
         .eq('topic_id', topicId)
         .order('display_order');
 
-      if (subtopicsError) throw subtopicsError;
-      if (subtopicsData && subtopicsData.length > 0) {
+      if (subtopicsError) {
+        console.warn('Error loading subtopics (continuing without subtopics):', subtopicsError);
+      } else if (subtopicsData && subtopicsData.length > 0) {
         setSubtopics(subtopicsData);
         
         // Check for subtopicId in URL params
@@ -86,37 +98,57 @@ export function TopicDetail() {
         } else {
           setSelectedSubtopic(subtopicsData[0]);
         }
+      } else {
+        console.warn('No subtopics found for topic:', topicId);
       }
 
+      // Load progress (don't fail if this errors)
       if (user) {
-        const { data: progressData } = await supabase
-          .from('topic_progress')
-          .select('*')
-          .eq('user_id', user.id)
-          .eq('topic_id', topicId)
-          .maybeSingle();
-
-        if (progressData) {
-          setProgress(progressData);
-        } else {
-          const { data: newProgress } = await supabase
+        try {
+          const { data: progressData, error: progressError } = await supabase
             .from('topic_progress')
-            .insert({
-              user_id: user.id,
-              topic_id: topicId,
-              mastery: 0,
-              questions_completed: 0,
-              questions_correct: 0,
-              streak_days: 0
-            })
-            .select()
-            .single();
+            .select('*')
+            .eq('user_id', user.id)
+            .eq('topic_id', topicId)
+            .maybeSingle();
 
-          if (newProgress) setProgress(newProgress);
+          if (progressError) {
+            console.warn('Error loading progress (continuing without progress):', progressError);
+          } else if (progressData) {
+            setProgress(progressData);
+          } else {
+            // Try to create new progress (don't fail if this errors)
+            try {
+              const { data: newProgress, error: insertError } = await supabase
+                .from('topic_progress')
+                .insert({
+                  user_id: user.id,
+                  topic_id: topicId,
+                  mastery: 0,
+                  questions_completed: 0,
+                  questions_correct: 0,
+                  streak_days: 0
+                })
+                .select()
+                .single();
+
+              if (insertError) {
+                console.warn('Error creating progress (continuing without progress):', insertError);
+              } else if (newProgress) {
+                setProgress(newProgress);
+              }
+            } catch (insertErr) {
+              console.warn('Exception creating progress (continuing without progress):', insertErr);
+            }
+          }
+        } catch (progressErr) {
+          console.warn('Exception loading progress (continuing without progress):', progressErr);
         }
       }
     } catch (error) {
       console.error('Error loading topic:', error);
+      // Don't navigate away on error - show error state instead
+      // Still set loading to false so page can render
     } finally {
       setLoading(false);
     }
@@ -135,15 +167,39 @@ export function TopicDetail() {
     if (data) setProgress(data);
   };
 
-  if (loading || !topic) {
+  // Show loading only if we're still loading AND don't have topic data
+  // Allow page to render if we have topic data even if other data is still loading
+  if (loading && !topic) {
     return (
-      <div className="flex items-center justify-center min-h-screen">
+      <div className="flex items-center justify-center min-h-screen bg-gradient-to-br from-blue-950 via-blue-900 to-slate-900">
         <div className="text-center">
           <div className="animate-spin rounded-full h-12 w-12 border-b-2 border-blue-600 mx-auto mb-4"></div>
-          <p className="text-gray-600">Loading topic...</p>
+          <p className="text-gray-300">Loading topic...</p>
         </div>
       </div>
     );
+  }
+
+  // If no topic after loading completes, show error
+  if (!loading && !topic) {
+    return (
+      <div className="flex items-center justify-center min-h-screen bg-gradient-to-br from-blue-950 via-blue-900 to-slate-900">
+        <div className="text-center max-w-md">
+          <p className="text-red-400 text-xl mb-4">Topic not found</p>
+          <button
+            onClick={() => navigate('/ap-physics')}
+            className="px-6 py-2 bg-blue-600 text-white rounded-lg hover:bg-blue-700"
+          >
+            Back to Topics
+          </button>
+        </div>
+      </div>
+    );
+  }
+
+  // If we don't have topic yet, don't render (shouldn't happen but just in case)
+  if (!topic) {
+    return null;
   }
 
   return (

@@ -35,16 +35,64 @@ export function TopicSelection() {
       console.log('User:', user ? 'Authenticated' : 'Not authenticated');
       console.log('Test mode:', useAuthStore.getState().testMode);
       
+      // Check Supabase configuration
+      const supabaseUrl = import.meta.env.VITE_SUPABASE_URL;
+      const supabaseKey = import.meta.env.VITE_SUPABASE_ANON_KEY;
+      
+      if (!supabaseUrl || !supabaseKey) {
+        const configError = 'Supabase configuration is missing. Please check your .env file for VITE_SUPABASE_URL and VITE_SUPABASE_ANON_KEY.';
+        console.error(configError);
+        setError(configError);
+        setTopics([]);
+        return;
+      }
+      
+      console.log('Supabase URL configured:', supabaseUrl ? 'Yes' : 'No');
+      
       // Load topics (public read access)
-      const { data: topicsData, error: topicsError } = await supabase
-        .from('topics')
-        .select('*')
-        .order('display_order');
+      let topicsData = null;
+      let topicsError = null;
+      
+      try {
+        const result = await supabase
+          .from('topics')
+          .select('*')
+          .order('display_order');
+        topicsData = result.data;
+        topicsError = result.error;
+      } catch (fetchError: any) {
+        console.error('Network error fetching topics:', fetchError);
+        // Check if it's a network/CORS error
+        if (fetchError instanceof TypeError && fetchError.message.includes('fetch')) {
+          setError(
+            `Network connection error: Unable to reach Supabase. Please check:\n` +
+            `1. Your internet connection\n` +
+            `2. Supabase URL: ${supabaseUrl}\n` +
+            `3. CORS settings in Supabase dashboard\n` +
+            `4. Browser console for detailed errors`
+          );
+          setTopics([]);
+          return;
+        }
+        throw fetchError;
+      }
 
       if (topicsError) {
         console.error('Topics loading error:', topicsError);
         console.error('Error details:', JSON.stringify(topicsError, null, 2));
-        setError(`Failed to load topics: ${topicsError.message}`);
+        
+        // Provide more helpful error messages based on error type
+        let errorMessage = `Failed to load topics: ${topicsError.message}`;
+        
+        if (topicsError.code === 'PGRST116') {
+          errorMessage = 'Topics table not found. Please ensure the database tables are set up correctly.';
+        } else if (topicsError.code === 'PGRST301' || topicsError.message?.includes('JWT')) {
+          errorMessage = 'Authentication error. Please check your Supabase API key configuration.';
+        } else if (topicsError.message?.includes('fetch')) {
+          errorMessage = 'Network error. Please check your internet connection and Supabase URL.';
+        }
+        
+        setError(errorMessage);
         throw topicsError;
       }
 
@@ -52,13 +100,20 @@ export function TopicSelection() {
       console.log('Topics data:', topicsData);
 
       // Load all subtopics
-      const { data: allSubtopics, error: subtopicsError } = await supabase
-        .from('subtopics')
-        .select('*')
-        .order('display_order');
-
-      if (subtopicsError) {
-        console.error('Subtopics loading error:', subtopicsError);
+      let allSubtopics = null;
+      try {
+        const { data: subtopicsData, error: subtopicsError } = await supabase
+          .from('subtopics')
+          .select('*')
+          .order('display_order');
+        allSubtopics = subtopicsData;
+        if (subtopicsError) {
+          console.error('Subtopics loading error:', subtopicsError);
+        }
+      } catch (subtopicError) {
+        console.error('Error loading subtopics:', subtopicError);
+        // Continue even if subtopics fail to load
+        allSubtopics = [];
       }
 
       console.log('Subtopics loaded:', allSubtopics?.length || 0, 'subtopics');
@@ -66,11 +121,16 @@ export function TopicSelection() {
       // Load user progress if authenticated
       let progressData: TopicProgress[] = [];
       if (user) {
-        const { data } = await supabase
-          .from('topic_progress')
-          .select('*')
-          .eq('user_id', user.id);
-        progressData = data || [];
+        try {
+          const { data } = await supabase
+            .from('topic_progress')
+            .select('*')
+            .eq('user_id', user.id);
+          progressData = data || [];
+        } catch (progressError) {
+          console.error('Error loading progress:', progressError);
+          // Continue without progress data
+        }
       }
 
       const topicsWithSubtopics = (topicsData || []).map((topic: any) => {
@@ -102,7 +162,19 @@ export function TopicSelection() {
       setError(null);
     } catch (error: any) {
       console.error('Error loading topics:', error);
-      setError(error.message || 'Failed to load topics. Please check your database connection.');
+      
+      // Provide more specific error messages
+      let errorMessage = 'Failed to load topics.';
+      
+      if (error instanceof TypeError && error.message.includes('fetch')) {
+        errorMessage = 'Network connection error. Please check your internet connection and try again.';
+      } else if (error.message) {
+        errorMessage = error.message;
+      } else {
+        errorMessage = 'Failed to load topics. Please check your database connection and browser console for details.';
+      }
+      
+      setError(errorMessage);
       setTopics([]);
     } finally {
       setLoading(false);
@@ -223,15 +295,24 @@ export function TopicSelection() {
         </div>
 
         {error ? (
-          <div className="bg-red-900/30 border-2 border-red-500/50 rounded-2xl shadow-lg p-12 text-center">
-            <div className="text-red-400 font-semibold mb-2">Error Loading Topics</div>
-            <p className="text-red-300 text-sm">{error}</p>
-            <button
-              onClick={loadTopics}
-              className="mt-4 px-6 py-2 bg-red-600 text-white rounded-lg hover:bg-red-700 transition-colors"
-            >
-              Retry
-            </button>
+          <div className="bg-red-900/30 border-2 border-red-500/50 rounded-2xl shadow-lg p-12">
+            <div className="text-center mb-6">
+              <div className="text-red-400 font-semibold text-xl mb-2">Error Loading Topics</div>
+              <div className="text-red-300 text-sm whitespace-pre-line text-left bg-red-950/50 p-4 rounded-lg border border-red-700/50">
+                {error}
+              </div>
+            </div>
+            <div className="flex flex-col items-center gap-3">
+              <button
+                onClick={loadTopics}
+                className="px-6 py-2 bg-red-600 text-white rounded-lg hover:bg-red-700 transition-colors"
+              >
+                Retry
+              </button>
+              <p className="text-red-400 text-xs text-center max-w-md">
+                If the error persists, please check the browser console (F12) for detailed error messages and ensure your Supabase configuration is correct.
+              </p>
+            </div>
           </div>
         ) : topics.length === 0 ? (
           <div className="bg-slate-800/50 backdrop-blur-sm border border-slate-700/50 rounded-2xl shadow-lg p-12 text-center">

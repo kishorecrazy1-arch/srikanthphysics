@@ -113,7 +113,60 @@ INSERT INTO public.topics (name, icon, description, display_order, color) VALUES
 ON CONFLICT DO NOTHING;
 ```
 
-### Issue 3: Supabase Connection Issue
+### Issue 3: "TypeError: Failed to fetch" Error
+
+This error typically means there's a network connectivity issue or Supabase configuration problem.
+
+**Symptoms**:
+- Error message: "TypeError: Failed to fetch"
+- Topics don't load
+- Red error box appears with "Error Loading Topics"
+
+**Solutions**:
+
+1. **Check Environment Variables**
+   - Verify `.env` file exists in the project root
+   - Check that variables are correctly named (must start with `VITE_`):
+     ```env
+     VITE_SUPABASE_URL=https://your-project.supabase.co
+     VITE_SUPABASE_ANON_KEY=your-anon-key
+     ```
+   - **Restart your dev server** after changing `.env` file
+
+2. **Verify Supabase Connection**
+   - Check if Supabase URL is accessible (try opening it in a browser)
+   - Verify API keys in Supabase Dashboard → Settings → API
+   - Make sure your Supabase project is active (not paused)
+
+3. **Check Network/CORS Issues**
+   - Open browser DevTools (F12) → Network tab
+   - Look for failed requests to Supabase
+   - Check for CORS errors in the console
+   - If CORS error, check Supabase Dashboard → Settings → API → CORS settings
+
+4. **Clear Browser Cache**
+   - Hard refresh: `Ctrl+Shift+R` (Windows) or `Cmd+Shift+R` (Mac)
+   - Clear browser cache and cookies
+   - Try in an incognito/private window
+
+5. **Check Internet Connection**
+   - Verify you have an active internet connection
+   - Try accessing Supabase dashboard directly
+   - Check if firewall or antivirus is blocking requests
+
+6. **Verify Supabase Client Initialization**
+   - Open browser console (F12)
+   - Look for error: "Missing Supabase environment variables"
+   - Check for: "✅ Supabase client initialized" (should appear on page load)
+
+**Debug Steps**:
+```javascript
+// In browser console, check if Supabase client is initialized
+console.log('Supabase URL:', import.meta.env.VITE_SUPABASE_URL);
+// If this shows undefined, your .env file isn't loaded properly
+```
+
+### Issue 4: Supabase Connection Issue
 
 **Solution**: Check your `.env` file:
 
@@ -124,7 +177,9 @@ VITE_SUPABASE_ANON_KEY=your-anon-key
 
 Verify these are correct in Supabase Dashboard → Settings → API.
 
-### Issue 4: Test Mode Not Working
+**Important**: After updating `.env` file, you MUST restart your development server!
+
+### Issue 5: Test Mode Not Working
 
 **Solution**: Enable test mode from login page, or check if it's active:
 
@@ -185,4 +240,6 @@ Questions generated/displayed
 4. **Check Supabase logs** in Dashboard → Logs
 
 The most common issue is RLS policies blocking access. Make sure the policies allow public read access!
+
+
 

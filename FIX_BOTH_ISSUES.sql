@@ -15,3 +15,6 @@ WHERE table_schema = 'public'
   AND table_name = 'questions' 
   AND column_name = 'ai_generated';
 
+
+
+

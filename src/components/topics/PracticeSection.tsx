@@ -85,49 +85,13 @@ export function PracticeSection({ topic, progress, onProgressUpdate, selectedLev
 
       let questionsToUse = questionsData || [];
 
-      // If no questions found, generate them on-demand
+      // If no questions found, don't generate - just show empty state
       if (!questionsData || questionsData.length === 0) {
-        console.log('📝 No practice bank questions found. Generating for all subtopics...');
-        try {
-          const { PracticeBankGenerator } = await import('../../services/practiceBankGenerator');
-          const generator = new PracticeBankGenerator();
-          
-          // Get all subtopics for this topic
-          const { data: subtopics } = await supabase
-            .from('subtopics')
-            .select('id, name')
-            .eq('topic_id', topic.id);
-
-          if (subtopics && subtopics.length > 0) {
-            // Generate questions for ALL subtopics (5 questions each)
-            const allGenerated: any[] = [];
-            for (const subtopic of subtopics) {
-              try {
-                const generated = await generator.generatePracticeQuestions({
-                  topicId: topic.id,
-                  topicName: topic.name,
-                  subtopicId: subtopic.id,
-                  subtopicName: subtopic.name,
-                  difficulty: difficultyLevel as 'Foundation' | 'Intermediate' | 'Advanced',
-                  count: 5
-                });
-                allGenerated.push(...generated);
-                console.log(`✅ Generated ${generated.length} questions for ${subtopic.name}`);
-              } catch (subtopicError) {
-                console.error(`Error generating for subtopic ${subtopic.name}:`, subtopicError);
-              }
-            }
-            questionsToUse = allGenerated;
-            console.log(`✅ Total generated: ${allGenerated.length} questions`);
-          } else {
-            console.warn('No subtopics found, using fallback');
-            // Fallback to old method
-            questionsToUse = await generatePracticeQuestions(topic);
-          }
-        } catch (genError) {
-          console.error('Error generating practice questions:', genError);
-          questionsToUse = await generatePracticeQuestions(topic);
-        }
+        console.log('📝 No practice bank questions found.');
+        console.log('ℹ️ Practice Bank questions need to be generated. For now, showing empty state.');
+        questionsToUse = [];
+        // Don't try to generate - just show empty state
+        // Generation should be done separately
       }
 
       // Transform questions to match expected format
@@ -183,8 +147,13 @@ export function PracticeSection({ topic, progress, onProgressUpdate, selectedLev
         transformedQuestions.sort(() => Math.random() - 0.5);
       }
 
+      // Always set questions (even if empty array) so loading can clear
       setQuestions(transformedQuestions);
       console.log('✅ Loaded practice questions:', transformedQuestions.length);
+      
+      if (transformedQuestions.length === 0) {
+        console.log('ℹ️ No practice bank questions available yet. Questions will appear after generation.');
+      }
 
       if (user && questionsToUse.length > 0) {
         const questionIds = questionsToUse.map(q => q.id);
@@ -201,10 +170,16 @@ export function PracticeSection({ topic, progress, onProgressUpdate, selectedLev
 
         setUserAnswers(answersMap);
       }
-    } catch (error) {
+    } catch (error: any) {
       console.error('Error loading practice questions:', error);
+      console.error('Error details:', error.message, error.code);
+      // Set empty array on error so page can still render
+      setQuestions([]);
+      setFilteredQuestions([]);
     } finally {
+      // Always clear loading state
       setLoading(false);
+      console.log('✅ Loading complete (practice bank)');
     }
   };
 

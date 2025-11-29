@@ -41,3 +41,6 @@ ALTER TABLE public.questions DISABLE ROW LEVEL SECURITY;
 2. Click "Get 10 Questions" again
 3. Questions should insert successfully!
 
+
+
+

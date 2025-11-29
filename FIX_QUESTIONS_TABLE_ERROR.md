@@ -49,3 +49,6 @@ Once the table is created:
 
 **The error happens because the `questions` table doesn't exist yet. Run the SQL above to create it!**
 
+
+
+

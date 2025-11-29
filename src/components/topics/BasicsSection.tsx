@@ -1180,6 +1180,18 @@ export function BasicsSection({ topic, progress, onProgressUpdate, selectedLevel
     return `${hours}h ${minutes}m`;
   };
 
+  // Debug logging
+  useEffect(() => {
+    console.log('📋 BasicsSection rendered:', {
+      topic: topic?.name,
+      selectedSubtopic: selectedSubtopic?.name,
+      selectedLevel: currentLevel,
+      showQuizMode,
+      showMcqQuestions,
+      showQaQuestions
+    });
+  }, [topic, selectedSubtopic, currentLevel, showQuizMode, showMcqQuestions, showQaQuestions]);
+
   if (showQuizMode) {
     return (
       <QuizMode
@@ -1194,6 +1206,7 @@ export function BasicsSection({ topic, progress, onProgressUpdate, selectedLevel
     );
   }
 
+  console.log('✅ Rendering BasicsSection content');
   return (
     <div id="questions-section">
 
