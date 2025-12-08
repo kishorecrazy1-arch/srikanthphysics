@@ -118,7 +118,7 @@ export function Signup() {
       if (err.message?.includes('provider is not enabled') || err.error_code === 'validation_failed') {
         setError('Google sign-in is not enabled. Please use email sign-up or contact support.');
       } else {
-        setError(err.message || 'Failed to sign in with Google');
+      setError(err.message || 'Failed to sign in with Google');
       }
     }
   };
@@ -137,7 +137,7 @@ export function Signup() {
       if (err.message?.includes('provider is not enabled') || err.error_code === 'validation_failed') {
         setError('Apple sign-in is not enabled. Please use email sign-up or contact support.');
       } else {
-        setError(err.message || 'Failed to sign in with Apple');
+      setError(err.message || 'Failed to sign in with Apple');
       }
     }
   };
