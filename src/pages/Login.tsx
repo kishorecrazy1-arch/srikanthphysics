@@ -50,6 +50,7 @@ export function Login() {
 
   const handleGoogleSignIn = async () => {
     try {
+      setError('');
       const { error } = await supabase.auth.signInWithOAuth({
         provider: 'google',
         options: {
@@ -58,12 +59,17 @@ export function Login() {
       });
       if (error) throw error;
     } catch (err: any) {
-      setError(err.message || 'Failed to sign in with Google');
+      if (err.message?.includes('provider is not enabled') || err.error_code === 'validation_failed') {
+        setError('Google sign-in is not enabled. Please use email sign-in or contact support.');
+      } else {
+        setError(err.message || 'Failed to sign in with Google');
+      }
     }
   };
 
   const handleAppleSignIn = async () => {
     try {
+      setError('');
       const { error } = await supabase.auth.signInWithOAuth({
         provider: 'apple',
         options: {
@@ -72,7 +78,11 @@ export function Login() {
       });
       if (error) throw error;
     } catch (err: any) {
-      setError(err.message || 'Failed to sign in with Apple');
+      if (err.message?.includes('provider is not enabled') || err.error_code === 'validation_failed') {
+        setError('Apple sign-in is not enabled. Please use email sign-in or contact support.');
+      } else {
+        setError(err.message || 'Failed to sign in with Apple');
+      }
     }
   };
 

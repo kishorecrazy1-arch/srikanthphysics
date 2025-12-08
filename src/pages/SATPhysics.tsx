@@ -357,7 +357,10 @@ export default function SATPhysics() {
           <p className="text-xl text-blue-100 mb-8">Build strong conceptual foundations for college success</p>
           <div className="flex flex-wrap justify-center gap-4">
             <button
-              onClick={() => navigate('/ap-physics')}
+              onClick={() => {
+                localStorage.setItem('selectedCourse', 'sat');
+                navigate('/signup');
+              }}
               className="px-8 py-4 bg-white text-blue-600 rounded-xl font-bold hover:bg-blue-50 transition-all flex items-center gap-2"
             >
               <Play className="w-5 h-5" />

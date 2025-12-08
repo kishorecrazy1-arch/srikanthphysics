@@ -14,6 +14,7 @@ import { TopicDetail } from './pages/TopicDetail';
 import { CourseDetails } from './pages/CourseDetails';
 import { APPhysicsSelector } from './pages/APPhysicsSelector';
 import { MotionSimulator } from './pages/MotionSimulator';
+import { Simulators } from './pages/Simulators';
 import { GraphGenerator } from './pages/GraphGenerator';
 import { MockTest } from './pages/MockTest';
 import { FRQPractice } from './pages/FRQPractice';
@@ -24,6 +25,8 @@ import SATPhysics from './pages/SATPhysics';
 import IITJEEPhysics from './pages/IITJEEPhysics';
 import NEETPhysics from './pages/NEETPhysics';
 import { AdminGeneratePracticeBank } from './pages/AdminGeneratePracticeBank';
+import { Demo } from './pages/Demo';
+import { DemoSuccess } from './pages/DemoSuccess';
 import { Layout } from './components/Layout';
 import { ProtectedRoute } from './components/ProtectedRoute';
 import { Chatbot } from './components/Chatbot';
@@ -44,6 +47,8 @@ function App() {
         <Route path="/login" element={<Login />} />
         <Route path="/signup" element={<Signup />} />
         <Route path="/reset-password" element={<ResetPassword />} />
+        <Route path="/demo" element={<Demo />} />
+        <Route path="/demo/success" element={<DemoSuccess />} />
         {/* Redirect routes for course shortcuts */}
         <Route path="/igcse" element={<Navigate to="/course/igcse" replace />} />
         <Route path="/sat" element={<Navigate to="/course/sat" replace />} />
@@ -128,6 +133,14 @@ function App() {
           element={
             <ProtectedRoute>
               <MotionSimulator />
+            </ProtectedRoute>
+          }
+        />
+        <Route
+          path="/simulators"
+          element={
+            <ProtectedRoute>
+              <Simulators />
             </ProtectedRoute>
           }
         />
