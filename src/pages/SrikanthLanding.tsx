@@ -102,7 +102,7 @@ export function SrikanthLanding() {
               </div>
 
               <div className="mt-8 flex items-center gap-2">
-                <div className="flex -space-x-2">
+                <div className="flex gap-1">
                   {[1,2,3,4,5].map(i => (
                     <Star key={i} className="w-5 h-5 fill-yellow-400 text-yellow-400" />
                   ))}
@@ -298,7 +298,7 @@ export function SrikanthLanding() {
             {[
               { icon: Users, number: '80K+', label: 'Students Trained', color: 'from-blue-400 to-cyan-400' },
               { icon: Award, number: '98.17%', label: 'Success Rate', color: 'from-green-400 to-emerald-400' },
-              { icon: Medal, number: 'Placed in Premier Institution', label: 'Top Students', color: 'from-yellow-400 to-orange-400' },
+              { icon: Medal, number: 'Top Institute Admits', label: 'Top Students', color: 'from-yellow-400 to-orange-400' },
               { icon: Star, number: '4.8/5', label: 'Rating', color: 'from-purple-400 to-pink-400' }
             ].map((stat, idx) => (
               <div key={idx} className="bg-white bg-opacity-10 backdrop-blur-lg rounded-2xl p-8 text-center border border-white border-opacity-20">
@@ -358,24 +358,24 @@ export function SrikanthLanding() {
       <section className="py-20 bg-gradient-to-br from-blue-900 to-blue-700" id="about">
         <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
           <div className="grid lg:grid-cols-2 gap-12 items-center">
-            <div>
-              <div className="w-full h-96 rounded-3xl overflow-hidden shadow-2xl bg-gradient-to-br from-blue-600 to-cyan-500">
+            <div className="flex items-center justify-center">
+              <div className="w-full max-w-md h-[500px] rounded-3xl overflow-hidden shadow-2xl bg-gradient-to-br from-slate-50 to-blue-50 flex items-center justify-center p-8 relative">
                 <img 
-                  src="/media/srikanth-sir.jpg" 
+                  src="/media/srikanth%20sir%20photo.PNG" 
                   alt="Srikanth Padavala - Physics Mentor"
-                  className="w-full h-full object-cover"
+                  className="w-full h-full object-cover object-top rounded-2xl"
                   onError={(e) => {
                     // Try alternative image paths
                     const img = e.currentTarget;
                     const alternatives = [
+                      '/media/srikanth%20sir%20photo.PNG',
+                      '/media/srikanth sir photo.PNG',
+                      '/media/srikanth-sir.jpg', 
                       '/media/srikanth-sir.png', 
-                      '/media/srikanth-sir.webp', 
                       '/media/srikanth.jpg', 
-                      '/media/srikanth.png',
-                      '/srikanth-sir.jpg',
-                      '/srikanth-sir.png'
+                      '/media/srikanth.png'
                     ];
-                    let currentIndex = alternatives.indexOf(img.src);
+                    let currentIndex = alternatives.indexOf(img.src.replace(window.location.origin, ''));
                     
                     if (currentIndex < alternatives.length - 1) {
                       img.src = alternatives[currentIndex + 1];
@@ -429,7 +429,7 @@ export function SrikanthLanding() {
                   </li>
                   <li className="flex items-center gap-2">
                     <Trophy className="w-5 h-5 text-yellow-400" />
-                    Placed in premier institutions
+                    Top Institute Admits
                   </li>
                   <li className="flex items-center gap-2">
                     <Trophy className="w-5 h-5 text-yellow-400" />

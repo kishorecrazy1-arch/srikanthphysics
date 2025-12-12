@@ -33,19 +33,13 @@ export function CourseDetails() {
     );
   }
 
-  const stats = [
-    { label: 'Score Perfect 5', value: '5/5', icon: <Star />, color: 'text-yellow-500' },
-    { label: 'College Credit', value: '$2,000+', icon: <Award />, color: 'text-green-500' },
-    { label: 'Students Enrolled', value: '10K+', icon: <Users />, color: 'text-blue-500' },
-    { label: 'Success Rate', value: '95%', icon: <TrendingUp />, color: 'text-purple-500' }
-  ];
 
   const examPattern = [
     {
       section: 'Section 1',
       subtitle: 'Multiple Choice',
       marks: '40 Questions',
-      duration: '80 min',
+      duration: '1 hr 20 min',
       weight: '50%',
       iconBg: 'bg-blue-500'
     },
@@ -262,23 +256,6 @@ export function CourseDetails() {
         </div>
       </div>
 
-      <div className="max-w-7xl mx-auto px-6 py-12">
-        <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
-          {stats.map((stat, index) => (
-            <div key={index} className="bg-gradient-to-br from-slate-800/50 to-slate-900/50 rounded-2xl p-8 border border-slate-700/50 backdrop-blur-sm">
-              <div className="flex items-center gap-6">
-                <div className={`${stat.color}`}>
-                  {stat.icon && <div className="w-12 h-12">{stat.icon}</div>}
-                </div>
-                <div>
-                  <div className="text-5xl font-bold mb-2">{stat.value}</div>
-                  <div className="text-slate-400 text-lg">{stat.label}</div>
-                </div>
-              </div>
-            </div>
-          ))}
-        </div>
-      </div>
 
       <div className="max-w-7xl mx-auto px-6 py-12">
         <div className="bg-gradient-to-br from-blue-500/10 to-purple-500/10 rounded-3xl p-8 border border-blue-500/20">
@@ -336,52 +313,57 @@ export function CourseDetails() {
         </div>
       </div>
 
-      <div className="max-w-7xl mx-auto px-6 py-16">
-        <h2 className="text-4xl font-bold mb-4 text-center bg-gradient-to-r from-blue-400 via-purple-400 to-orange-400 bg-clip-text text-transparent">
-          Exam Pattern & Structure
-        </h2>
-        <p className="text-center text-slate-400 text-lg mb-12">Each AP Physics exam follows this format</p>
+      <div className="max-w-7xl mx-auto px-6 py-12">
+        <div className="bg-gradient-to-br from-purple-500/10 to-pink-500/10 rounded-3xl p-8 border border-purple-500/20">
+          <h2 className="text-3xl font-bold mb-6 flex items-center gap-3 text-white">
+            <GraduationCap className="w-8 h-8 text-purple-400" />
+            Exam Pattern & Structure
+          </h2>
+          <p className="text-slate-300 text-lg mb-8">Each AP Physics exam (AP Physics 1 & 2) follows this format</p>
 
-        <div className="grid grid-cols-1 md:grid-cols-2 gap-8">
-          {examPattern.map((paper, index) => (
-            <div key={index} className="bg-white rounded-3xl p-8 shadow-xl">
-              <div className="flex flex-col items-center text-center">
-                <div className={`w-20 h-20 ${paper.iconBg} rounded-2xl flex items-center justify-center mb-6`}>
-                  <BookOpen className="w-10 h-10 text-white" />
-                </div>
-
-                <h3 className="text-4xl font-bold text-gray-900 mb-2">{paper.section}</h3>
-                <p className="text-xl text-blue-600 mb-8">{paper.subtitle}</p>
-
-                <div className="w-full space-y-6">
-                  <div>
-                    <div className="text-gray-600 mb-2">Questions</div>
-                    <div className="text-5xl font-bold text-gray-900">{paper.marks}</div>
+          <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+            {examPattern.map((paper, index) => (
+              <div key={index} className="bg-slate-800/30 rounded-xl p-6 border border-slate-700/50">
+                <div className="flex flex-col items-center text-center">
+                  <div className={`w-16 h-16 ${paper.iconBg} rounded-xl flex items-center justify-center mb-6`}>
+                    <BookOpen className="w-8 h-8 text-white" />
                   </div>
 
-                  <div>
-                    <div className="text-gray-600 mb-2">Duration</div>
-                    <div className="text-3xl font-bold text-blue-600">{paper.duration}</div>
-                  </div>
+                  <h3 className="text-3xl font-bold text-white mb-2">{paper.section}</h3>
+                  <p className="text-xl text-blue-400 mb-8">{paper.subtitle}</p>
 
-                  <div>
-                    <div className="text-gray-600 mb-2">Weightage</div>
-                    <div className="text-3xl font-bold text-green-600">{paper.weight}</div>
+                  <div className="w-full space-y-6">
+                    <div className="grid grid-cols-2 gap-6">
+                      <div>
+                        <div className="text-slate-400 mb-2">Questions</div>
+                        <div className="text-3xl font-bold text-white">{paper.marks}</div>
+                      </div>
+
+                      <div>
+                        <div className="text-slate-400 mb-2">Duration</div>
+                        <div className="text-2xl font-bold text-blue-400">{paper.duration}</div>
+                      </div>
+                    </div>
+
+                    <div>
+                      <div className="text-slate-400 mb-2">Weightage</div>
+                      <div className="text-2xl font-bold text-green-400">{paper.weight}</div>
+                    </div>
                   </div>
                 </div>
               </div>
-            </div>
-          ))}
-        </div>
+            ))}
+          </div>
 
-        <div className="mt-8 bg-gradient-to-br from-slate-800/50 to-slate-900/50 rounded-2xl p-8 border border-slate-700/50 backdrop-blur-sm text-center">
-          <h3 className="text-2xl font-bold mb-4 flex items-center justify-center gap-3">
-            <Calendar className="w-7 h-7 text-orange-400" />
-            Total Duration: 3 Hours
-          </h3>
-          <p className="text-slate-300 text-lg">
-            The exam tests both your problem-solving skills (MCQs) and your ability to explain physics concepts (FRQs)
-          </p>
+          <div className="mt-8 bg-gradient-to-br from-slate-800/50 to-slate-900/50 rounded-2xl p-8 border border-slate-700/50 backdrop-blur-sm text-center">
+            <h3 className="text-2xl font-bold mb-4 flex items-center justify-center gap-3 text-white">
+              <Calendar className="w-7 h-7 text-orange-400" />
+              Total Duration: 3 Hours
+            </h3>
+            <p className="text-slate-300 text-lg">
+              The exam tests both your problem-solving skills (MCQs) and your ability to explain physics concepts (FRQs)
+            </p>
+          </div>
         </div>
       </div>
 
