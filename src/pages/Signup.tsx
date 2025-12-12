@@ -83,20 +83,8 @@ export function Signup() {
     try {
       await signUp(formData.email, formData.password, formData);
       
-      // Navigate to course-specific page based on selected course
-      if (formData.courseType.startsWith('ap_physics')) {
-        navigate('/ap-physics');
-      } else if (formData.courseType === 'igcse') {
-        navigate('/course/igcse');
-      } else if (formData.courseType === 'sat') {
-        navigate('/course/sat');
-      } else if (formData.courseType === 'iit_jee') {
-        navigate('/course/iit-jee');
-      } else if (formData.courseType === 'neet') {
-        navigate('/course/neet');
-      } else {
-        navigate('/ap-physics');
-      }
+      // Navigate to demo page after successful signup
+      navigate('/demo');
     } catch (err: any) {
       setError(err.message || 'Failed to create account');
     } finally {

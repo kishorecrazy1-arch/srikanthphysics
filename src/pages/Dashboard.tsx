@@ -152,61 +152,7 @@ export function Dashboard() {
       <div>
         <h2 className="text-2xl font-bold text-gray-800 mb-4">Courses 🎓</h2>
 
-        <div className="grid md:grid-cols-3 gap-6 mb-6">
-          <div
-            onClick={() => navigate('/ap-physics')}
-            className="bg-gradient-to-br from-blue-600 to-cyan-500 rounded-2xl shadow-xl p-8 text-white cursor-pointer hover:shadow-2xl hover:scale-[1.02] transition-all"
-          >
-            <div className="flex items-start justify-between mb-6">
-              <div className="flex items-center gap-4">
-                <div className="w-16 h-16 bg-white bg-opacity-20 backdrop-blur-sm rounded-2xl flex items-center justify-center">
-                  <BookOpen className="w-8 h-8 text-white" />
-                </div>
-                <div>
-                  <h3 className="text-3xl font-bold mb-1">AP Physics 1</h3>
-                  <p className="text-blue-100 text-lg">Master 7 core topics with AI-powered practice</p>
-                </div>
-              </div>
-              <ArrowRight className="w-6 h-6 flex-shrink-0" />
-            </div>
-
-            <div className="grid grid-cols-3 gap-4 mb-6">
-            <div className="bg-white bg-opacity-10 backdrop-blur-sm rounded-xl p-4">
-              <div className="text-sm text-blue-100 mb-1">Topics Mastered</div>
-              <div className="text-3xl font-bold">0/7</div>
-            </div>
-            <div className="bg-white bg-opacity-10 backdrop-blur-sm rounded-xl p-4">
-              <div className="text-sm text-blue-100 mb-1">Overall Progress</div>
-              <div className="text-3xl font-bold">0%</div>
-            </div>
-            <div className="bg-white bg-opacity-10 backdrop-blur-sm rounded-xl p-4">
-              <div className="text-sm text-blue-100 mb-1">Questions Done</div>
-              <div className="text-3xl font-bold">0</div>
-            </div>
-          </div>
-
-          <div className="bg-white bg-opacity-20 backdrop-blur-sm rounded-xl p-4">
-            <div className="flex items-center justify-between mb-2">
-              <span className="text-sm font-medium">Learning Progress</span>
-              <span className="text-sm font-bold">0%</span>
-            </div>
-            <div className="w-full bg-white bg-opacity-20 rounded-full h-2">
-              <div
-                className="bg-white h-2 rounded-full transition-all"
-                style={{ width: '0%' }}
-              />
-            </div>
-          </div>
-
-          <div className="mt-6 flex items-center gap-2 text-blue-50">
-            <span>🎯 Daily Basics</span>
-            <span>•</span>
-            <span>📚 Homework</span>
-            <span>•</span>
-            <span>⚡ Practice Bank</span>
-          </div>
-          </div>
-
+        <div className="grid md:grid-cols-2 gap-6 mb-6">
           <div
             onClick={() => navigate('/course/igcse')}
             className="bg-gradient-to-br from-purple-600 to-pink-500 rounded-2xl shadow-xl p-8 text-white cursor-pointer hover:shadow-2xl hover:scale-[1.02] transition-all"

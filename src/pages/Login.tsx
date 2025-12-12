@@ -1,5 +1,5 @@
-import { useState } from 'react';
-import { Link, useNavigate } from 'react-router-dom';
+import { useState, useEffect } from 'react';
+import { Link, useNavigate, useLocation } from 'react-router-dom';
 import { BookOpen, Mail, Lock, TestTube } from 'lucide-react';
 import { useAuthStore } from '../store/authStore';
 import { supabase } from '../lib/supabase';
@@ -8,15 +8,27 @@ export function Login() {
   const [email, setEmail] = useState('');
   const [password, setPassword] = useState('');
   const [error, setError] = useState('');
+  const [successMessage, setSuccessMessage] = useState('');
   const [loading, setLoading] = useState(false);
   const [showForgotPassword, setShowForgotPassword] = useState(false);
   const [resetEmail, setResetEmail] = useState('');
   const [resetMessage, setResetMessage] = useState('');
   const [showTestMode, setShowTestMode] = useState(false);
   const navigate = useNavigate();
+  const location = useLocation();
   const signIn = useAuthStore(state => state.signIn);
   const enableTestMode = useAuthStore(state => state.enableTestMode);
   const testMode = useAuthStore(state => state.testMode);
+
+  useEffect(() => {
+    // Check for success message from signup
+    if (location.state?.message) {
+      setSuccessMessage(location.state.message);
+      if (location.state.email) {
+        setEmail(location.state.email);
+      }
+    }
+  }, [location]);
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
@@ -25,24 +37,29 @@ export function Login() {
 
     try {
       await signIn(email, password);
+      
+      // Check email verification status
+      const { emailVerified } = useAuthStore.getState();
+      
+      if (emailVerified === false) {
+        // Email not confirmed - ProtectedRoute will show EmailConfirmationRequired page
+        // Navigate to dashboard, which will check and redirect if needed
+        navigate('/dashboard');
+        return;
+      }
+      
+      // Email is confirmed - navigate to dashboard with selected course
       const selectedCourse = localStorage.getItem('selectedCourse') || 'ap-physics';
       
-      // Navigate to course-specific page based on selected course
-      if (selectedCourse.startsWith('ap-physics')) {
-        navigate('/ap-physics');
-      } else if (selectedCourse === 'igcse') {
-        navigate('/course/igcse');
-      } else if (selectedCourse === 'sat') {
-        navigate('/course/sat');
-      } else if (selectedCourse === 'iit-jee') {
-        navigate('/course/iit-jee');
-      } else if (selectedCourse === 'neet') {
-        navigate('/course/neet');
-      } else {
-        navigate('/ap-physics');
-      }
+      // Navigate to dashboard first, then user can access their selected course
+      navigate('/dashboard');
     } catch (err: any) {
-      setError(err.message || 'Failed to sign in');
+      // Check if error is due to email not confirmed
+      if (err.message?.includes('email') && (err.message?.includes('confirm') || err.message?.includes('verified'))) {
+        setError('Please confirm your email address (srikanthsacademyforphysics@gmail.com) before signing in. Check your inbox for the confirmation email.');
+      } else {
+        setError(err.message || 'Failed to sign in');
+      }
     } finally {
       setLoading(false);
     }
@@ -240,6 +257,11 @@ export function Login() {
             <p className="text-gray-600">Sign in to continue your learning</p>
           </div>
 
+          {successMessage && (
+            <div className="mb-6 p-4 bg-green-50 border-l-4 border-green-500 rounded-r-lg text-green-700 text-sm">
+              {successMessage}
+            </div>
+          )}
           {error && (
             <div className="mb-6 p-4 bg-red-50 border-l-4 border-red-500 rounded-r-lg text-red-700 text-sm">
               {error}

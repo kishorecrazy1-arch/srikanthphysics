@@ -1,8 +1,10 @@
 import { Navigate } from 'react-router-dom';
 import { useAuthStore } from '../store/authStore';
+import { PaymentRequired } from '../pages/PaymentRequired';
+import { EmailConfirmationRequired } from '../pages/EmailConfirmationRequired';
 
 export function ProtectedRoute({ children }: { children: React.ReactNode }) {
-  const { user, loading, testMode } = useAuthStore();
+  const { user, loading, testMode, emailVerified } = useAuthStore();
 
   if (loading) {
     return (
@@ -15,9 +17,31 @@ export function ProtectedRoute({ children }: { children: React.ReactNode }) {
     );
   }
 
-  // Allow access in test mode or if user is authenticated
-  if (!user && !testMode) {
+  // Allow access in test mode
+  if (testMode) {
+    return <>{children}</>;
+  }
+
+  // Redirect to login if not authenticated
+  if (!user) {
     return <Navigate to="/login" replace />;
+  }
+
+  // Check email confirmation first - if not verified, show email confirmation page
+  if (emailVerified === false) {
+    return <EmailConfirmationRequired />;
+  }
+
+  // Only check payment if email is confirmed
+  // Check if user has paid subscription
+  const hasActiveSubscription = user.subscriptionStatus === 'paid' || 
+    (user.subscriptionStatus === 'trial' && 
+     user.subscriptionExpiresAt && 
+     new Date(user.subscriptionExpiresAt) > new Date());
+
+  // If user doesn't have active subscription, show payment required page
+  if (!hasActiveSubscription) {
+    return <PaymentRequired />;
   }
 
   return <>{children}</>;

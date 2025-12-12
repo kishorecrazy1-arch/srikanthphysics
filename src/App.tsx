@@ -28,8 +28,11 @@ import { AdminGeneratePracticeBank } from './pages/AdminGeneratePracticeBank';
 import { Demo } from './pages/Demo';
 import { DemoSuccess } from './pages/DemoSuccess';
 import { EnableTestMode } from './pages/EnableTestMode';
+import { Payment } from './pages/Payment';
+import { PaymentSuccess } from './pages/PaymentSuccess';
 import { Layout } from './components/Layout';
 import { ProtectedRoute } from './components/ProtectedRoute';
+import { AuthenticatedRoute } from './components/AuthenticatedRoute';
 import { Chatbot } from './components/Chatbot';
 
 function App() {
@@ -51,6 +54,22 @@ function App() {
         <Route path="/demo" element={<Demo />} />
         <Route path="/demo/success" element={<DemoSuccess />} />
         <Route path="/test-mode" element={<EnableTestMode />} />
+        <Route
+          path="/payment"
+          element={
+            <AuthenticatedRoute>
+              <Payment />
+            </AuthenticatedRoute>
+          }
+        />
+        <Route
+          path="/payment/success"
+          element={
+            <ProtectedRoute>
+              <PaymentSuccess />
+            </ProtectedRoute>
+          }
+        />
         {/* Redirect routes for course shortcuts */}
         <Route path="/igcse" element={<Navigate to="/course/igcse" replace />} />
         <Route path="/sat" element={<Navigate to="/course/sat" replace />} />

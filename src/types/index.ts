@@ -17,6 +17,8 @@ export type QuizType = 'morning_pulse' | 'homework' | 'challenge';
 
 export type QuizStatus = 'pending' | 'in_progress' | 'completed';
 
+export type SubscriptionStatus = 'free' | 'paid' | 'trial' | 'expired';
+
 export interface User {
   id: string;
   name: string;
@@ -31,6 +33,9 @@ export interface User {
   correctAnswers: number;
   skillLevel: number;
   createdAt: string;
+  subscriptionStatus?: SubscriptionStatus;
+  subscriptionExpiresAt?: string;
+  paymentDate?: string;
 }
 
 export interface QuestionOption {

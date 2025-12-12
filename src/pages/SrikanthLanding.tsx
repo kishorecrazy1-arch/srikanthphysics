@@ -78,10 +78,7 @@ export function SrikanthLanding() {
 
               <div className="flex flex-wrap gap-4 mb-8">
                 <button
-                  onClick={() => {
-                    localStorage.setItem('selectedCourse', 'ap-physics');
-                    navigate('/signup');
-                  }}
+                  onClick={() => navigate('/demo')}
                   className="px-8 py-4 bg-white text-blue-800 rounded-xl font-bold text-lg hover:bg-blue-50 transition-all shadow-2xl hover:shadow-3xl animate-pulse-glow flex items-center gap-2"
                 >
                   Get Started Free <ArrowRight className="w-5 h-5" />
@@ -300,9 +297,9 @@ export function SrikanthLanding() {
           <div className="grid md:grid-cols-4 gap-8 mb-12">
             {[
               { icon: Users, number: '80K+', label: 'Students Trained', color: 'from-blue-400 to-cyan-400' },
-              { icon: Award, number: '98.17%', label: 'Top Score IIT JEE', color: 'from-green-400 to-emerald-400' },
-              { icon: Medal, number: 'Numerous', label: 'First 100 Ranks', color: 'from-yellow-400 to-orange-400' },
-              { icon: Star, number: '4.9/5', label: 'Rating (450 Reviews)', color: 'from-purple-400 to-pink-400' }
+              { icon: Award, number: '98.17%', label: 'Success Rate', color: 'from-green-400 to-emerald-400' },
+              { icon: Medal, number: 'Placed in Premier Institution', label: 'Top Students', color: 'from-yellow-400 to-orange-400' },
+              { icon: Star, number: '4.8/5', label: 'Rating', color: 'from-purple-400 to-pink-400' }
             ].map((stat, idx) => (
               <div key={idx} className="bg-white bg-opacity-10 backdrop-blur-lg rounded-2xl p-8 text-center border border-white border-opacity-20">
                 <div className={`w-16 h-16 bg-gradient-to-br ${stat.color} rounded-xl flex items-center justify-center mx-auto mb-4`}>
@@ -432,7 +429,7 @@ export function SrikanthLanding() {
                   </li>
                   <li className="flex items-center gap-2">
                     <Trophy className="w-5 h-5 text-yellow-400" />
-                    Numerous in the first 100 ranks
+                    Placed in premier institutions
                   </li>
                   <li className="flex items-center gap-2">
                     <Trophy className="w-5 h-5 text-yellow-400" />
@@ -522,7 +519,7 @@ export function SrikanthLanding() {
           </p>
           <div className="flex flex-wrap justify-center gap-4 mb-6">
             <button
-              onClick={() => navigate('/signup')}
+              onClick={() => navigate('/demo')}
               className="px-10 py-4 bg-white text-blue-800 rounded-xl font-bold text-xl hover:bg-blue-50 transition-all shadow-2xl flex items-center gap-2"
             >
               Get Started Free <ArrowRight className="w-6 h-6" />

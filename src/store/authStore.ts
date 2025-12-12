@@ -6,6 +6,7 @@ interface AuthState {
   user: User | null;
   loading: boolean;
   testMode: boolean;
+  emailVerified: boolean | null; // null = unknown, true = verified, false = not verified
   signUp: (email: string, password: string, userData: Omit<User, 'id' | 'currentStreak' | 'longestStreak' | 'totalQuestions' | 'correctAnswers' | 'skillLevel' | 'createdAt'>) => Promise<void>;
   signIn: (email: string, password: string) => Promise<void>;
   signOut: () => Promise<void>;
@@ -27,16 +28,40 @@ export const useAuthStore = create<AuthState>((set, get) => ({
   user: null,
   loading: true,
   testMode: getInitialTestMode(),
+  emailVerified: null,
 
   signUp: async (email, password, userData) => {
+    // Include user data in metadata for trigger function
     const { data: authData, error: authError } = await supabase.auth.signUp({
       email,
       password,
+      options: {
+        data: {
+          name: userData.name,
+          country_code: userData.countryCode,
+          phone_number: userData.phoneNumber,
+          grade: userData.grade,
+          course_type: userData.courseType,
+        }
+      }
     });
 
     if (authError) throw authError;
     if (!authData.user) throw new Error('No user returned from signup');
 
+    // Try to sign in immediately after signup (no email confirmation required)
+    const { error: signInError } = await supabase.auth.signInWithPassword({
+      email,
+      password,
+    });
+
+    if (signInError) {
+      // If sign-in fails, user might need to confirm email, but we'll still proceed
+      // The trigger will create the profile
+      console.warn('Sign-in after signup failed:', signInError);
+    }
+
+    // Try to insert profile if trigger didn't create it
     const { error: profileError } = await supabase
       .from('user_profiles')
       .insert({
@@ -47,9 +72,14 @@ export const useAuthStore = create<AuthState>((set, get) => ({
         phone_number: userData.phoneNumber,
         grade: userData.grade,
         course_type: userData.courseType,
-      });
+      })
+      .select()
+      .single();
 
-    if (profileError) throw profileError;
+    // If insert fails with duplicate error, trigger already created it - that's fine
+    if (profileError && !profileError.message.includes('duplicate') && !profileError.message.includes('already exists')) {
+      console.warn('Profile insert failed, but trigger may have created it:', profileError);
+    }
 
     const topics = ['Kinematics', "Newton's Laws", 'Energy & Work', 'Momentum', 'Circular Motion', 'Rotational Motion'];
     const masteryInserts = topics.map(topic => ({
@@ -62,23 +92,33 @@ export const useAuthStore = create<AuthState>((set, get) => ({
 
     await supabase.from('topic_mastery').insert(masteryInserts);
 
-    await get().fetchUserProfile();
+    // Fetch user profile if sign-in was successful
+    if (!signInError) {
+      await get().fetchUserProfile();
+    }
   },
 
   signIn: async (email, password) => {
-    const { error } = await supabase.auth.signInWithPassword({
+    const { data, error } = await supabase.auth.signInWithPassword({
       email,
       password,
     });
 
     if (error) throw error;
+    
+    // Check email verification status
+    if (data.user) {
+      const emailVerified = data.user.email_confirmed_at !== null;
+      set({ emailVerified });
+    }
+    
     await get().fetchUserProfile();
   },
 
   signOut: async () => {
     const { error } = await supabase.auth.signOut();
     if (error) throw error;
-    set({ user: null });
+    set({ user: null, emailVerified: null });
   },
 
   fetchUserProfile: async () => {
@@ -109,9 +149,13 @@ export const useAuthStore = create<AuthState>((set, get) => ({
       const { data: { user: authUser } } = await supabase.auth.getUser();
 
       if (!authUser) {
-        set({ user: null, loading: false });
+        set({ user: null, loading: false, emailVerified: null });
         return;
       }
+
+      // Check email verification status
+      const emailVerified = authUser.email_confirmed_at !== null;
+      set({ emailVerified });
 
       const { data: profile, error } = await supabase
         .from('user_profiles')
@@ -137,6 +181,9 @@ export const useAuthStore = create<AuthState>((set, get) => ({
             correctAnswers: profile.correct_answers,
             skillLevel: profile.skill_level,
             createdAt: profile.created_at,
+            subscriptionStatus: profile.subscription_status || 'free',
+            subscriptionExpiresAt: profile.subscription_expires_at,
+            paymentDate: profile.payment_date,
           },
           loading: false,
         });

@@ -44,16 +44,16 @@ export function CourseDetails() {
     {
       section: 'Section 1',
       subtitle: 'Multiple Choice',
-      marks: '50 Questions',
-      duration: '90 min',
+      marks: '40 Questions',
+      duration: '80 min',
       weight: '50%',
       iconBg: 'bg-blue-500'
     },
     {
       section: 'Section 2',
       subtitle: 'Free Response',
-      marks: '5 Questions',
-      duration: '90 min',
+      marks: '4 Questions',
+      duration: '1 hr 40 min',
       weight: '50%',
       iconBg: 'bg-purple-500'
     }
@@ -253,6 +253,10 @@ export function CourseDetails() {
                 <Users className="w-5 h-5 text-purple-400" />
                 <span className="text-purple-300">Grades 9-12</span>
               </div>
+              <div className="flex items-center gap-2 px-6 py-3 bg-gradient-to-r from-blue-500/20 to-cyan-500/20 rounded-xl border border-blue-500/30">
+                <TrendingUp className="w-5 h-5 text-blue-400" />
+                <span className="text-blue-300">98% Success Rate</span>
+              </div>
             </div>
           </div>
         </div>
@@ -319,7 +323,7 @@ export function CourseDetails() {
               'Grade 9, 10, 11, 12 students',
               'Students aiming for US, Canada & International university admissions',
               'Students with strong interest in Physics and STEM',
-              'CBSE/ICSE/IGCSE students preparing for SAT/ACT + AP exams',
+              'CBSE/ICSE/IGCSE and other students preparing for SAT/ACT + AP exams',
               'Future engineers, doctors, and scientists',
               'Students looking to earn college credit in high school'
             ].map((point, index) => (
@@ -361,7 +365,7 @@ export function CourseDetails() {
                   </div>
 
                   <div>
-                    <div className="text-gray-600 mb-2">Weight</div>
+                    <div className="text-gray-600 mb-2">Weightage</div>
                     <div className="text-3xl font-bold text-green-600">{paper.weight}</div>
                   </div>
                 </div>
@@ -498,10 +502,7 @@ export function CourseDetails() {
               Start Free Demo
             </button>
             <button
-              onClick={() => {
-                localStorage.setItem('selectedCourse', 'ap-physics');
-                navigate('/signup');
-              }}
+              onClick={() => navigate('/demo')}
               className="px-8 py-4 bg-white/10 backdrop-blur-sm border border-white/20 rounded-xl font-bold hover:bg-white/20 transition-all flex items-center gap-2"
             >
               <Play className="w-5 h-5" />
