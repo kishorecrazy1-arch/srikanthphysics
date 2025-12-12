@@ -374,20 +374,7 @@ export function Login() {
                   <button
                     onClick={() => {
                       enableTestMode();
-                      const selectedCourse = localStorage.getItem('selectedCourse') || 'ap-physics';
-                      if (selectedCourse.startsWith('ap-physics')) {
-                        navigate('/ap-physics');
-                      } else if (selectedCourse === 'igcse') {
-                        navigate('/course/igcse');
-                      } else if (selectedCourse === 'sat') {
-                        navigate('/course/sat');
-                      } else if (selectedCourse === 'iit-jee') {
-                        navigate('/course/iit-jee');
-                      } else if (selectedCourse === 'neet') {
-                        navigate('/course/neet');
-                      } else {
-                        navigate('/ap-physics');
-                      }
+                      navigate('/dashboard');
                     }}
                     className="w-full px-3 py-2 bg-gradient-to-r from-green-500 to-emerald-500 text-white text-sm font-semibold rounded-lg hover:from-green-600 hover:to-emerald-600 transition-colors shadow-md"
                   >

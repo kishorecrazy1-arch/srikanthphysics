@@ -12,7 +12,7 @@ export function Layout({ children }: { children: React.ReactNode }) {
   };
 
   const navItems = [
-    { to: '/ap-physics', icon: LayoutDashboard, label: 'Dashboard' },
+    { to: '/dashboard', icon: LayoutDashboard, label: 'Dashboard' },
     { to: '/quiz', icon: BookOpen, label: 'Quiz' },
     { to: '/progress', icon: TrendingUp, label: 'Progress' },
     { to: '/analytics', icon: BarChart3, label: 'Analytics' },

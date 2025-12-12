@@ -171,7 +171,7 @@ export default function IGCSECourse() {
               </div>
               <div className="flex items-center gap-2 px-6 py-3 bg-gradient-to-r from-amber-500/20 to-orange-500/20 rounded-xl border border-amber-500/30">
                 <Star className="w-5 h-5 text-amber-400" />
-                <span className="text-amber-300">Trusted by 2,500+ Students</span>
+                <span className="text-amber-300">Trusted by Top Performing students</span>
               </div>
               <div className="flex items-center gap-2 px-6 py-3 bg-gradient-to-r from-purple-500/20 to-pink-500/20 rounded-xl border border-purple-500/30">
                 <Users className="w-5 h-5 text-purple-400" />

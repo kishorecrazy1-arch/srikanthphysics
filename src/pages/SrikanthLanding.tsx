@@ -59,7 +59,7 @@ export function SrikanthLanding() {
               <div className="inline-block mb-6">
                 <div className="flex items-center gap-3 bg-blue-600 px-6 py-3 rounded-xl text-white font-semibold shadow-lg">
                   <Star className="w-5 h-5 fill-yellow-400 text-yellow-400" />
-                  <span className="text-base">Trusted by 2,500+ Students</span>
+                  <span className="text-base">Trusted by Top Performing students</span>
                 </div>
               </div>
 
@@ -73,7 +73,7 @@ export function SrikanthLanding() {
                 AI-powered daily practice for IIT JEE, NEET, and AP Physics students
               </p>
               <p className="text-lg text-blue-200 mb-8">
-                Join 2,500+ students who achieved top ranks with Srikanth's Academy
+                Join students who achieved top ranks with Srikanth's Academy
               </p>
 
               <div className="flex flex-wrap gap-4 mb-8">
@@ -110,7 +110,7 @@ export function SrikanthLanding() {
                     <Star key={i} className="w-5 h-5 fill-yellow-400 text-yellow-400" />
                   ))}
                 </div>
-                <span className="text-white font-semibold">4.9/5 from 450+ students</span>
+                <span className="text-white font-semibold">from students</span>
               </div>
             </div>
 

@@ -1,4 +1,3 @@
-import { useEffect } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { Flame, Target, Clock, CheckCircle, TrendingUp, BookOpen, ArrowRight } from 'lucide-react';
 import { useAuthStore } from '../store/authStore';
@@ -9,12 +8,16 @@ export function Dashboard() {
   const user = useAuthStore(state => state.user);
   const startQuiz = useQuizStore(state => state.startQuiz);
 
-  // Redirect to AP Physics 1 page since Dashboard is not being used
-  useEffect(() => {
-    navigate('/ap-physics', { replace: true });
-  }, [navigate]);
-
-  if (!user) return null;
+  if (!user) {
+    return (
+      <div className="min-h-screen flex items-center justify-center">
+        <div className="text-center">
+          <div className="inline-block animate-spin rounded-full h-12 w-12 border-4 border-blue-500 border-t-transparent"></div>
+          <p className="mt-4 text-gray-600">Loading...</p>
+        </div>
+      </div>
+    );
+  }
 
   const accuracy = user.totalQuestions > 0
     ? Math.round((user.correctAnswers / user.totalQuestions) * 100)
