@@ -34,13 +34,26 @@ export function Logo({ size = 'md', showText = true, className = '', textColor =
   return (
     <div className={`flex items-center gap-3 ${className}`}>
       <img 
-        src="/logo.png" 
+        src="/media/logo.png" 
         alt="Srikanth's Academy Logo" 
         className={`${sizeClasses[size]} object-contain`}
         onError={(e) => {
-          // Fallback to icon if logo not found
-          e.currentTarget.style.display = 'none';
-          const fallback = e.currentTarget.nextElementSibling as HTMLElement;
+          // Try alternative logo paths
+          const img = e.currentTarget;
+          const alternatives = ['/media/logo.jpg', '/media/logo.webp', '/logo.png', '/logo.jpg'];
+          let currentIndex = alternatives.indexOf(img.src.split('/').pop() || '');
+          
+          if (currentIndex === -1 || currentIndex < alternatives.length - 1) {
+            const nextIndex = currentIndex === -1 ? 0 : currentIndex + 1;
+            if (nextIndex < alternatives.length) {
+              img.src = alternatives[nextIndex];
+              return;
+            }
+          }
+          
+          // All alternatives failed, show fallback icon
+          img.style.display = 'none';
+          const fallback = img.nextElementSibling as HTMLElement;
           if (fallback) fallback.style.display = 'flex';
         }}
       />

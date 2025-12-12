@@ -59,7 +59,7 @@ export function SrikanthLanding() {
               <div className="inline-block mb-6">
                 <div className="flex items-center gap-3 bg-blue-600 px-6 py-3 rounded-xl text-white font-semibold shadow-lg">
                   <Star className="w-5 h-5 fill-yellow-400 text-yellow-400" />
-                  <span className="text-base">Trusted by Top Performing students</span>
+                  <span className="text-base">Trusted by Students Worldwide</span>
                 </div>
               </div>
 
@@ -299,9 +299,9 @@ export function SrikanthLanding() {
 
           <div className="grid md:grid-cols-4 gap-8 mb-12">
             {[
-              { icon: Users, number: '2.5K+', label: 'Students Trained', color: 'from-blue-400 to-cyan-400' },
+              { icon: Users, number: '80K+', label: 'Students Trained', color: 'from-blue-400 to-cyan-400' },
               { icon: Award, number: '98.17%', label: 'Top Score IIT JEE', color: 'from-green-400 to-emerald-400' },
-              { icon: Medal, number: '85+', label: 'Top 100 Ranks', color: 'from-yellow-400 to-orange-400' },
+              { icon: Medal, number: 'Numerous', label: 'First 100 Ranks', color: 'from-yellow-400 to-orange-400' },
               { icon: Star, number: '4.9/5', label: 'Rating (450 Reviews)', color: 'from-purple-400 to-pink-400' }
             ].map((stat, idx) => (
               <div key={idx} className="bg-white bg-opacity-10 backdrop-blur-lg rounded-2xl p-8 text-center border border-white border-opacity-20">
@@ -362,18 +362,52 @@ export function SrikanthLanding() {
         <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
           <div className="grid lg:grid-cols-2 gap-12 items-center">
             <div>
-              <div className="w-full h-96 bg-gradient-to-br from-blue-600 to-cyan-500 rounded-3xl flex items-center justify-center">
-                <div className="text-center text-white">
-                  <Users className="w-32 h-32 mx-auto mb-4 opacity-50" />
-                  <p className="text-xl">Srikanth Sir Photo</p>
-                  <p className="text-sm opacity-75">(Insert professional photo)</p>
-                </div>
+              <div className="w-full h-96 rounded-3xl overflow-hidden shadow-2xl bg-gradient-to-br from-blue-600 to-cyan-500">
+                <img 
+                  src="/media/srikanth-sir.jpg" 
+                  alt="Srikanth Padavala - Physics Mentor"
+                  className="w-full h-full object-cover"
+                  onError={(e) => {
+                    // Try alternative image paths
+                    const img = e.currentTarget;
+                    const alternatives = [
+                      '/media/srikanth-sir.png', 
+                      '/media/srikanth-sir.webp', 
+                      '/media/srikanth.jpg', 
+                      '/media/srikanth.png',
+                      '/srikanth-sir.jpg',
+                      '/srikanth-sir.png'
+                    ];
+                    let currentIndex = alternatives.indexOf(img.src);
+                    
+                    if (currentIndex < alternatives.length - 1) {
+                      img.src = alternatives[currentIndex + 1];
+                    } else {
+                      // All alternatives failed, show placeholder
+                      img.style.display = 'none';
+                      const parent = img.parentElement;
+                      if (parent) {
+                        parent.innerHTML = `
+                          <div class="w-full h-full flex items-center justify-center">
+                            <div class="text-center text-white">
+                              <svg class="w-32 h-32 mx-auto mb-4 opacity-50" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M16 7a4 4 0 11-8 0 4 4 0 018 0zM12 14a7 7 0 00-7 7h14a7 7 0 00-7-7z"></path>
+                              </svg>
+                              <p class="text-xl">Srikanth Sir Photo</p>
+                              <p class="text-sm opacity-75">(Please add image to public/media folder)</p>
+                            </div>
+                          </div>
+                        `;
+                      }
+                    }
+                  }}
+                />
               </div>
             </div>
             <div className="text-white">
               <h2 className="text-4xl font-bold mb-4">Meet Your Physics Mentor</h2>
               <h3 className="text-3xl font-bold text-yellow-400 mb-2">Srikanth Padavala</h3>
-              <p className="text-xl text-blue-200 mb-6">M.Tech in Physics | 13+ Years Experience</p>
+              <p className="text-xl text-blue-200 mb-6">M.Tech | 13+ Years Experience</p>
 
               <div className="mb-6">
                 <h4 className="text-xl font-bold mb-3">Former Faculty at:</h4>
@@ -394,11 +428,11 @@ export function SrikanthLanding() {
                 <ul className="space-y-2 text-lg">
                   <li className="flex items-center gap-2">
                     <Trophy className="w-5 h-5 text-yellow-400" />
-                    Trained 2,500+ students across India
+                    Trained 80000+ students globally
                   </li>
                   <li className="flex items-center gap-2">
                     <Trophy className="w-5 h-5 text-yellow-400" />
-                    85+ students in Top 100 ranks
+                    Numerous in the first 100 ranks
                   </li>
                   <li className="flex items-center gap-2">
                     <Trophy className="w-5 h-5 text-yellow-400" />
@@ -406,7 +440,7 @@ export function SrikanthLanding() {
                   </li>
                   <li className="flex items-center gap-2">
                     <Trophy className="w-5 h-5 text-yellow-400" />
-                    Expert in IIT JEE, NEET, AP Physics
+                    Top students are placed in top institutions worldwide
                   </li>
                 </ul>
               </div>
@@ -420,9 +454,6 @@ export function SrikanthLanding() {
                 </p>
               </div>
 
-              <button className="px-8 py-4 bg-white text-blue-900 rounded-xl font-bold text-lg hover:bg-blue-50 transition-all shadow-xl flex items-center gap-2">
-                Schedule a Free Consultation <ArrowRight className="w-5 h-5" />
-              </button>
             </div>
           </div>
         </div>
@@ -486,7 +517,7 @@ export function SrikanthLanding() {
             Ready to Transform Your Physics Scores?
           </h2>
           <p className="text-2xl text-blue-100 mb-8">
-            Join 2,500+ students achieving their dream ranks<br/>
+            Join 80,000+ students achieving their dream ranks globally<br/>
             Start your free 7-day trial today
           </p>
           <div className="flex flex-wrap justify-center gap-4 mb-6">
