@@ -1,14 +1,11 @@
 import { useEffect, useState } from 'react';
 import { useNavigate } from 'react-router-dom';
-import { CheckCircle, Download, Calendar, ArrowLeft, Play } from 'lucide-react';
+import { CheckCircle, Download, ArrowLeft, Play } from 'lucide-react';
 import { CourseNavigation } from '../components/CourseNavigation';
-import { CalendlyEmbed } from '../components/CalendlyEmbed';
 
 export function DemoSuccess() {
   const navigate = useNavigate();
   const [leadData, setLeadData] = useState<{ name: string; email: string } | null>(null);
-  const calendlyUrl = import.meta.env.VITE_CALENDLY_URL;
-  const showCalendly = !!calendlyUrl;
 
   useEffect(() => {
     // Get lead data from sessionStorage
@@ -91,22 +88,6 @@ export function DemoSuccess() {
             </p>
           </button>
         </div>
-
-        {/* Calendly Embed */}
-        {showCalendly && (
-          <div className="bg-white rounded-2xl shadow-xl p-8 mb-8">
-            <div className="flex items-center gap-3 mb-6">
-              <div className="w-12 h-12 bg-gradient-to-r from-green-600 to-emerald-500 rounded-xl flex items-center justify-center">
-                <Calendar className="w-6 h-6 text-white" />
-              </div>
-              <div>
-                <h2 className="text-2xl font-bold text-gray-900">Book Your Slot Now</h2>
-                <p className="text-gray-600">Choose a convenient time for your demo</p>
-              </div>
-            </div>
-            <CalendlyEmbed url={calendlyUrl} />
-          </div>
-        )}
 
         {/* Next Steps */}
         <div className="bg-gradient-to-r from-blue-600 to-purple-600 rounded-2xl shadow-xl p-8 text-white mb-8">
