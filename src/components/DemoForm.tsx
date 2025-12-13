@@ -89,10 +89,10 @@ export function DemoForm({ showCalendly = false }: DemoFormProps) {
   };
 
   return (
-    <form onSubmit={handleSubmit} className="space-y-6">
+    <form onSubmit={handleSubmit} className="space-y-4">
       {/* Name */}
       <div>
-        <label className="block text-sm font-semibold text-gray-700 mb-2">
+        <label className="block text-sm font-semibold text-gray-700 mb-1.5">
           <User className="inline w-4 h-4 mr-1" />
           Full Name <span className="text-red-500">*</span>
         </label>
@@ -116,7 +116,7 @@ export function DemoForm({ showCalendly = false }: DemoFormProps) {
 
       {/* Email */}
       <div>
-        <label className="block text-sm font-semibold text-gray-700 mb-2">
+        <label className="block text-sm font-semibold text-gray-700 mb-1.5">
           <Mail className="inline w-4 h-4 mr-1" />
           Email Address <span className="text-red-500">*</span>
         </label>
@@ -140,7 +140,7 @@ export function DemoForm({ showCalendly = false }: DemoFormProps) {
 
       {/* Phone */}
       <div>
-        <label className="block text-sm font-semibold text-gray-700 mb-2">
+        <label className="block text-sm font-semibold text-gray-700 mb-1.5">
           <Phone className="inline w-4 h-4 mr-1" />
           Phone Number (Optional)
         </label>
@@ -157,7 +157,7 @@ export function DemoForm({ showCalendly = false }: DemoFormProps) {
       {/* Grade and Board Row */}
       <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
         <div>
-          <label className="block text-sm font-semibold text-gray-700 mb-2">
+          <label className="block text-sm font-semibold text-gray-700 mb-1.5">
             <GraduationCap className="inline w-4 h-4 mr-1" />
             Grade (Optional)
           </label>
@@ -168,6 +168,9 @@ export function DemoForm({ showCalendly = false }: DemoFormProps) {
             disabled={isSubmitting}
           >
             <option value="">Select grade</option>
+            <option value="7">7th</option>
+            <option value="8">8th</option>
+            <option value="9">9th</option>
             <option value="10">10th</option>
             <option value="11">11th</option>
             <option value="12">12th</option>
@@ -176,9 +179,9 @@ export function DemoForm({ showCalendly = false }: DemoFormProps) {
         </div>
 
         <div>
-          <label className="block text-sm font-semibold text-gray-700 mb-2">
+          <label className="block text-sm font-semibold text-gray-700 mb-1.5">
             <GraduationCap className="inline w-4 h-4 mr-1" />
-            Board/Curriculum (Optional)
+            Subject/Board (Optional)
           </label>
           <select
             value={formData.board || ''}
@@ -186,13 +189,24 @@ export function DemoForm({ showCalendly = false }: DemoFormProps) {
             className="w-full px-4 py-3 border-2 border-gray-300 rounded-xl focus:ring-2 focus:ring-blue-500 focus:border-blue-500 transition-colors"
             disabled={isSubmitting}
           >
-            <option value="">Select board</option>
-            <option value="CBSE">CBSE</option>
-            <option value="ICSE">ICSE</option>
-            <option value="AP">AP</option>
-            <option value="IB">IB</option>
-            <option value="IGCSE">IGCSE</option>
-            <option value="Other">Other</option>
+            <option value="">Select subject/board</option>
+            <optgroup label="Subjects">
+              <option value="Physics">Physics</option>
+              <option value="Chemistry">Chemistry</option>
+              <option value="Mathematics">Mathematics</option>
+              <option value="Biology">Biology</option>
+              <option value="Computer Science">Computer Science</option>
+              <option value="All Subjects">All Subjects</option>
+            </optgroup>
+            <optgroup label="Boards/Curriculum">
+              <option value="CBSE">CBSE</option>
+              <option value="ICSE">ICSE</option>
+              <option value="AP">AP (Advanced Placement)</option>
+              <option value="IB">IB (International Baccalaureate)</option>
+              <option value="IGCSE">IGCSE</option>
+              <option value="State Board">State Board</option>
+              <option value="Other">Other</option>
+            </optgroup>
           </select>
         </div>
       </div>
@@ -200,7 +214,7 @@ export function DemoForm({ showCalendly = false }: DemoFormProps) {
       {/* City and Country Row */}
       <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
         <div>
-          <label className="block text-sm font-semibold text-gray-700 mb-2">
+          <label className="block text-sm font-semibold text-gray-700 mb-1.5">
             <MapPin className="inline w-4 h-4 mr-1" />
             City (Optional)
           </label>
@@ -215,7 +229,7 @@ export function DemoForm({ showCalendly = false }: DemoFormProps) {
         </div>
 
         <div>
-          <label className="block text-sm font-semibold text-gray-700 mb-2">
+          <label className="block text-sm font-semibold text-gray-700 mb-1.5">
             <Globe className="inline w-4 h-4 mr-1" />
             Country (Optional)
           </label>
