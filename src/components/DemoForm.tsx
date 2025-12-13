@@ -142,16 +142,24 @@ export function DemoForm({ showCalendly = false }: DemoFormProps) {
       <div>
         <label className="block text-sm font-semibold text-gray-700 mb-1">
           <Phone className="inline w-4 h-4 mr-1" />
-          Phone Number (Optional)
+          Phone Number <span className="text-red-500">*</span>
         </label>
         <input
           type="tel"
           value={formData.phone || ''}
           onChange={(e) => handleChange('phone', e.target.value)}
-          className="w-full px-4 py-3 border-2 border-gray-300 rounded-xl focus:ring-2 focus:ring-blue-500 focus:border-blue-500 transition-colors"
+          className={`w-full px-4 py-3 border-2 rounded-xl focus:ring-2 focus:ring-blue-500 focus:border-blue-500 transition-colors ${
+            errors.phone ? 'border-red-500' : 'border-gray-300'
+          }`}
           placeholder="+1 234 567 8900"
           disabled={isSubmitting}
         />
+        {errors.phone && (
+          <p className="mt-1 text-sm text-red-600 flex items-center gap-1">
+            <AlertCircle className="w-4 h-4" />
+            {errors.phone}
+          </p>
+        )}
       </div>
 
       {/* Grade and Board Row */}
