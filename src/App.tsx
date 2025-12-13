@@ -24,15 +24,16 @@ import IGCSECourse from './pages/IGCSECourse';
 import SATPhysics from './pages/SATPhysics';
 import IITJEEPhysics from './pages/IITJEEPhysics';
 import NEETPhysics from './pages/NEETPhysics';
+import { APPhysicsMechanics } from './pages/APPhysicsMechanics';
+import { APPhysicsEM } from './pages/APPhysicsEM';
+import { APPhysics2 } from './pages/APPhysics2';
 import { AdminGeneratePracticeBank } from './pages/AdminGeneratePracticeBank';
 import { Demo } from './pages/Demo';
 import { DemoSuccess } from './pages/DemoSuccess';
-import { EnableTestMode } from './pages/EnableTestMode';
-import { Payment } from './pages/Payment';
 import { PaymentSuccess } from './pages/PaymentSuccess';
+import { ApproveSubscription } from './pages/ApproveSubscription';
 import { Layout } from './components/Layout';
 import { ProtectedRoute } from './components/ProtectedRoute';
-import { AuthenticatedRoute } from './components/AuthenticatedRoute';
 import { Chatbot } from './components/Chatbot';
 
 function App() {
@@ -44,6 +45,9 @@ function App() {
         <Route path="/" element={<SrikanthLanding />} />
         <Route path="/old-landing" element={<Landing />} />
         <Route path="/course/:courseId" element={<CourseDetails />} />
+        <Route path="/course/ap-physics-2" element={<APPhysics2 />} />
+        <Route path="/course/ap-physics-mechanics" element={<APPhysicsMechanics />} />
+        <Route path="/course/ap-physics-em" element={<APPhysicsEM />} />
         <Route path="/course/igcse" element={<IGCSECourse />} />
         <Route path="/course/sat" element={<SATPhysics />} />
         <Route path="/course/iit-jee" element={<IITJEEPhysics />} />
@@ -53,15 +57,7 @@ function App() {
         <Route path="/reset-password" element={<ResetPassword />} />
         <Route path="/demo" element={<Demo />} />
         <Route path="/demo/success" element={<DemoSuccess />} />
-        <Route path="/test-mode" element={<EnableTestMode />} />
-        <Route
-          path="/payment"
-          element={
-            <AuthenticatedRoute>
-              <Payment />
-            </AuthenticatedRoute>
-          }
-        />
+        <Route path="/approve-subscription" element={<ApproveSubscription />} />
         <Route
           path="/payment/success"
           element={

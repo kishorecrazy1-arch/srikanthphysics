@@ -120,23 +120,23 @@ export function Chatbot() {
                 {mode === 'customer-support' ? (
                   <CustomerSupportChat />
                 ) : (
-                  <div className="flex-1 overflow-y-auto p-4">
-                    <div className="mb-4">
-                      <div className="bg-slate-700/50 rounded-lg p-3 mb-3">
-                        <p className="text-slate-300 text-xs mb-2">
-                          <strong className="text-cyan-400">Ask me anything</strong> about physics!
-                        </p>
-                        <p className="text-slate-400 text-xs">
-                          I can help with explanations, formulas, problem-solving, and more.
-                        </p>
-                      </div>
-                      
-                      {/* Chat Input Component */}
-                      <StudentQuestionInput 
-                        topicName={topicName} 
-                        subtopicName={subtopicName}
-                      />
-                    </div>
+              <div className="flex-1 overflow-y-auto p-4">
+                <div className="mb-4">
+                  <div className="bg-slate-700/50 rounded-lg p-3 mb-3">
+                    <p className="text-slate-300 text-xs mb-2">
+                      <strong className="text-cyan-400">Ask me anything</strong> about physics!
+                    </p>
+                    <p className="text-slate-400 text-xs">
+                      I can help with explanations, formulas, problem-solving, and more.
+                    </p>
+                  </div>
+                  
+                  {/* Chat Input Component */}
+                  <StudentQuestionInput 
+                    topicName={topicName} 
+                    subtopicName={subtopicName}
+                  />
+                </div>
                   </div>
                 )}
               </div>

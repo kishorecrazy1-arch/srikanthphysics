@@ -16,6 +16,9 @@ export function CourseNavigation() {
 
   const courses = [
     { id: 'ap-physics', label: 'AP Physics', icon: '⚡' },
+    { id: 'ap-physics-2', label: 'AP Physics 2', icon: '🔬' },
+    { id: 'ap-physics-mechanics', label: 'AP Physics C: Mechanics', icon: '📐' },
+    { id: 'ap-physics-em', label: 'AP Physics C: E&M', icon: '⚡' },
     { id: 'ib-physics', label: 'IB Physics', icon: '🌍' },
     { id: 'aqa-physics', label: 'AQA Physics', icon: '📚' },
     { id: 'igcse', label: 'IGCSE', icon: '🎓' },

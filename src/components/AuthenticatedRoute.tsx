@@ -7,7 +7,7 @@ import { useAuthStore } from '../store/authStore';
  * Use this for pages like /payment where free users should have access
  */
 export function AuthenticatedRoute({ children }: { children: React.ReactNode }) {
-  const { user, loading, testMode } = useAuthStore();
+  const { user, loading } = useAuthStore();
 
   if (loading) {
     return (
@@ -18,11 +18,6 @@ export function AuthenticatedRoute({ children }: { children: React.ReactNode }) 
         </div>
       </div>
     );
-  }
-
-  // Allow access in test mode
-  if (testMode) {
-    return <>{children}</>;
   }
 
   // Redirect to login if not authenticated

@@ -1,6 +1,6 @@
 import { useEffect } from 'react';
 import { useNavigate, useLocation } from 'react-router-dom';
-import { CheckCircle, ArrowRight, Download } from 'lucide-react';
+import { CheckCircle, ArrowRight, Download, ArrowLeft } from 'lucide-react';
 import { CourseNavigation } from '../components/CourseNavigation';
 import { useAuthStore } from '../store/authStore';
 
@@ -19,7 +19,7 @@ export function PaymentSuccess() {
   useEffect(() => {
     // Redirect if no payment data
     if (!paymentData) {
-      navigate('/payment');
+      navigate('/dashboard');
     }
   }, [paymentData, navigate]);
 
@@ -32,6 +32,13 @@ export function PaymentSuccess() {
       <CourseNavigation />
       
       <div className="max-w-2xl mx-auto px-4 sm:px-6 lg:px-8 py-20">
+        <button
+          onClick={() => navigate('/')}
+          className="flex items-center gap-2 text-blue-600 hover:text-blue-700 mb-6 transition-colors font-medium"
+        >
+          <ArrowLeft className="w-4 h-4" />
+          <span>Back to Home</span>
+        </button>
         <div className="bg-white rounded-2xl shadow-xl p-8 md:p-12 text-center">
           <div className="w-20 h-20 bg-green-100 rounded-full flex items-center justify-center mx-auto mb-6">
             <CheckCircle className="w-12 h-12 text-green-600" />

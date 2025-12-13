@@ -1,21 +1,33 @@
 import { DemoForm } from '../components/DemoForm';
 import { CalendlyEmbed } from '../components/CalendlyEmbed';
 import { CourseNavigation } from '../components/CourseNavigation';
-import { BookOpen, CheckCircle } from 'lucide-react';
+import { BookOpen, CheckCircle, ArrowLeft } from 'lucide-react';
+import { useNavigate } from 'react-router-dom';
+import { useAuthStore } from '../store/authStore';
 
 export function Demo() {
   const calendlyUrl = import.meta.env.VITE_CALENDLY_URL;
   const showCalendly = !!calendlyUrl;
+  const navigate = useNavigate();
+  const { user } = useAuthStore();
 
   return (
     <div className="min-h-screen bg-gradient-to-br from-blue-50 via-white to-cyan-50">
       <CourseNavigation />
 
       <div className="max-w-6xl mx-auto px-4 sm:px-6 lg:px-8 py-12">
+        {/* Back to Dashboard Button */}
+        <button
+          onClick={() => navigate('/')}
+          className="flex items-center gap-2 text-blue-600 hover:text-blue-700 mb-6 transition-colors font-medium"
+        >
+          <ArrowLeft className="w-4 h-4" />
+          <span>Back to Home</span>
+        </button>
         {/* Header */}
         <div className="text-center mb-12">
           <h1 className="text-4xl md:text-5xl font-bold text-gray-900 mb-4">
-            Book Your Free AP Physics Demo
+            Book Your Free Demo
           </h1>
           <p className="text-xl text-gray-600 max-w-2xl mx-auto">
             Experience our AI-powered learning platform and see how we can help you score a perfect 5
@@ -87,7 +99,7 @@ export function Demo() {
                   },
                   {
                     title: 'Proven Results',
-                    desc: '95% success rate achieving 3+ scores',
+                    desc: '98% success rate',
                   },
                   {
                     title: 'College Credit',

@@ -4,7 +4,10 @@ import { PaymentRequired } from '../pages/PaymentRequired';
 import { EmailConfirmationRequired } from '../pages/EmailConfirmationRequired';
 
 export function ProtectedRoute({ children }: { children: React.ReactNode }) {
-  const { user, loading, testMode, emailVerified } = useAuthStore();
+  const { user, loading, emailVerified } = useAuthStore();
+
+  // Check for test mode - bypasses all subscription checks
+  const testMode = typeof window !== 'undefined' && localStorage.getItem('testMode') === 'true';
 
   if (loading) {
     return (
@@ -17,14 +20,14 @@ export function ProtectedRoute({ children }: { children: React.ReactNode }) {
     );
   }
 
-  // Allow access in test mode
-  if (testMode) {
-    return <>{children}</>;
-  }
-
   // Redirect to login if not authenticated
   if (!user) {
     return <Navigate to="/login" replace />;
+  }
+
+  // Test mode: Skip all checks and grant full access
+  if (testMode) {
+    return <>{children}</>;
   }
 
   // Check email confirmation first - if not verified, show email confirmation page

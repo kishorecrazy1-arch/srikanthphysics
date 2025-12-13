@@ -1,6 +1,6 @@
 import { useState, useEffect } from 'react';
 import { Link, useNavigate, useLocation } from 'react-router-dom';
-import { BookOpen, Mail, Lock, TestTube } from 'lucide-react';
+import { BookOpen, Mail, Lock, ArrowLeft } from 'lucide-react';
 import { useAuthStore } from '../store/authStore';
 import { supabase } from '../lib/supabase';
 
@@ -13,12 +13,9 @@ export function Login() {
   const [showForgotPassword, setShowForgotPassword] = useState(false);
   const [resetEmail, setResetEmail] = useState('');
   const [resetMessage, setResetMessage] = useState('');
-  const [showTestMode, setShowTestMode] = useState(false);
   const navigate = useNavigate();
   const location = useLocation();
   const signIn = useAuthStore(state => state.signIn);
-  const enableTestMode = useAuthStore(state => state.enableTestMode);
-  const testMode = useAuthStore(state => state.testMode);
 
   useEffect(() => {
     // Check for success message from signup
@@ -48,17 +45,14 @@ export function Login() {
         return;
       }
       
-      // Email is confirmed - navigate to dashboard with selected course
-      const selectedCourse = localStorage.getItem('selectedCourse') || 'ap-physics';
-      
-      // Navigate to dashboard first, then user can access their selected course
+      // Email is confirmed - navigate to dashboard
       navigate('/dashboard');
     } catch (err: any) {
       // Check if error is due to email not confirmed
       if (err.message?.includes('email') && (err.message?.includes('confirm') || err.message?.includes('verified'))) {
         setError('Please confirm your email address (srikanthsacademyforphysics@gmail.com) before signing in. Check your inbox for the confirmation email.');
       } else {
-        setError(err.message || 'Failed to sign in');
+      setError(err.message || 'Failed to sign in');
       }
     } finally {
       setLoading(false);
@@ -71,13 +65,13 @@ export function Login() {
       const { error } = await supabase.auth.signInWithOAuth({
         provider: 'google',
         options: {
-          redirectTo: `${window.location.origin}/ap-physics`,
+          redirectTo: `${window.location.origin}/dashboard`,
         },
       });
       if (error) throw error;
     } catch (err: any) {
       if (err.message?.includes('provider is not enabled') || err.error_code === 'validation_failed') {
-        setError('Google sign-in is not enabled. Please use email sign-in or contact support.');
+        setError('Google sign-in is not enabled in Supabase. Please enable it in Supabase Dashboard → Authentication → Providers → Google. For detailed instructions, see QUICK_FIX_GOOGLE_SIGNIN.md. You can also use email sign-in instead.');
       } else {
       setError(err.message || 'Failed to sign in with Google');
       }
@@ -194,6 +188,14 @@ export function Login() {
   return (
     <div className="min-h-screen bg-gradient-to-br from-blue-900 via-blue-800 to-cyan-900 flex items-center justify-center p-4">
       <div className="absolute inset-0 bg-[url('data:image/svg+xml;base64,PHN2ZyB3aWR0aD0iNjAiIGhlaWdodD0iNjAiIHZpZXdCb3g9IjAgMCA2MCA2MCIgeG1sbnM9Imh0dHA6Ly93d3cudzMub3JnLzIwMDAvc3ZnIj48ZyBmaWxsPSJub25lIiBmaWxsLXJ1bGU9ImV2ZW5vZGQiPjxnIGZpbGw9IiNmZmZmZmYiIGZpbGwtb3BhY2l0eT0iMC4wNSI+PHBhdGggZD0iTTM2IDE2YzAtNi42MjctNS4zNzMtMTItMTItMTJzLTEyIDUuMzczLTEyIDEyIDUuMzczIDEyIDEyIDEyIDEyLTUuMzczIDEyLTEyeiIvPjwvZz48L2c+PC9zdmc+')] opacity-20"></div>
+
+      <button
+        onClick={() => navigate('/')}
+        className="absolute top-4 left-4 z-20 flex items-center gap-2 text-white hover:text-blue-200 transition-colors font-medium"
+      >
+        <ArrowLeft className="w-4 h-4" />
+        <span>Back to Home</span>
+      </button>
 
       <div className="max-w-6xl w-full relative z-10 grid lg:grid-cols-2 gap-8 items-center">
         <div className="hidden lg:block text-white space-y-6">
@@ -357,97 +359,6 @@ export function Login() {
               Create Account
             </Link>
           </p>
-
-          {/* Test Mode Helper */}
-          <div className="mt-6 pt-6 border-t border-gray-200">
-            {testMode && (
-              <div className="mb-4 p-3 bg-green-50 border border-green-300 rounded-lg">
-                <div className="flex items-center justify-between">
-                  <div className="flex items-center gap-2">
-                    <TestTube className="w-4 h-4 text-green-600" />
-                    <span className="text-xs font-semibold text-green-800">Test Mode Active</span>
-                  </div>
-                  <button
-                    onClick={() => {
-                      useAuthStore.getState().disableTestMode();
-                      window.location.reload();
-                    }}
-                    className="text-xs text-green-700 hover:text-green-900 underline"
-                  >
-                    Disable
-                  </button>
-                </div>
-                <p className="text-xs text-green-700 mt-1">You can access all features without logging in.</p>
-              </div>
-            )}
-            <button
-              onClick={() => setShowTestMode(!showTestMode)}
-              className="w-full text-center text-xs text-gray-500 hover:text-gray-700 font-medium"
-            >
-              {showTestMode ? '▼ Hide' : '▶ Show'} Test Mode / Forgot Password Helper
-            </button>
-            {showTestMode && (
-              <div className="mt-4 p-4 bg-yellow-50 border border-yellow-200 rounded-lg space-y-3">
-                <div className="pb-3 border-b border-yellow-200">
-                  <div className="text-xs font-semibold text-yellow-800 mb-2 flex items-center gap-1">
-                    <TestTube className="w-3 h-3" />
-                    Test Access (No Login Required):
-                  </div>
-                  <button
-                    onClick={() => {
-                      enableTestMode();
-                      navigate('/dashboard');
-                    }}
-                    className="w-full px-3 py-2 bg-gradient-to-r from-green-500 to-emerald-500 text-white text-sm font-semibold rounded-lg hover:from-green-600 hover:to-emerald-600 transition-colors shadow-md"
-                  >
-                    🚀 Enter Test Mode (Bypass Login)
-                  </button>
-                  <p className="text-xs text-gray-600 mt-2">
-                    Access all features with a test account. No authentication required!
-                  </p>
-                </div>
-                
-                <div className="text-xs font-semibold text-yellow-800 mb-2">🧪 Test Credentials:</div>
-                <div className="text-xs text-gray-700 space-y-1">
-                  <div><strong>Email:</strong> test@example.com</div>
-                  <div><strong>Password:</strong> test123</div>
-                </div>
-                <button
-                  onClick={() => {
-                    setEmail('test@example.com');
-                    setPassword('test123');
-                  }}
-                  className="w-full mt-2 px-3 py-2 bg-yellow-100 text-yellow-800 text-xs font-semibold rounded-lg hover:bg-yellow-200 transition-colors"
-                >
-                  Fill Test Credentials
-                </button>
-                <div className="pt-3 border-t border-yellow-200">
-                  <div className="text-xs font-semibold text-yellow-800 mb-2">🔑 Test Forgot Password:</div>
-                  <div className="text-xs text-gray-700 mb-2">
-                    1. Click "Forgot password?" above
-                  </div>
-                  <div className="text-xs text-gray-700 mb-2">
-                    2. Enter any email (e.g., test@example.com)
-                  </div>
-                  <div className="text-xs text-gray-700 mb-2">
-                    3. Check your email for reset link
-                  </div>
-                  <div className="text-xs text-gray-700 mb-2">
-                    4. Or use this direct link: <Link to="/reset-password" className="text-blue-600 underline">/reset-password</Link>
-                  </div>
-                  <button
-                    onClick={() => {
-                      setShowForgotPassword(true);
-                      setResetEmail('test@example.com');
-                    }}
-                    className="w-full mt-2 px-3 py-2 bg-blue-100 text-blue-800 text-xs font-semibold rounded-lg hover:bg-blue-200 transition-colors"
-                  >
-                    Open Forgot Password with Test Email
-                  </button>
-                </div>
-              </div>
-            )}
-          </div>
         </div>
       </div>
     </div>

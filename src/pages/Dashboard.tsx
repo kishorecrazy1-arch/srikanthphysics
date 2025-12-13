@@ -154,6 +154,25 @@ export function Dashboard() {
 
         <div className="grid md:grid-cols-2 gap-6 mb-6">
           <div
+            onClick={() => navigate('/ap-physics')}
+            className="bg-gradient-to-br from-blue-600 to-cyan-500 rounded-2xl shadow-xl p-8 text-white cursor-pointer hover:shadow-2xl hover:scale-[1.02] transition-all"
+          >
+            <div className="flex items-start justify-between mb-4">
+              <div className="flex items-center gap-4">
+                <div className="w-16 h-16 bg-white bg-opacity-20 backdrop-blur-sm rounded-2xl flex items-center justify-center">
+                  <BookOpen className="w-8 h-8 text-white" />
+                </div>
+                <div>
+                  <h3 className="text-3xl font-bold mb-1">AP Physics 1</h3>
+                  <p className="text-blue-100 text-lg">College Board Advanced Placement</p>
+                </div>
+              </div>
+              <ArrowRight className="w-6 h-6 flex-shrink-0" />
+            </div>
+            <p className="text-blue-100">Master algebra-based mechanics & waves for college credit</p>
+          </div>
+
+          <div
             onClick={() => navigate('/course/igcse')}
             className="bg-gradient-to-br from-purple-600 to-pink-500 rounded-2xl shadow-xl p-8 text-white cursor-pointer hover:shadow-2xl hover:scale-[1.02] transition-all"
           >
@@ -170,25 +189,6 @@ export function Dashboard() {
               <ArrowRight className="w-6 h-6 flex-shrink-0" />
             </div>
             <p className="text-purple-100">Global-standard Physics mastered with clarity & intuition</p>
-          </div>
-
-          <div
-            onClick={() => navigate('/course/sat')}
-            className="bg-gradient-to-br from-teal-600 to-cyan-500 rounded-2xl shadow-xl p-8 text-white cursor-pointer hover:shadow-2xl hover:scale-[1.02] transition-all"
-          >
-            <div className="flex items-start justify-between mb-4">
-              <div className="flex items-center gap-4">
-                <div className="w-16 h-16 bg-white bg-opacity-20 backdrop-blur-sm rounded-2xl flex items-center justify-center">
-                  <BookOpen className="w-8 h-8 text-white" />
-                </div>
-                <div>
-                  <h3 className="text-3xl font-bold mb-1">SAT Physics</h3>
-                  <p className="text-teal-100 text-lg">College Board Subject Test</p>
-                </div>
-              </div>
-              <ArrowRight className="w-6 h-6 flex-shrink-0" />
-            </div>
-            <p className="text-teal-100">Master conceptual physics reasoning for college admissions</p>
           </div>
         </div>
       </div>

@@ -1,5 +1,5 @@
 import { useNavigate } from 'react-router-dom';
-import { Mail, CheckCircle, AlertCircle, ArrowRight } from 'lucide-react';
+import { Mail, CheckCircle, AlertCircle, ArrowRight, ArrowLeft } from 'lucide-react';
 import { CourseNavigation } from '../components/CourseNavigation';
 import { useAuthStore } from '../store/authStore';
 
@@ -17,6 +17,13 @@ export function EmailConfirmationRequired() {
       <CourseNavigation />
       
       <div className="max-w-2xl mx-auto px-4 sm:px-6 lg:px-8 py-20">
+        <button
+          onClick={() => navigate('/')}
+          className="flex items-center gap-2 text-blue-600 hover:text-blue-700 mb-6 transition-colors font-medium"
+        >
+          <ArrowLeft className="w-4 h-4" />
+          <span>Back to Home</span>
+        </button>
         <div className="bg-white rounded-2xl shadow-xl p-8 md:p-12 text-center">
           <div className="w-20 h-20 bg-yellow-100 rounded-full flex items-center justify-center mx-auto mb-6">
             <Mail className="w-10 h-10 text-yellow-600" />
@@ -27,8 +34,14 @@ export function EmailConfirmationRequired() {
           </h1>
           
           <p className="text-xl text-gray-600 mb-8">
-            Please confirm your email address (srikanthsacademyforphysics@gmail.com) to access Srikanth's Academy platform.
+            To access the dashboard, you need to confirm your email address. This is required for approval to access Srikanth's Academy platform.
           </p>
+          
+          <div className="bg-yellow-50 border border-yellow-300 rounded-xl p-4 mb-6">
+            <p className="text-yellow-800 font-semibold text-center">
+              📧 Contact: srikanthsacademyforphysics@gmail.com
+            </p>
+          </div>
 
           <div className="bg-blue-50 border border-blue-200 rounded-xl p-6 mb-8 text-left">
             <h2 className="text-lg font-semibold text-gray-900 mb-3">What to do:</h2>

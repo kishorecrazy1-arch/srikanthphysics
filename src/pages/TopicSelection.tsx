@@ -33,7 +33,6 @@ export function TopicSelection() {
       
       console.log('Loading topics...');
       console.log('User:', user ? 'Authenticated' : 'Not authenticated');
-      console.log('Test mode:', useAuthStore.getState().testMode);
       
       // Check Supabase configuration
       const supabaseUrl = import.meta.env.VITE_SUPABASE_URL;

@@ -393,7 +393,7 @@ export function SrikanthLanding() {
                               <p class="text-xl">Srikanth Sir Photo</p>
                               <p class="text-sm opacity-75">(Please add image to public/media folder)</p>
                             </div>
-                          </div>
+                </div>
                         `;
                       }
                     }

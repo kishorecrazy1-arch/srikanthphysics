@@ -1,6 +1,6 @@
 import { useState, useEffect } from 'react';
 import { Link, useNavigate } from 'react-router-dom';
-import { Phone, Mail, Lock, User, GraduationCap, BookText } from 'lucide-react';
+import { Phone, Mail, Lock, User, GraduationCap, BookText, ArrowLeft } from 'lucide-react';
 import { useAuthStore } from '../store/authStore';
 import { CourseType } from '../types';
 import { supabase } from '../lib/supabase';
@@ -133,6 +133,14 @@ export function Signup() {
   return (
     <div className="min-h-screen bg-gradient-to-br from-blue-900 via-blue-800 to-cyan-900 flex items-center justify-center p-4">
       <div className="absolute inset-0 bg-[url('data:image/svg+xml;base64,PHN2ZyB3aWR0aD0iNjAiIGhlaWdodD0iNjAiIHZpZXdCb3g9IjAgMCA2MCA2MCIgeG1sbnM9Imh0dHA6Ly93d3cudzMub3JnLzIwMDAvc3ZnIj48ZyBmaWxsPSJub25lIiBmaWxsLXJ1bGU9ImV2ZW5vZGQiPjxnIGZpbGw9IiNmZmZmZmYiIGZpbGwtb3BhY2l0eT0iMC4wNSI+PHBhdGggZD0iTTM2IDE2YzAtNi42MjctNS4zNzMtMTItMTItMTJzLTEyIDUuMzczLTEyIDEyIDUuMzczIDEyIDEyIDEyIDEyLTUuMzczIDEyLTEyeiIvPjwvZz48L2c+PC9zdmc+')] opacity-20"></div>
+
+      <button
+        onClick={() => navigate('/')}
+        className="absolute top-4 left-4 z-20 flex items-center gap-2 text-white hover:text-blue-200 transition-colors font-medium"
+      >
+        <ArrowLeft className="w-4 h-4" />
+        <span>Back to Home</span>
+      </button>
 
       <div className="max-w-6xl w-full relative z-10 grid lg:grid-cols-2 gap-8 items-start">
         <div className="hidden lg:block text-white space-y-6 pt-8">
