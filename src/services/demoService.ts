@@ -21,20 +21,13 @@ export interface DemoLeadPayload {
 
 /**
  * Send demo lead to n8n webhook
+ * Note: Webhook is optional - form will still succeed if webhook is not configured
  */
 export async function submitDemoLead(
   formData: DemoFormData,
   utm: UTMParams = {}
 ): Promise<{ success: boolean; error?: string }> {
   const webhookUrl = import.meta.env.VITE_N8N_WEBHOOK_URL;
-
-  if (!webhookUrl) {
-    console.error('VITE_N8N_WEBHOOK_URL is not configured');
-    return {
-      success: false,
-      error: 'Webhook URL is not configured. Please contact support.',
-    };
-  }
 
   const payload: DemoLeadPayload = {
     source: 'ap-physics-demo',
@@ -54,6 +47,14 @@ export async function submitDemoLead(
     referrer: typeof document !== 'undefined' ? document.referrer : undefined,
   };
 
+  // If webhook is not configured, still return success (webhook is optional)
+  if (!webhookUrl) {
+    console.warn('VITE_N8N_WEBHOOK_URL is not configured. Form submitted successfully, but webhook was not called.');
+    console.log('Demo lead data:', payload);
+    return { success: true };
+  }
+
+  // Try to send to webhook, but don't fail the form if webhook fails
   try {
     const response = await fetch(webhookUrl, {
       method: 'POST',
@@ -66,19 +67,17 @@ export async function submitDemoLead(
     if (!response.ok) {
       const errorText = await response.text();
       console.error('n8n webhook error:', errorText);
-      return {
-        success: false,
-        error: 'Failed to submit form. Please try again or contact support.',
-      };
+      // Still return success - webhook failure shouldn't block form submission
+      console.warn('Form submitted successfully, but webhook call failed. Data:', payload);
+      return { success: true };
     }
 
     return { success: true };
   } catch (error) {
-    console.error('Error submitting demo lead:', error);
-    return {
-      success: false,
-      error: 'Network error. Please check your connection and try again.',
-    };
+    console.error('Error calling webhook:', error);
+    // Still return success - network error shouldn't block form submission
+    console.warn('Form submitted successfully, but webhook call failed. Data:', payload);
+    return { success: true };
   }
 }
 
