@@ -60,23 +60,46 @@ export function CustomerSupportChat() {
   };
 
   const extractName = (text: string): string | null => {
-    // Simple name extraction - look for patterns like "I'm John" or "My name is John"
+    // Remove phone numbers and email addresses first
+    let cleanText = text
+      .replace(/[\d\s\-\+\(\)]{10,}/g, '') // Remove phone numbers
+      .replace(/[a-zA-Z0-9._%+-]+@[a-zA-Z0-9.-]+\.[a-zA-Z]{2,}/g, '') // Remove emails
+      .replace(/\s+/g, ' ')
+      .trim();
+    
+    // Look for patterns like "I'm John" or "My name is John"
     const patterns = [
-      /(?:my name is|i'm|i am|name is|call me)\s+([a-z]+(?:\s+[a-z]+)?)/i,
-      /^([A-Z][a-z]+(?:\s+[A-Z][a-z]+)?)$/,
+      /(?:my name is|i'm|i am|name is|call me|this is)\s+([a-z]+(?:\s+[a-z]+)?)/i,
+      /^([A-Z][a-z]+(?:\s+[A-Z][a-z]+)?)/,
     ];
     
     for (const pattern of patterns) {
-      const match = text.match(pattern);
+      const match = cleanText.match(pattern);
       if (match && match[1]) {
         return match[1].trim();
       }
     }
     
-    // If no pattern matches, check if it's a simple name (2-3 words, capitalized)
-    const words = text.trim().split(/\s+/);
-    if (words.length <= 3 && words.every(w => /^[A-Z]/.test(w))) {
-      return words.join(' ');
+    // If text contains "and" or "&", take the part before it (likely the name)
+    if (cleanText.includes(' and ') || cleanText.includes(' & ')) {
+      const parts = cleanText.split(/\s+(?:and|&)\s+/i);
+      if (parts[0] && parts[0].trim().length > 0) {
+        const namePart = parts[0].trim();
+        // Check if it looks like a name (letters only, 2-30 chars)
+        if (/^[a-zA-Z\s]{2,30}$/.test(namePart)) {
+          return namePart;
+        }
+      }
+    }
+    
+    // Check if it's a simple name (letters only, 2-30 chars, no numbers)
+    const words = cleanText.trim().split(/\s+/).filter(w => w.length > 0);
+    if (words.length > 0 && words.length <= 3) {
+      const potentialName = words.join(' ');
+      // Check if all words are letters (no numbers, no special chars except spaces)
+      if (/^[a-zA-Z\s]{2,30}$/.test(potentialName)) {
+        return potentialName;
+      }
     }
     
     return null;
@@ -129,7 +152,20 @@ export function CustomerSupportChat() {
     // Collect user information
     if (conversationState === 'collecting_name') {
       const name = extractName(messageText);
-      if (name) {
+      const contact = extractContact(messageText);
+      
+      // If user provided both name and contact in one message
+      if (name && (contact.email || contact.phone)) {
+        setUserInfo({ name, ...contact });
+        const botMessage: Message = {
+          type: 'bot',
+          text: `Perfect! Thank you, ${name}! I have your contact information. How can I help you today? 😊\n\nYou can ask me about:\n• Course information\n• How to contact Srikanth Sir\n• Demo sessions\n• Course enrollment\n• Any other questions!`,
+          timestamp: new Date()
+        };
+        setMessages(prev => [...prev, botMessage]);
+        setConversationState('ready_to_help');
+      } else if (name) {
+        // Only name provided
         setUserInfo(prev => ({ ...prev, name }));
         const botMessage: Message = {
           type: 'bot',
@@ -138,7 +174,17 @@ export function CustomerSupportChat() {
         };
         setMessages(prev => [...prev, botMessage]);
         setConversationState('collecting_contact');
+      } else if (contact.email || contact.phone) {
+        // Only contact provided, no name
+        setUserInfo(prev => ({ ...prev, ...contact }));
+        const botMessage: Message = {
+          type: 'bot',
+          text: `Thank you for the contact information! Could you please also tell me your name?`,
+          timestamp: new Date()
+        };
+        setMessages(prev => [...prev, botMessage]);
       } else {
+        // Neither name nor contact detected
         const botMessage: Message = {
           type: 'bot',
           text: "I'd love to know your name! Could you please tell me your name?",

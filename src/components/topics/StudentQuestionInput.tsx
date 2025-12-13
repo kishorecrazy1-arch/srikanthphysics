@@ -77,8 +77,42 @@ export function StudentQuestionInput({ topicName, subtopicName, onSubmit }: Stud
     }
   };
 
+  // Check if question is about course information
+  const isCourseQuestion = (question: string): boolean => {
+    const lowerQuestion = question.toLowerCase();
+    const courseKeywords = [
+      'course', 'enroll', 'enrollment', 'class', 'classes', 'syllabus',
+      'curriculum', 'what is', 'tell me about', 'information about',
+      'details about', 'learn about', 'know about', 'ap physics course',
+      'igcse course', 'sat course', 'iit jee course', 'neet course',
+      'fee', 'price', 'cost', 'duration', 'schedule', 'timing'
+    ];
+    return courseKeywords.some(keyword => lowerQuestion.includes(keyword));
+  };
+
   // AI Response Generation Function
   const generateAIResponse = async (context: string, question: string) => {
+    // Check if this is a course-related question
+    if (isCourseQuestion(question)) {
+      return {
+        explanation: `**Course Information:**\n\nThank you for your interest in our courses! 🎓\n\n**${context}** is one of our comprehensive physics programs designed to help you excel in your exams.\n\n**What we offer:**\n• Structured curriculum covering all topics\n• AI-powered practice questions\n• Step-by-step explanations\n• Progress tracking\n• Expert guidance from Srikanth Sir\n\n**To get detailed course information, pricing, and enrollment details, I'd recommend:**\n\n1. **Book a Free Demo Session** - Meet with Srikanth Sir to discuss your goals and get personalized course recommendations\n2. **Visit our Course Page** - Check out the complete syllabus and course structure\n3. **Contact our Support Team** - We're here to answer all your questions!\n\nWould you like me to help you book a demo session or connect you with our team?`,
+        formulas: [],
+        diagram: '',
+        keyPoints: [
+          'Comprehensive curriculum',
+          'AI-powered learning',
+          'Expert guidance',
+          'Progress tracking'
+        ],
+        relatedConcepts: [
+          'Free Demo Session',
+          'Course Enrollment',
+          'Contact Support',
+          'Course Details'
+        ]
+      };
+    }
+
     // This is a placeholder - replace with actual OpenAI API call
     // Example implementation:
     /*
@@ -108,7 +142,7 @@ export function StudentQuestionInput({ topicName, subtopicName, onSubmit }: Stud
     // Parse the response to extract formulas, explanation, etc.
     */
 
-    // Mock response for now
+    // Mock response for physics questions
     return {
       explanation: `**Detailed Explanation for ${context}:**\n\n${question}\n\nThis is a comprehensive step-by-step explanation:\n\n**Step 1:** Identify the given values and what needs to be found.\n\n**Step 2:** Apply the relevant physics principles.\n\n**Step 3:** Use the appropriate formulas to solve.\n\n**Step 4:** Verify the solution makes physical sense.`,
       formulas: [

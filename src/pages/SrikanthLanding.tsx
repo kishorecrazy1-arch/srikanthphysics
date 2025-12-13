@@ -63,16 +63,16 @@ export function SrikanthLanding() {
                 </div>
               </div>
 
-              <h1 className="text-5xl md:text-7xl font-bold text-white mb-6 leading-tight">
+              <h1 className="text-3xl md:text-5xl font-bold text-white mb-6 leading-tight">
                 Master Physics.<br/>
                 Ace Your Exam.<br/>
                 <span className="text-yellow-400">Transform Your Future.</span>
               </h1>
 
-              <p className="text-xl text-blue-100 mb-4">
+              <p className="text-lg text-blue-100 mb-4">
                 AI-powered daily practice for IIT JEE, NEET, and AP Physics students
               </p>
-              <p className="text-lg text-blue-200 mb-8">
+              <p className="text-base text-blue-200 mb-8">
                 Join students who achieved top ranks with Srikanth's Academy
               </p>
 
@@ -286,10 +286,10 @@ export function SrikanthLanding() {
       <section className="py-20 bg-gradient-to-br from-blue-900 to-blue-700">
         <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
           <div className="text-center mb-16">
-            <h2 className="text-4xl md:text-5xl font-bold text-white mb-4">
+            <h2 className="text-3xl md:text-4xl font-bold text-white mb-4">
               Real Results from Real Students
             </h2>
-            <p className="text-xl text-blue-200">
+            <p className="text-lg text-blue-200">
               Join thousands who transformed their physics scores
             </p>
           </div>
@@ -305,8 +305,8 @@ export function SrikanthLanding() {
                 <div className={`w-16 h-16 bg-gradient-to-br ${stat.color} rounded-xl flex items-center justify-center mx-auto mb-4`}>
                   <stat.icon className="w-8 h-8 text-white" />
                 </div>
-                <div className="text-5xl font-bold text-white mb-2">{stat.number}</div>
-                <div className="text-blue-200">{stat.label}</div>
+                <div className="text-3xl md:text-4xl font-bold text-white mb-2">{stat.number}</div>
+                <div className="text-sm md:text-base text-blue-200">{stat.label}</div>
               </div>
             ))}
           </div>
