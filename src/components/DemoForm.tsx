@@ -181,7 +181,7 @@ export function DemoForm({ showCalendly = false }: DemoFormProps) {
         <div>
           <label className="block text-sm font-semibold text-gray-700 mb-1">
             <GraduationCap className="inline w-4 h-4 mr-1" />
-            Subject/Board (Optional)
+            Board/Curriculum (Optional)
           </label>
           <select
             value={formData.board || ''}
@@ -189,31 +189,22 @@ export function DemoForm({ showCalendly = false }: DemoFormProps) {
             className="w-full px-4 py-3 border-2 border-gray-300 rounded-xl focus:ring-2 focus:ring-blue-500 focus:border-blue-500 transition-colors"
             disabled={isSubmitting}
           >
-            <option value="">Select subject/board</option>
-            <optgroup label="Subjects">
-              <option value="Physics">Physics</option>
-              <option value="Chemistry">Chemistry</option>
-              <option value="Mathematics">Mathematics</option>
-              <option value="Biology">Biology</option>
-              <option value="Computer Science">Computer Science</option>
-              <option value="English">English</option>
-              <option value="Social Studies">Social Studies</option>
-              <option value="History">History</option>
-              <option value="Geography">Geography</option>
-              <option value="Economics">Economics</option>
-              <option value="Business Studies">Business Studies</option>
-              <option value="Accountancy">Accountancy</option>
-              <option value="All Subjects">All Subjects</option>
-            </optgroup>
-            <optgroup label="Boards/Curriculum">
-              <option value="CBSE">CBSE</option>
-              <option value="ICSE">ICSE</option>
-              <option value="AP">AP (Advanced Placement)</option>
-              <option value="IB">IB (International Baccalaureate)</option>
-              <option value="IGCSE">IGCSE</option>
-              <option value="State Board">State Board</option>
-              <option value="Other">Other</option>
-            </optgroup>
+            <option value="">Select board/curriculum</option>
+            <option value="AP Physics">AP Physics</option>
+            <option value="AP Chemistry">AP Chemistry</option>
+            <option value="AP Mathematics">AP Mathematics</option>
+            <option value="AP Biology">AP Biology</option>
+            <option value="AP Computer Science">AP Computer Science</option>
+            <option value="CBSE">CBSE</option>
+            <option value="ICSE">ICSE</option>
+            <option value="IB">IB (International Baccalaureate)</option>
+            <option value="IGCSE">IGCSE</option>
+            <option value="State Board">State Board</option>
+            <option value="SAT">SAT</option>
+            <option value="ACT">ACT</option>
+            <option value="IIT JEE">IIT JEE</option>
+            <option value="NEET">NEET</option>
+            <option value="Other">Other</option>
           </select>
         </div>
       </div>
