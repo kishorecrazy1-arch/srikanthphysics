@@ -89,10 +89,10 @@ export function DemoForm({ showCalendly = false }: DemoFormProps) {
   };
 
   return (
-    <form onSubmit={handleSubmit} className="space-y-4">
+    <form onSubmit={handleSubmit} className="space-y-3">
       {/* Name */}
       <div>
-        <label className="block text-sm font-semibold text-gray-700 mb-1.5">
+        <label className="block text-sm font-semibold text-gray-700 mb-1">
           <User className="inline w-4 h-4 mr-1" />
           Full Name <span className="text-red-500">*</span>
         </label>
@@ -116,7 +116,7 @@ export function DemoForm({ showCalendly = false }: DemoFormProps) {
 
       {/* Email */}
       <div>
-        <label className="block text-sm font-semibold text-gray-700 mb-1.5">
+        <label className="block text-sm font-semibold text-gray-700 mb-1">
           <Mail className="inline w-4 h-4 mr-1" />
           Email Address <span className="text-red-500">*</span>
         </label>
@@ -140,7 +140,7 @@ export function DemoForm({ showCalendly = false }: DemoFormProps) {
 
       {/* Phone */}
       <div>
-        <label className="block text-sm font-semibold text-gray-700 mb-1.5">
+        <label className="block text-sm font-semibold text-gray-700 mb-1">
           <Phone className="inline w-4 h-4 mr-1" />
           Phone Number (Optional)
         </label>
@@ -157,7 +157,7 @@ export function DemoForm({ showCalendly = false }: DemoFormProps) {
       {/* Grade and Board Row */}
       <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
         <div>
-          <label className="block text-sm font-semibold text-gray-700 mb-1.5">
+          <label className="block text-sm font-semibold text-gray-700 mb-1">
             <GraduationCap className="inline w-4 h-4 mr-1" />
             Grade (Optional)
           </label>
@@ -179,7 +179,7 @@ export function DemoForm({ showCalendly = false }: DemoFormProps) {
         </div>
 
         <div>
-          <label className="block text-sm font-semibold text-gray-700 mb-1.5">
+          <label className="block text-sm font-semibold text-gray-700 mb-1">
             <GraduationCap className="inline w-4 h-4 mr-1" />
             Subject/Board (Optional)
           </label>
@@ -196,6 +196,13 @@ export function DemoForm({ showCalendly = false }: DemoFormProps) {
               <option value="Mathematics">Mathematics</option>
               <option value="Biology">Biology</option>
               <option value="Computer Science">Computer Science</option>
+              <option value="English">English</option>
+              <option value="Social Studies">Social Studies</option>
+              <option value="History">History</option>
+              <option value="Geography">Geography</option>
+              <option value="Economics">Economics</option>
+              <option value="Business Studies">Business Studies</option>
+              <option value="Accountancy">Accountancy</option>
               <option value="All Subjects">All Subjects</option>
             </optgroup>
             <optgroup label="Boards/Curriculum">
@@ -214,7 +221,7 @@ export function DemoForm({ showCalendly = false }: DemoFormProps) {
       {/* City and Country Row */}
       <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
         <div>
-          <label className="block text-sm font-semibold text-gray-700 mb-1.5">
+          <label className="block text-sm font-semibold text-gray-700 mb-1">
             <MapPin className="inline w-4 h-4 mr-1" />
             City (Optional)
           </label>
@@ -229,7 +236,7 @@ export function DemoForm({ showCalendly = false }: DemoFormProps) {
         </div>
 
         <div>
-          <label className="block text-sm font-semibold text-gray-700 mb-1.5">
+          <label className="block text-sm font-semibold text-gray-700 mb-1">
             <Globe className="inline w-4 h-4 mr-1" />
             Country (Optional)
           </label>
