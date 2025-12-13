@@ -154,7 +154,41 @@ This guide will help you set up n8n to automatically save all demo form submissi
      referrer → {{ $json.referrer }}
      ```
 
-### 3.5 Activate Workflow
+### 3.5 Add Email Notification Node
+
+1. **Add Gmail node** after Google Sheets node:
+   - Click "+" after Google Sheets node
+   - Search for "Gmail" or "SMTP Email"
+   - Select **"Gmail"** node (or "SMTP Email" if using custom SMTP)
+
+2. **Configure Gmail Authentication**:
+   - **Authentication**: `OAuth2` (recommended) or `Service Account`
+   - Follow n8n's Gmail OAuth setup to connect your Gmail account
+   - Or use SMTP with your email provider
+
+3. **Configure Email**:
+   - **Operation**: `Send Email`
+   - **To**: `srikanthsacademyforphysics@gmail.com`
+   - **Subject**: `New Demo Lead: {{ $json.name }}`
+   - **Email Type**: `HTML`
+   - **Message**:
+     ```html
+     <h2>New Demo Lead Submission</h2>
+     <p><strong>Name:</strong> {{ $json.name }}</p>
+     <p><strong>Email:</strong> {{ $json.email }}</p>
+     <p><strong>Phone:</strong> {{ $json.phone || 'Not provided' }}</p>
+     <p><strong>Grade:</strong> {{ $json.grade || 'Not provided' }}</p>
+     <p><strong>Board/Curriculum:</strong> {{ $json.board || 'Not provided' }}</p>
+     <p><strong>City:</strong> {{ $json.city || 'Not provided' }}</p>
+     <p><strong>Country:</strong> {{ $json.country || 'Not provided' }}</p>
+     <hr>
+     <p><strong>Submitted:</strong> {{ $json.timestamp }}</p>
+     <p><strong>UTM Source:</strong> {{ $json.utm_source || 'N/A' }}</p>
+     <p><strong>UTM Campaign:</strong> {{ $json.utm_campaign || 'N/A' }}</p>
+     <p><strong>Referrer:</strong> {{ $json.referrer || 'Direct' }}</p>
+     ```
+
+### 3.6 Activate Workflow
 
 1. **Save Workflow**:
    - Click "Save" button
@@ -262,20 +296,28 @@ This guide will help you set up n8n to automatically save all demo form submissi
 - [ ] Webhook node configured
 - [ ] Code node configured
 - [ ] Google Sheets node configured
+- [ ] Gmail/Email node configured
+- [ ] Email notification set to: srikanthsacademyforphysics@gmail.com
 - [ ] Workflow activated
 - [ ] Webhook URL added to Vercel environment variables
 - [ ] Vercel redeployed
 - [ ] Test submission successful
+- [ ] Verified email received at srikanthsacademyforphysics@gmail.com
 
 ---
 
 ## 🎉 You're Done!
 
-Now when users fill out the demo form on your website, their details will automatically appear in your Google Sheet via n8n!
+Now when users fill out the demo form on your website:
+1. ✅ Their details will automatically appear in your Google Sheet
+2. ✅ You'll receive an email notification at **srikanthsacademyforphysics@gmail.com**
+
+**What Happens:**
+- Form submission → n8n webhook → Google Sheet (saved) → Email notification (sent to you)
 
 **Next Steps:**
 - Monitor the Google Sheet for new leads
-- Set up email notifications in n8n (optional)
+- Check your email for instant notifications
 - Set up team notifications via Slack/Telegram (optional)
 
 ---
