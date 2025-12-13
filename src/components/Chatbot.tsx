@@ -1,11 +1,13 @@
 import { useState } from 'react';
-import { MessageCircle, X, Sparkles, Minimize2, Maximize2 } from 'lucide-react';
+import { MessageCircle, X, Sparkles, Minimize2, Maximize2, Headphones } from 'lucide-react';
 import { useLocation, useParams } from 'react-router-dom';
 import { StudentQuestionInput } from './topics/StudentQuestionInput';
+import { CustomerSupportChat } from './CustomerSupportChat';
 
 export function Chatbot() {
   const [isOpen, setIsOpen] = useState(false);
   const [isMinimized, setIsMinimized] = useState(false);
+  const [mode, setMode] = useState<'physics-tutor' | 'customer-support'>('customer-support');
   const location = useLocation();
   const params = useParams();
 
@@ -70,11 +72,27 @@ export function Chatbot() {
                   <Sparkles className="w-5 h-5 text-white" />
                 </div>
                 <div>
-                  <h3 className="text-white font-bold text-sm">AI Physics Tutor</h3>
-                  <p className="text-cyan-100 text-xs">Powered by GPT-4</p>
+                  <h3 className="text-white font-bold text-sm">
+                    {mode === 'customer-support' ? 'Customer Support' : 'AI Physics Tutor'}
+                  </h3>
+                  <p className="text-cyan-100 text-xs">
+                    {mode === 'customer-support' ? 'How can I help you?' : 'Powered by GPT-4'}
+                  </p>
                 </div>
               </div>
               <div className="flex items-center gap-2">
+                <button
+                  onClick={() => setMode(mode === 'customer-support' ? 'physics-tutor' : 'customer-support')}
+                  className="w-8 h-8 bg-white/20 hover:bg-white/30 rounded-lg flex items-center justify-center transition-colors"
+                  aria-label="Switch mode"
+                  title={mode === 'customer-support' ? 'Switch to Physics Tutor' : 'Switch to Customer Support'}
+                >
+                  {mode === 'customer-support' ? (
+                    <Sparkles className="w-4 h-4 text-white" />
+                  ) : (
+                    <Headphones className="w-4 h-4 text-white" />
+                  )}
+                </button>
                 <button
                   onClick={() => setIsMinimized(!isMinimized)}
                   className="w-8 h-8 bg-white/20 hover:bg-white/30 rounded-lg flex items-center justify-center transition-colors"
@@ -98,23 +116,29 @@ export function Chatbot() {
 
             {/* Content - Only show when not minimized */}
             {!isMinimized && (
-              <div className="flex-1 overflow-y-auto p-4">
-                <div className="mb-4">
-                  <div className="bg-slate-700/50 rounded-lg p-3 mb-3">
-                    <p className="text-slate-300 text-xs mb-2">
-                      <strong className="text-cyan-400">Ask me anything</strong> about physics!
-                    </p>
-                    <p className="text-slate-400 text-xs">
-                      I can help with explanations, formulas, problem-solving, and more.
-                    </p>
+              <div className="flex-1 overflow-hidden flex flex-col">
+                {mode === 'customer-support' ? (
+                  <CustomerSupportChat />
+                ) : (
+                  <div className="flex-1 overflow-y-auto p-4">
+                    <div className="mb-4">
+                      <div className="bg-slate-700/50 rounded-lg p-3 mb-3">
+                        <p className="text-slate-300 text-xs mb-2">
+                          <strong className="text-cyan-400">Ask me anything</strong> about physics!
+                        </p>
+                        <p className="text-slate-400 text-xs">
+                          I can help with explanations, formulas, problem-solving, and more.
+                        </p>
+                      </div>
+                      
+                      {/* Chat Input Component */}
+                      <StudentQuestionInput 
+                        topicName={topicName} 
+                        subtopicName={subtopicName}
+                      />
+                    </div>
                   </div>
-                  
-                  {/* Chat Input Component */}
-                  <StudentQuestionInput 
-                    topicName={topicName} 
-                    subtopicName={subtopicName}
-                  />
-                </div>
+                )}
               </div>
             )}
           </div>
