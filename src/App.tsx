@@ -30,6 +30,7 @@ import { APPhysics2 } from './pages/APPhysics2';
 import { AdminGeneratePracticeBank } from './pages/AdminGeneratePracticeBank';
 import { Demo } from './pages/Demo';
 import { DemoSuccess } from './pages/DemoSuccess';
+import { Courses } from './pages/Courses';
 import { PaymentSuccess } from './pages/PaymentSuccess';
 import { ApproveSubscription } from './pages/ApproveSubscription';
 import { Layout } from './components/Layout';
@@ -57,6 +58,7 @@ function App() {
         <Route path="/reset-password" element={<ResetPassword />} />
         <Route path="/demo" element={<Demo />} />
         <Route path="/demo/success" element={<DemoSuccess />} />
+        <Route path="/courses" element={<Courses />} />
         <Route path="/approve-subscription" element={<ApproveSubscription />} />
         <Route
           path="/payment/success"

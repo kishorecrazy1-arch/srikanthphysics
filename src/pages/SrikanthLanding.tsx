@@ -53,7 +53,7 @@ export function SrikanthLanding() {
           <div className="absolute bottom-20 right-1/3 text-white text-5xl physics-formula animate-float-slow" style={{ animationDelay: '1.5s' }}>P=mgh</div>
         </div>
 
-        <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-20 relative z-10">
+        <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-8 relative z-10">
           <div className="grid lg:grid-cols-2 gap-12 items-center">
             <div>
               <div className="inline-block mb-6">
@@ -78,13 +78,14 @@ export function SrikanthLanding() {
 
               <div className="flex flex-wrap gap-4 mb-8">
                 <button
-                  onClick={() => navigate('/demo')}
+                  onClick={() => navigate('/courses')}
                   className="px-8 py-4 bg-white text-blue-800 rounded-xl font-bold text-lg hover:bg-blue-50 transition-all shadow-2xl hover:shadow-3xl animate-pulse-glow flex items-center gap-2"
                 >
-                  Get Started Free <ArrowRight className="w-5 h-5" />
+                  Explore Courses <ArrowRight className="w-5 h-5" />
                 </button>
                 <button
-                  className="px-8 py-4 bg-blue-700 bg-opacity-50 text-white rounded-xl font-bold text-lg hover:bg-opacity-70 transition-all border-2 border-white border-opacity-30 flex items-center gap-2"
+                  onClick={() => navigate('/demo')}
+                  className="px-8 py-4 bg-blue-700 bg-opacity-50 text-white rounded-xl font-bold text-lg hover:bg-opacity-70 transition-all border border-white border-opacity-30 flex items-center gap-2"
                 >
                   <Play className="w-5 h-5" /> Watch Demo
                 </button>
@@ -210,7 +211,7 @@ export function SrikanthLanding() {
                 </div>
 
                 <div className="absolute bottom-0 left-0 right-0 text-center">
-                  <div className="bg-white bg-opacity-10 backdrop-blur-sm rounded-2xl px-6 py-4 inline-block border border-white border-opacity-20">
+                  <div className="bg-white bg-opacity-10 backdrop-blur-sm rounded-xl px-6 py-4 inline-block border border-white border-opacity-20">
                     <p className="text-white text-lg font-bold mb-1">AI-Powered Physics Learning</p>
                     <p className="text-blue-200 text-sm">Personalized. Adaptive. Effective.</p>
                   </div>
@@ -238,7 +239,7 @@ export function SrikanthLanding() {
                 icon: Lightbulb,
                 title: 'Physics That Finally Makes Sense',
                 description: 'Teaches Physics with intuition, logic, and real-world meaning — not rote formulas. Students finally understand concepts instead of memorizing them.',
-                gradient: 'from-yellow-500 to-orange-500'
+                gradient: 'from-indigo-500 to-purple-500'
               },
               {
                 icon: FileText,
@@ -250,7 +251,7 @@ export function SrikanthLanding() {
                 icon: Zap,
                 title: 'Exam-Speed Thinking (1–2 Minute Problem Mastery)',
                 description: 'Learn how toppers think during competitive exams. Pattern recognition + rapid reasoning + smart shortcuts = faster, more accurate answers.',
-                gradient: 'from-orange-500 to-red-500'
+                gradient: 'from-purple-500 to-pink-500'
               },
               {
                 icon: Brain,
@@ -298,14 +299,14 @@ export function SrikanthLanding() {
             {[
               { icon: Users, number: '80K+', label: 'Students Trained', color: 'from-blue-400 to-cyan-400' },
               { icon: Award, number: '98.17%', label: 'Success Rate', color: 'from-green-400 to-emerald-400' },
-              { icon: Medal, number: 'Top Institute Admits', label: 'Top Students', color: 'from-yellow-400 to-orange-400' },
+              { icon: Medal, number: 'Top Institute Admits', label: 'Top Students', color: 'from-indigo-400 to-purple-400' },
               { icon: Star, number: '4.8/5', label: 'Rating', color: 'from-purple-400 to-pink-400' }
             ].map((stat, idx) => (
-              <div key={idx} className="bg-white bg-opacity-10 backdrop-blur-lg rounded-2xl p-8 text-center border border-white border-opacity-20">
+              <div key={idx} className="bg-white bg-opacity-10 backdrop-blur-lg rounded-xl p-8 text-center border border-white border-opacity-20">
                 <div className={`w-16 h-16 bg-gradient-to-br ${stat.color} rounded-xl flex items-center justify-center mx-auto mb-4`}>
                   <stat.icon className="w-8 h-8 text-white" />
                 </div>
-                <div className="text-3xl md:text-4xl font-bold text-white mb-2">{stat.number}</div>
+                <div className={`font-bold text-white mb-2 ${stat.number === 'Top Institute Admits' ? 'text-xl md:text-2xl' : 'text-3xl md:text-4xl'}`}>{stat.number}</div>
                 <div className="text-sm md:text-base text-blue-200">{stat.label}</div>
               </div>
             ))}
@@ -325,7 +326,7 @@ export function SrikanthLanding() {
           </div>
 
           <div className="max-w-4xl mx-auto">
-            <div className="bg-gradient-to-br from-blue-50 to-cyan-50 rounded-3xl p-12 shadow-xl border-2 border-blue-200">
+            <div className="bg-gradient-to-br from-blue-50 to-cyan-50 rounded-2xl p-12 shadow-xl border border-blue-200">
               <div className="text-center mb-6">
                 {[...Array(testimonials[activeTestimonial].rating)].map((_, i) => (
                   <Star key={i} className="w-8 h-8 inline fill-yellow-400 text-yellow-400" />
@@ -425,7 +426,7 @@ export function SrikanthLanding() {
                 <ul className="space-y-2 text-lg">
                   <li className="flex items-center gap-2">
                     <Trophy className="w-5 h-5 text-yellow-400" />
-                    Trained 80000+ students globally
+                    Trained 80K+ students globally
                   </li>
                   <li className="flex items-center gap-2">
                     <Trophy className="w-5 h-5 text-yellow-400" />
@@ -459,10 +460,10 @@ export function SrikanthLanding() {
       <section className="py-20 bg-white">
         <div className="max-w-5xl mx-auto px-4 sm:px-6 lg:px-8">
           <div className="text-center mb-16">
-            <h2 className="text-4xl md:text-5xl font-bold text-gray-900 mb-4">
+            <h2 className="text-3xl md:text-4xl font-bold text-gray-900 mb-4">
               Your Learning Journey in 3 Simple Steps
             </h2>
-            <p className="text-xl text-gray-600">
+            <p className="text-lg text-gray-600">
               From signup to exam success
             </p>
           </div>
@@ -471,7 +472,7 @@ export function SrikanthLanding() {
             {[
               {
                 number: '1',
-                title: 'Sign Up Free',
+                title: 'Sign In',
                 description: 'Create your account in 30 seconds. Choose your exam (IIT JEE/NEET/AP). Set your target exam date.',
                 icon: Rocket
               },
@@ -490,16 +491,16 @@ export function SrikanthLanding() {
             ].map((step, idx) => (
               <div key={idx} className="flex gap-8 items-start">
                 <div className="flex-shrink-0">
-                  <div className="w-20 h-20 bg-gradient-to-br from-blue-600 to-cyan-500 rounded-2xl flex items-center justify-center text-white text-3xl font-bold shadow-xl">
+                  <div className="w-20 h-20 bg-gradient-to-br from-blue-600 to-cyan-500 rounded-2xl flex items-center justify-center text-white text-2xl font-bold shadow-xl">
                     {step.number}
                   </div>
                 </div>
                 <div className="flex-1">
                   <div className="flex items-center gap-3 mb-3">
-                    <step.icon className="w-8 h-8 text-blue-600" />
-                    <h3 className="text-3xl font-bold text-gray-900">{step.title}</h3>
+                    <step.icon className="w-6 h-6 text-blue-600" />
+                    <h3 className="text-2xl font-bold text-gray-900">{step.title}</h3>
                   </div>
-                  <p className="text-xl text-gray-600 leading-relaxed">{step.description}</p>
+                  <p className="text-lg text-gray-600 leading-relaxed">{step.description}</p>
                 </div>
               </div>
             ))}
@@ -514,29 +515,18 @@ export function SrikanthLanding() {
             Ready to Transform Your Physics Scores?
           </h2>
           <p className="text-2xl text-blue-100 mb-8">
-            Join 80,000+ students achieving their dream ranks globally<br/>
-            Start your free 7-day trial today
+            Join 80K+ students achieving their dream ranks globally
           </p>
           <div className="flex flex-wrap justify-center gap-4 mb-6">
             <button
-              onClick={() => navigate('/demo')}
+              onClick={() => navigate('/courses')}
               className="px-10 py-4 bg-white text-blue-800 rounded-xl font-bold text-xl hover:bg-blue-50 transition-all shadow-2xl flex items-center gap-2"
             >
-              Get Started Free <ArrowRight className="w-6 h-6" />
+              Explore Courses <ArrowRight className="w-6 h-6" />
             </button>
-            <button className="px-10 py-4 bg-blue-700 text-white rounded-xl font-bold text-xl hover:bg-blue-600 transition-all border-2 border-white">
+            <button className="px-10 py-4 bg-blue-700 text-white rounded-xl font-bold text-xl hover:bg-blue-600 transition-all border border-white">
               Talk to Expert
             </button>
-          </div>
-          <div className="flex flex-wrap justify-center gap-6 text-blue-100">
-            <div className="flex items-center gap-2">
-              <CheckCircle className="w-5 h-5" />
-              <span>No credit card required</span>
-            </div>
-            <div className="flex items-center gap-2">
-              <CheckCircle className="w-5 h-5" />
-              <span>Cancel anytime</span>
-            </div>
           </div>
         </div>
       </section>
