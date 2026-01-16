@@ -87,7 +87,7 @@ export function SrikanthLanding() {
                   onClick={() => navigate('/demo')}
                   className="px-8 py-4 bg-blue-700 bg-opacity-50 text-white rounded-xl font-bold text-lg hover:bg-opacity-70 transition-all border border-white border-opacity-30 flex items-center gap-2"
                 >
-                  <Play className="w-5 h-5" /> Book Demo
+                  <Play className="w-5 h-5" /> Start Your Journey
                 </button>
               </div>
 
