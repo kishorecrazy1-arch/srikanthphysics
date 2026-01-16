@@ -1,13 +1,10 @@
 import { DemoForm } from '../components/DemoForm';
-import { CalendlyEmbed } from '../components/CalendlyEmbed';
 import { CourseNavigation } from '../components/CourseNavigation';
 import { BookOpen, CheckCircle, ArrowLeft } from 'lucide-react';
 import { useNavigate } from 'react-router-dom';
 import { useAuthStore } from '../store/authStore';
 
 export function Demo() {
-  const calendlyUrl = import.meta.env.VITE_CALENDLY_URL;
-  const showCalendly = !!calendlyUrl;
   const navigate = useNavigate();
   const { user } = useAuthStore();
 
@@ -34,7 +31,7 @@ export function Demo() {
           </p>
         </div>
 
-        <div className="grid lg:grid-cols-2 gap-8">
+        <div className="max-w-2xl mx-auto">
           {/* Form Section */}
           <div className="bg-white rounded-2xl shadow-xl p-8">
             <div className="flex items-center gap-3 mb-6">
@@ -47,7 +44,7 @@ export function Demo() {
               </div>
             </div>
 
-            <DemoForm showCalendly={showCalendly} />
+            <DemoForm showCalendly={false} />
 
             {/* Benefits List */}
             <div className="mt-8 pt-8 border-t border-gray-200">
@@ -67,53 +64,6 @@ export function Demo() {
               </ul>
             </div>
           </div>
-
-          {/* Calendly Section */}
-          {showCalendly && (
-            <div className="bg-white rounded-2xl shadow-xl p-8">
-              <div className="mb-6">
-                <h2 className="text-2xl font-bold text-gray-900 mb-2">
-                  Or Book a Slot Instantly
-                </h2>
-                <p className="text-gray-600">
-                  Choose a time that works for you and book your demo directly
-                </p>
-              </div>
-              <CalendlyEmbed url={calendlyUrl} />
-            </div>
-          )}
-
-          {/* Info Section (if no Calendly) */}
-          {!showCalendly && (
-            <div className="bg-gradient-to-br from-blue-600 to-cyan-500 rounded-2xl shadow-xl p-8 text-white">
-              <h2 className="text-2xl font-bold mb-4">Why Choose Srikanth's Academy?</h2>
-              <ul className="space-y-4">
-                {[
-                  {
-                    title: '13+ Years Experience',
-                    desc: 'Expert guidance from Srikanth Sir',
-                  },
-                  {
-                    title: 'AI-Powered Learning',
-                    desc: 'Personalized daily practice questions',
-                  },
-                  {
-                    title: 'Proven Results',
-                    desc: '98% success rate',
-                  },
-                  {
-                    title: 'College Credit',
-                    desc: 'Save $2,000+ in tuition costs',
-                  },
-                ].map((item, index) => (
-                  <li key={index}>
-                    <h3 className="font-semibold text-lg mb-1">{item.title}</h3>
-                    <p className="text-blue-100">{item.desc}</p>
-                  </li>
-                ))}
-              </ul>
-            </div>
-          )}
         </div>
       </div>
     </div>
