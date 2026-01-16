@@ -87,19 +87,8 @@ export function SrikanthLanding() {
                   onClick={() => navigate('/demo')}
                   className="px-8 py-4 bg-blue-700 bg-opacity-50 text-white rounded-xl font-bold text-lg hover:bg-opacity-70 transition-all border border-white border-opacity-30 flex items-center gap-2"
                 >
-                  <Play className="w-5 h-5" /> Watch Demo
+                  <Play className="w-5 h-5" /> Book Demo
                 </button>
-              </div>
-
-              <div className="flex flex-wrap gap-6 text-white text-sm">
-                <div className="flex items-center gap-2">
-                  <CheckCircle className="w-5 h-5 text-green-400" />
-                  <span>Free forever plan</span>
-                </div>
-                <div className="flex items-center gap-2">
-                  <CheckCircle className="w-5 h-5 text-green-400" />
-                  <span>No credit card required</span>
-                </div>
               </div>
 
               <div className="mt-8 flex items-center gap-2">
