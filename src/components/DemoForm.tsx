@@ -1,9 +1,8 @@
-import { useState, useEffect } from 'react';
+import { useState } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { User, Mail, Phone, GraduationCap, MapPin, Globe, CheckCircle, AlertCircle, Loader2 } from 'lucide-react';
 import { demoFormSchema, type DemoFormData } from '../lib/demoSchemas';
 import { submitDemoLead } from '../services/demoService';
-import { getUTM } from '../utils/utm';
 
 interface DemoFormProps {
   showCalendly?: boolean;
@@ -24,12 +23,6 @@ export function DemoForm({ showCalendly = false }: DemoFormProps) {
   const [errors, setErrors] = useState<Partial<Record<keyof DemoFormData, string>>>({});
   const [isSubmitting, setIsSubmitting] = useState(false);
   const [submitError, setSubmitError] = useState<string | null>(null);
-
-  // Get UTM params on mount
-  useEffect(() => {
-    const utm = getUTM();
-    console.log('UTM params:', utm);
-  }, []);
 
   const handleChange = (field: keyof DemoFormData, value: string | boolean) => {
     setFormData(prev => ({ ...prev, [field]: value }));
@@ -65,8 +58,7 @@ export function DemoForm({ showCalendly = false }: DemoFormProps) {
     setIsSubmitting(true);
 
     try {
-      const utm = getUTM();
-      const result = await submitDemoLead(validation.data, utm);
+      const result = await submitDemoLead(validation.data);
 
       if (result.success) {
         // Store form data in sessionStorage for success page

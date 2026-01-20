@@ -1,9 +1,9 @@
-import type { UTMParams } from '../utils/utm';
 import type { DemoFormData } from '../lib/demoSchemas';
 
+/**
+ * Payload structure matching n8n webhook expectations
+ */
 export interface DemoLeadPayload {
-  source: string;
-  timestamp: string;
   name: string;
   email: string;
   phone?: string;
@@ -11,12 +11,6 @@ export interface DemoLeadPayload {
   board?: string;
   city?: string;
   country?: string;
-  utm: {
-    source?: string;
-    medium?: string;
-    campaign?: string;
-  };
-  referrer?: string;
 }
 
 /**
@@ -24,14 +18,12 @@ export interface DemoLeadPayload {
  * Note: Webhook is optional - form will still succeed if webhook is not configured
  */
 export async function submitDemoLead(
-  formData: DemoFormData,
-  utm: UTMParams = {}
+  formData: DemoFormData
 ): Promise<{ success: boolean; error?: string }> {
   const webhookUrl = import.meta.env.VITE_N8N_WEBHOOK_URL;
 
+  // Simple payload structure matching n8n webhook requirements
   const payload: DemoLeadPayload = {
-    source: 'ap-physics-demo',
-    timestamp: new Date().toISOString(),
     name: formData.name,
     email: formData.email,
     phone: formData.phone || undefined,
@@ -39,12 +31,6 @@ export async function submitDemoLead(
     board: formData.board || undefined,
     city: formData.city || undefined,
     country: formData.country || undefined,
-    utm: {
-      source: utm.source || '',
-      medium: utm.medium || '',
-      campaign: utm.campaign || '',
-    },
-    referrer: typeof document !== 'undefined' ? document.referrer : undefined,
   };
 
   // If webhook is not configured, still return success (webhook is optional)

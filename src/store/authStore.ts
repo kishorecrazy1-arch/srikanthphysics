@@ -2,6 +2,7 @@ import { create } from 'zustand';
 import { supabase } from '../lib/supabase';
 import { User } from '../types';
 import { sendSignupNotification } from '../services/signupService';
+import { sendSigninNotification } from '../services/signinService';
 
 interface AuthState {
   user: User | null;
@@ -116,6 +117,31 @@ export const useAuthStore = create<AuthState>((set, get) => ({
     }
     
     await get().fetchUserProfile();
+    
+    // Send sign-in notification to srikanthsacademyforphysics@gmail.com
+    // This happens in the background and doesn't block sign-in
+    const user = get().user;
+    if (user && data.user) {
+      sendSigninNotification({
+        name: user.name,
+        email: user.email,
+        userId: user.id,
+        lastSignIn: data.user.last_sign_in_at || undefined,
+      }).catch(error => {
+        console.error('Failed to send sign-in notification:', error);
+        // Don't throw - sign-in should succeed even if notification fails
+      });
+    } else if (data.user) {
+      // If user profile not loaded yet, send with auth data
+      sendSigninNotification({
+        name: data.user.user_metadata?.name || email.split('@')[0],
+        email: email,
+        userId: data.user.id,
+        lastSignIn: data.user.last_sign_in_at || undefined,
+      }).catch(error => {
+        console.error('Failed to send sign-in notification:', error);
+      });
+    }
   },
 
   signOut: async () => {
@@ -174,7 +200,8 @@ export const useAuthStore = create<AuthState>((set, get) => ({
       }
     } catch (error) {
       console.error('Error fetching profile:', error);
-      set({ user: null, loading: false });
+      // Always clear loading state, even on error or timeout
+      set({ user: null, loading: false, emailVerified: null });
     }
   },
 
@@ -215,5 +242,19 @@ supabase.auth.onAuthStateChange((event) => {
     }
 });
 
-// Initialize - fetch user profile
-useAuthStore.getState().fetchUserProfile();
+// Initialize - fetch user profile with timeout fallback
+(async () => {
+  try {
+    // Set a timeout to ensure loading doesn't hang forever
+    const timeoutId = setTimeout(() => {
+      console.warn('Auth check taking too long, clearing loading state');
+      useAuthStore.setState({ loading: false, user: null, emailVerified: null });
+    }, 10000); // 10 second timeout
+
+    await useAuthStore.getState().fetchUserProfile();
+    clearTimeout(timeoutId);
+  } catch (error) {
+    console.error('Initial auth check failed:', error);
+    useAuthStore.setState({ loading: false, user: null, emailVerified: null });
+  }
+})();
