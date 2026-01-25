@@ -1,8 +1,24 @@
 # ✅ Add Webhook URL to Vercel - Step by Step
 
-## Your Webhook URL
+## Your Workflow
+**Workflow URL:** https://manasapadavala.app.n8n.cloud/workflow/XmafvLhS28STAmPo
+
+## Get Your Webhook URL
+
+**Important:** You need to get the actual webhook URL from your n8n workflow:
+
+1. Open the workflow: https://manasapadavala.app.n8n.cloud/workflow/XmafvLhS28STAmPo
+2. Click on the **Webhook node** (first node)
+3. Copy the **Production URL** or **Webhook URL** shown in the node settings
+4. It will look like: `https://manasapadavala.app.n8n.cloud/webhook/[your-path]`
+
+**Example webhook URLs:**
 ```
-https://manasapadavala.app.n8n.cloud/webhook/ap-physics-demo
+https://manasapadavala.app.n8n.cloud/webhook/demo-booking
+```
+OR
+```
+https://manasapadavala.app.n8n.cloud/webhook/XmafvLhS28STAmPo/demo-booking
 ```
 
 ---
@@ -19,10 +35,10 @@ https://manasapadavala.app.n8n.cloud/webhook/ap-physics-demo
 - Click **"Environment Variables"** in the left sidebar
 
 ### 3. Add the Environment Variable
-- Click the **"Add New"** button
+- Click the **"Add New"** button (or edit existing `VITE_N8N_WEBHOOK_URL`)
 - Fill in:
   - **Key/Name**: `VITE_N8N_WEBHOOK_URL`
-  - **Value**: `https://manasapadavala.app.n8n.cloud/webhook/ap-physics-demo`
+  - **Value**: Paste your webhook URL from Step 1 above
   - **Environment**: Select **ALL THREE**:
     - ✅ Production
     - ✅ Preview

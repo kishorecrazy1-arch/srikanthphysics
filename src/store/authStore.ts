@@ -3,22 +3,26 @@ import { supabase } from '../lib/supabase';
 import { User } from '../types';
 import { sendSignupNotification } from '../services/signupService';
 import { sendSigninNotification } from '../services/signinService';
+import { checkUserApproval } from '../services/approvalCheckService';
 
 interface AuthState {
   user: User | null;
   loading: boolean;
   emailVerified: boolean | null; // null = unknown, true = verified, false = not verified
+  approved: boolean | null; // null = unknown, true = approved, false = not approved (from Google Sheet)
   signUp: (email: string, password: string, userData: Omit<User, 'id' | 'currentStreak' | 'longestStreak' | 'totalQuestions' | 'correctAnswers' | 'skillLevel' | 'createdAt'>) => Promise<void>;
   signIn: (email: string, password: string) => Promise<void>;
   signOut: () => Promise<void>;
   fetchUserProfile: () => Promise<void>;
   updateUserProfile: (updates: Partial<User>) => Promise<void>;
+  checkApproval: () => Promise<void>; // Check approval status from Google Sheet
 }
 
 export const useAuthStore = create<AuthState>((set, get) => ({
   user: null,
   loading: true,
   emailVerified: null,
+  approved: null,
 
   signUp: async (email, password, userData) => {
     // Include user data in metadata for trigger function
@@ -118,10 +122,21 @@ export const useAuthStore = create<AuthState>((set, get) => ({
     
     await get().fetchUserProfile();
     
-    // Send sign-in notification to srikanthsacademyforphysics@gmail.com
-    // This happens in the background and doesn't block sign-in
+    // Check approval status from Google Sheet via n8n
     const user = get().user;
-    if (user && data.user) {
+    if (user) {
+      // Check approval status
+      const approvalResult = await checkUserApproval({
+        email: user.email,
+        name: user.name,
+        userId: user.id,
+        mobile: user.phoneNumber,
+      });
+      
+      set({ approved: approvalResult.approved });
+      
+      // Send sign-in notification to srikanthsacademyforphysics@gmail.com
+      // This happens in the background and doesn't block sign-in
       sendSigninNotification({
         name: user.name,
         email: user.email,
@@ -132,7 +147,16 @@ export const useAuthStore = create<AuthState>((set, get) => ({
         // Don't throw - sign-in should succeed even if notification fails
       });
     } else if (data.user) {
-      // If user profile not loaded yet, send with auth data
+      // If user profile not loaded yet, check with auth data
+      const approvalResult = await checkUserApproval({
+        email: email,
+        name: data.user.user_metadata?.name || email.split('@')[0],
+        userId: data.user.id,
+      });
+      
+      set({ approved: approvalResult.approved });
+      
+      // Send sign-in notification
       sendSigninNotification({
         name: data.user.user_metadata?.name || email.split('@')[0],
         email: email,
@@ -147,7 +171,29 @@ export const useAuthStore = create<AuthState>((set, get) => ({
   signOut: async () => {
     const { error } = await supabase.auth.signOut();
     if (error) throw error;
-    set({ user: null, emailVerified: null });
+    set({ user: null, emailVerified: null, approved: null });
+  },
+
+  checkApproval: async () => {
+    const user = get().user;
+    if (!user) {
+      set({ approved: null });
+      return;
+    }
+
+    try {
+      const approvalResult = await checkUserApproval({
+        email: user.email,
+        name: user.name,
+        userId: user.id,
+        mobile: user.phoneNumber,
+      });
+      
+      set({ approved: approvalResult.approved });
+    } catch (error) {
+      console.error('Error checking approval:', error);
+      // Don't update approval status on error
+    }
   },
 
   fetchUserProfile: async () => {
@@ -194,14 +240,17 @@ export const useAuthStore = create<AuthState>((set, get) => ({
           },
           loading: false,
         });
+        
+        // Check approval status after profile is loaded
+        get().checkApproval();
       } else {
         // No profile found - user not authenticated or profile doesn't exist
-        set({ user: null, loading: false });
+        set({ user: null, loading: false, approved: null });
       }
     } catch (error) {
       console.error('Error fetching profile:', error);
       // Always clear loading state, even on error or timeout
-      set({ user: null, loading: false, emailVerified: null });
+      set({ user: null, loading: false, emailVerified: null, approved: null });
     }
   },
 
@@ -238,7 +287,7 @@ supabase.auth.onAuthStateChange((event) => {
     if (event === 'SIGNED_IN') {
       useAuthStore.getState().fetchUserProfile();
     } else if (event === 'SIGNED_OUT') {
-      useAuthStore.setState({ user: null });
+      useAuthStore.setState({ user: null, approved: null });
     }
 });
 
@@ -248,13 +297,13 @@ supabase.auth.onAuthStateChange((event) => {
     // Set a timeout to ensure loading doesn't hang forever
     const timeoutId = setTimeout(() => {
       console.warn('Auth check taking too long, clearing loading state');
-      useAuthStore.setState({ loading: false, user: null, emailVerified: null });
+      useAuthStore.setState({ loading: false, user: null, emailVerified: null, approved: null });
     }, 10000); // 10 second timeout
 
     await useAuthStore.getState().fetchUserProfile();
     clearTimeout(timeoutId);
   } catch (error) {
     console.error('Initial auth check failed:', error);
-    useAuthStore.setState({ loading: false, user: null, emailVerified: null });
+    useAuthStore.setState({ loading: false, user: null, emailVerified: null, approved: null });
   }
 })();

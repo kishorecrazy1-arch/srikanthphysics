@@ -36,6 +36,7 @@ import { ApproveSubscription } from './pages/ApproveSubscription';
 import { Layout } from './components/Layout';
 import { ProtectedRoute } from './components/ProtectedRoute';
 import { Chatbot } from './components/Chatbot';
+import { FloatingRAGWidget } from './components/AITutor/FloatingRAGWidget';
 
 function App() {
   return (
@@ -212,6 +213,9 @@ function App() {
           }
         />
       </Routes>
+      
+      {/* Floating RAG Widget - Appears on all pages */}
+      <FloatingRAGWidget />
     </BrowserRouter>
   );
 }

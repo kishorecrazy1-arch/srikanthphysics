@@ -19,7 +19,7 @@
    - Click **"Workflows"** → **"Add Workflow"**
 
 2. **Name your workflow**
-   - Name: `AP Physics Demo Leads`
+   - Name: `Demo Booking Leads` (or your product name)
    - Description: `Captures demo form submissions and sends to Google Sheets`
 
 ---
@@ -33,7 +33,7 @@
 
 2. **Configure Webhook**
    - **HTTP Method:** `POST`
-   - **Path:** `ap-physics-demo`
+   - **Path:** `demo-booking` (or your custom path)
    - **Response Mode:** `Respond to Webhook`
    - **Response Code:** `200`
    - **Response Body:** Select `JSON`
@@ -47,8 +47,28 @@
 
 3. **Get Webhook URL**
    - Click **"Execute Node"** (or save workflow)
-   - Copy the **Webhook URL** (looks like: `https://your-n8n.com/webhook/ap-physics-demo`)
+   - Copy the **Webhook URL** (looks like: `https://your-n8n.com/webhook/demo-booking`)
    - **This is your `VITE_N8N_WEBHOOK_URL`** - add it to `.env`!
+
+---
+
+## 📋 Step 2.5: Add Product Configuration (Optional)
+
+Add a **Set** node after the Webhook to configure product-specific variables:
+
+1. **Add Set node**
+   - Click **"+"** after Webhook node
+   - Search for **"Set"** → Select **"Set"**
+
+2. **Configure Product Variables**
+   Add these fields (adjust values for your product):
+   - **productName**: `Your Product Name`
+   - **productEmail**: `support@yourproduct.com`
+   - **productPhone**: `+1-555-0100`
+   - **teamEmail**: `team@yourproduct.com`
+   - **productWebsite**: `https://yourproduct.com`
+
+   These variables will be available in subsequent nodes and email templates.
 
 ---
 

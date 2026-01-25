@@ -134,7 +134,7 @@ export function CustomerSupportChat() {
       setTimeout(() => {
         const botMessage: Message = {
           type: 'bot',
-          text: "Great! I'll help you connect with Srikanth Sir. Let me take you to our demo booking page where you can schedule a free session with him. 🎓",
+          text: "Great! I'll help you connect with Srikanth Sir. Let me take you to our demo booking page where you can schedule a free session with him. 🎓\n\nYou can also contact Srikanth Sir directly:\n📞 Phone: +91 9492937716\n📧 Email: srikanthsacademyforphysics@gmail.com",
           timestamp: new Date()
         };
         setMessages(prev => [...prev, botMessage]);

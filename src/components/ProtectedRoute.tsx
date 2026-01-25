@@ -1,10 +1,10 @@
 import { Navigate } from 'react-router-dom';
 import { useAuthStore } from '../store/authStore';
-import { PaymentRequired } from '../pages/PaymentRequired';
+import { ApprovalRequired } from '../pages/ApprovalRequired';
 import { EmailConfirmationRequired } from '../pages/EmailConfirmationRequired';
 
 export function ProtectedRoute({ children }: { children: React.ReactNode }) {
-  const { user, loading, emailVerified } = useAuthStore();
+  const { user, loading, emailVerified, approved } = useAuthStore();
 
   // Check for test mode - bypasses all subscription checks
   const testMode = typeof window !== 'undefined' && localStorage.getItem('testMode') === 'true';
@@ -35,17 +35,24 @@ export function ProtectedRoute({ children }: { children: React.ReactNode }) {
     return <EmailConfirmationRequired />;
   }
 
-  // Only check payment if email is confirmed
-  // Check if user has paid subscription
-  const hasActiveSubscription = user.subscriptionStatus === 'paid' || 
-    (user.subscriptionStatus === 'trial' && 
-     user.subscriptionExpiresAt && 
-     new Date(user.subscriptionExpiresAt) > new Date());
-
-  // If user doesn't have active subscription, show payment required page
-  if (!hasActiveSubscription) {
-    return <PaymentRequired />;
+  // Check approval status from Google Sheet (via n8n)
+  // approved can be: null (checking), true (approved), false (not approved)
+  if (approved === false) {
+    return <ApprovalRequired />;
   }
 
+  // If approval status is still being checked (null), show loading
+  if (approved === null && emailVerified === true) {
+    return (
+      <div className="min-h-screen flex items-center justify-center bg-gradient-to-br from-blue-50 to-cyan-50">
+        <div className="text-center">
+          <div className="inline-block animate-spin rounded-full h-12 w-12 border-4 border-blue-500 border-t-transparent"></div>
+          <p className="mt-4 text-gray-600">Checking approval status...</p>
+        </div>
+      </div>
+    );
+  }
+
+  // User is approved (approved === true) and email is confirmed
   return <>{children}</>;
 }

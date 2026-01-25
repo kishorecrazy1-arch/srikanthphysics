@@ -3,7 +3,7 @@
 ## Steps to Get the Webhook URL
 
 1. **Open Your n8n Workflow**
-   - Go to: https://manasapadavala.app.n8n.cloud/workflow/Mbd8YfxUlm5NnRwV
+   - Go to: https://manasapadavala.app.n8n.cloud/workflow/XmafvLhS28STAmPo
    - Make sure the workflow is **Active** (toggle should be ON/green)
 
 2. **Click on the "Webhook - Receive Form Data" Node**
@@ -53,7 +53,7 @@ https://manasapadavala.app.n8n.cloud/webhook/demo-leads
 
 **Format 2:**
 ```
-https://manasapadavala.app.n8n.cloud/webhook/Mbd8YfxUlm5NnRwV/demo-leads
+https://manasapadavala.app.n8n.cloud/webhook/XmafvLhS28STAmPo/demo-booking
 ```
 
 **Format 3:**

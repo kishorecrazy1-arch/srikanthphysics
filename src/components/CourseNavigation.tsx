@@ -1,6 +1,6 @@
 import { useState } from 'react';
 import { useNavigate } from 'react-router-dom';
-import { Info, GraduationCap, Sparkles, HeadphonesIcon, ChevronDown } from 'lucide-react';
+import { Info, GraduationCap, Sparkles, HeadphonesIcon, ChevronDown, Brain } from 'lucide-react';
 import { Logo } from './Logo';
 
 export function CourseNavigation() {
@@ -11,7 +11,8 @@ export function CourseNavigation() {
   const mainTabs = [
     { id: 'about', label: 'About', icon: Info, path: '#about' },
     { id: 'success', label: 'Success Stories', icon: Sparkles, path: '#success' },
-    { id: 'support', label: 'Support', icon: HeadphonesIcon, path: '#support' }
+    { id: 'support', label: 'Support', icon: HeadphonesIcon, path: '#support' },
+    { id: 'ai-tutor', label: 'AI Physics Tutor (FREE)', icon: Brain, path: '/ai-tutor.html' }
   ];
 
   const courses = [
@@ -61,7 +62,7 @@ export function CourseNavigation() {
                   href={tab.path}
                   className="flex items-center gap-2 px-4 py-2 rounded-lg text-gray-700 hover:bg-white hover:text-blue-600 transition-all font-medium"
                 >
-                  {tab.id !== 'about' && <tab.icon className="w-4 h-4" />}
+                  <tab.icon className="w-4 h-4" />
                   <span>{tab.label}</span>
                 </a>
               ))}
@@ -129,8 +130,8 @@ export function CourseNavigation() {
                 href={tab.path}
                 className="flex flex-col items-center gap-1 text-gray-600 hover:text-blue-600"
               >
-                {tab.id !== 'about' && <tab.icon className="w-5 h-5" />}
-                <span>{tab.label}</span>
+                <tab.icon className="w-5 h-5" />
+                <span className="text-center">{tab.label}</span>
               </a>
             ))}
           </div>

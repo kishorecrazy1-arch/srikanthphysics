@@ -32,7 +32,11 @@ Add these to your `.env` file:
 
 ```env
 # n8n Webhook URL (Required)
-VITE_N8N_WEBHOOK_URL=https://your-n8n-instance.com/webhook/ap-physics-demo
+VITE_N8N_WEBHOOK_URL=https://your-n8n-instance.com/webhook/demo-booking
+
+# Product Source Identifier (Optional - defaults to 'demo-booking')
+# Use this to identify which product/service the demo is for
+VITE_PRODUCT_SOURCE=your-product-name
 
 # Calendly Integration (Optional)
 VITE_CALENDLY_URL=https://calendly.com/your-username/demo-session
@@ -63,7 +67,7 @@ VITE_RECAPTCHA_SITE_KEY=your-recaptcha-site-key
 
 ```json
 {
-  "source": "ap-physics-demo",
+  "source": "your-product-name",
   "timestamp": "2024-12-07T12:00:00.000Z",
   "name": "John Doe",
   "email": "john@example.com",
@@ -75,11 +79,13 @@ VITE_RECAPTCHA_SITE_KEY=your-recaptcha-site-key
   "utm": {
     "source": "google",
     "medium": "cpc",
-    "campaign": "ap-physics-2024"
+    "campaign": "your-product-2024"
   },
   "referrer": "https://google.com"
 }
 ```
+
+**Note:** The `source` field will use `VITE_PRODUCT_SOURCE` from your `.env` file, or default to `"demo-booking"` if not set.
 
 ---
 
@@ -137,8 +143,18 @@ VITE_RECAPTCHA_SITE_KEY=your-recaptcha-site-key
 ### Step 1: Create Webhook Node
 1. Add **Webhook** node
 2. Set method to **POST**
-3. Set path to: `ap-physics-demo`
+3. Set path to: `demo-booking` (or your custom path)
 4. Enable **Respond** with 200 JSON: `{ "received": true }`
+
+### Step 1.5: Configure Product Variables (Optional)
+Add a **Set** node after the Webhook to configure product-specific information:
+- `productName`: Your product/service name
+- `productEmail`: Support email address
+- `productPhone`: Support phone number
+- `teamEmail`: Email for team notifications
+- `productWebsite`: Your website URL
+
+These variables will be used in email templates.
 
 ### Step 2: Normalize Data (Optional)
 Add **Function** node to normalize:

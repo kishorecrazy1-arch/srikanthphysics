@@ -2,6 +2,7 @@ import { useNavigate } from 'react-router-dom';
 import { Flame, Target, Clock, CheckCircle, TrendingUp, BookOpen, ArrowRight } from 'lucide-react';
 import { useAuthStore } from '../store/authStore';
 import { useQuizStore } from '../store/quizStore';
+import { RAGChatbot } from '../components/AITutor/RAGChatbot';
 
 export function Dashboard() {
   const navigate = useNavigate();
@@ -209,6 +210,16 @@ export function Dashboard() {
           <p className="text-3xl font-bold text-orange-600">{user.longestStreak} days</p>
         </div>
       </div>
+
+      <section className="ai-tutor-section">
+        <div className="bg-white rounded-2xl shadow-lg p-8">
+          <h2 className="text-2xl font-bold text-gray-800 mb-4">🤖 AI Physics Tutor (RAG-Powered)</h2>
+          <p className="text-gray-600 mb-6">
+            Ask me anything about AP Physics or NCERT curriculum! Powered by NCERT knowledge base and advanced AI.
+          </p>
+          <RAGChatbot />
+        </div>
+      </section>
     </div>
   );
 }
