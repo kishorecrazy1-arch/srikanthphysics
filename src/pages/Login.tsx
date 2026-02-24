@@ -68,12 +68,18 @@ export function Login() {
         provider: 'google',
         options: {
           redirectTo: `${window.location.origin}/dashboard`,
+          queryParams: {
+            access_type: 'offline',
+            prompt: 'consent',
+          },
         },
       });
       if (error) throw error;
     } catch (err: any) {
       if (err.message?.includes('provider is not enabled') || err.error_code === 'validation_failed') {
         setError('Google sign-in is not enabled in Supabase. Please enable it in Supabase Dashboard → Authentication → Providers → Google. For detailed instructions, see QUICK_FIX_GOOGLE_SIGNIN.md. You can also use email sign-in instead.');
+      } else if (err.message?.includes('Failed to fetch') || err.message?.includes('DNS') || err.message?.includes('NXDOMAIN')) {
+        setError('Supabase connection error: The Supabase project may be paused or the URL is incorrect. Please check your Supabase project status at https://supabase.com/dashboard. You can use email sign-in instead.');
       } else {
       setError(err.message || 'Failed to sign in with Google');
       }

@@ -27,6 +27,7 @@ import NEETPhysics from './pages/NEETPhysics';
 import { APPhysicsMechanics } from './pages/APPhysicsMechanics';
 import { APPhysicsEM } from './pages/APPhysicsEM';
 import { APPhysics2 } from './pages/APPhysics2';
+import { FoundationCourse } from './pages/FoundationCourse';
 import { AdminGeneratePracticeBank } from './pages/AdminGeneratePracticeBank';
 import { Demo } from './pages/Demo';
 import { DemoSuccess } from './pages/DemoSuccess';
@@ -47,6 +48,7 @@ function App() {
         <Route path="/" element={<SrikanthLanding />} />
         <Route path="/old-landing" element={<Landing />} />
         <Route path="/course/:courseId" element={<CourseDetails />} />
+        <Route path="/course/foundation" element={<FoundationCourse />} />
         <Route path="/course/ap-physics-2" element={<APPhysics2 />} />
         <Route path="/course/ap-physics-mechanics" element={<APPhysicsMechanics />} />
         <Route path="/course/ap-physics-em" element={<APPhysicsEM />} />

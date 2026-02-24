@@ -8,6 +8,11 @@ export function CourseDetails() {
   const { courseId } = useParams();
   const [expandedSubtopic, setExpandedSubtopic] = useState<string | null>(null);
 
+  if (courseId === 'foundation') {
+    navigate('/course/foundation');
+    return null;
+  }
+
   if (courseId === 'igcse') {
     navigate('/course/igcse');
     return null;

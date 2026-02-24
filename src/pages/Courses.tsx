@@ -6,7 +6,8 @@ export function Courses() {
   const navigate = useNavigate();
 
   const courses = [
-    { id: 'ap-physics', label: 'AP Physics', icon: '⚡', description: 'Master algebra-based mechanics & waves for college credit', color: 'from-blue-600 to-cyan-500' },
+    { id: 'foundation', label: 'Foundation Course', icon: '🏗️', description: 'Complete physics fundamentals from basics to advanced topics - 13 comprehensive units', color: 'from-orange-600 to-amber-500' },
+    { id: 'ap-physics', label: 'AP Physics 1', icon: '⚡', description: 'Master algebra-based mechanics & waves for college credit', color: 'from-blue-600 to-cyan-500' },
     { id: 'ap-physics-2', label: 'AP Physics 2', icon: '🔬', description: 'Advanced algebra-based physics covering thermodynamics, fluids, and more', color: 'from-purple-600 to-pink-500' },
     { id: 'ap-physics-mechanics', label: 'AP Physics C: Mechanics', icon: '📐', description: 'Calculus-based mechanics for engineering-focused students', color: 'from-indigo-600 to-purple-500' },
     { id: 'ap-physics-em', label: 'AP Physics C: E&M', icon: '⚡', description: 'Electricity and magnetism with calculus-based problem solving', color: 'from-blue-600 to-indigo-500' },

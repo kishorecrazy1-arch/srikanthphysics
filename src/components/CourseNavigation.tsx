@@ -16,7 +16,8 @@ export function CourseNavigation() {
   ];
 
   const courses = [
-    { id: 'ap-physics', label: 'AP Physics', icon: '⚡' },
+    { id: 'foundation', label: 'Foundation Course', icon: '🏗️' },
+    { id: 'ap-physics', label: 'AP Physics 1', icon: '⚡' },
     { id: 'ap-physics-2', label: 'AP Physics 2', icon: '🔬' },
     { id: 'ap-physics-mechanics', label: 'AP Physics C: Mechanics', icon: '📐' },
     { id: 'ap-physics-em', label: 'AP Physics C: E&M', icon: '⚡' },
@@ -113,7 +114,7 @@ export function CourseNavigation() {
                 onClick={() => navigate('/demo')}
                 className="px-6 py-2 bg-gradient-to-r from-blue-800 to-blue-600 text-white rounded-lg font-semibold hover:opacity-90 transition-opacity shadow-lg"
               >
-                Get Started
+                Register
               </button>
             </div>
           </div>

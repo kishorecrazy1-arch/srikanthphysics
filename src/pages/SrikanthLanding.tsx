@@ -8,11 +8,40 @@ import {
 import { Logo } from '../components/Logo';
 import { useEffect, useState } from 'react';
 import { CourseNavigation } from '../components/CourseNavigation';
+import { PhotoCarousel } from '../components/PhotoCarousel';
 // import { RAGChatbot } from '../components/AITutor/RAGChatbot'; // Hidden - RAG section removed from landing page
 
 export function SrikanthLanding() {
   const navigate = useNavigate();
   const [activeTestimonial, setActiveTestimonial] = useState(0);
+
+  // Carousel images - Add your actual images here
+  const carouselImages = [
+    {
+      src: '/media/srikanth sir photo.PNG',
+      alt: 'Srikanth Sir - Physics Expert',
+      title: 'Expert Guidance',
+      description: 'Learn from Srikanth Sir with years of teaching experience'
+    },
+    {
+      src: '/media/images/student-success-1.jpg',
+      alt: 'Student Success Stories',
+      title: 'Success Stories',
+      description: 'Join thousands of students achieving their goals'
+    },
+    {
+      src: '/media/images/classroom-1.jpg',
+      alt: 'Interactive Learning',
+      title: 'Interactive Learning',
+      description: 'AI-powered platform for personalized learning'
+    },
+    {
+      src: '/media/images/results-1.jpg',
+      alt: 'Top Results',
+      title: 'Top Results',
+      description: 'Achieve perfect scores with our comprehensive courses'
+    }
+  ];
 
   useEffect(() => {
     const timer = setInterval(() => {
@@ -104,82 +133,12 @@ export function SrikanthLanding() {
 
             <div className="hidden lg:block relative">
               <div className="relative w-full h-[600px]">
-                <svg className="w-full h-full" viewBox="0 0 500 600" fill="none" xmlns="http://www.w3.org/2000/svg">
-                  <defs>
-                    <filter id="glow">
-                      <feGaussianBlur stdDeviation="3.5" result="coloredBlur"/>
-                      <feMerge>
-                        <feMergeNode in="coloredBlur"/>
-                        <feMergeNode in="SourceGraphic"/>
-                      </feMerge>
-                    </filter>
-                    <linearGradient id="brainGradient" x1="0%" y1="0%" x2="100%" y2="100%">
-                      <stop offset="0%" style={{ stopColor: '#60a5fa', stopOpacity: 1 }} />
-                      <stop offset="100%" style={{ stopColor: '#a78bfa', stopOpacity: 1 }} />
-                    </linearGradient>
-                  </defs>
-
-                  <g className="animate-float-slow">
-                    <circle cx="250" cy="300" r="150" fill="url(#brainGradient)" opacity="0.1" />
-                    <circle cx="250" cy="300" r="130" fill="url(#brainGradient)" opacity="0.15" />
-                    <circle cx="250" cy="300" r="110" fill="url(#brainGradient)" opacity="0.2" />
-                  </g>
-
-                  <g className="animate-float" style={{ animationDelay: '0.5s' }}>
-                    <circle cx="250" cy="300" r="80" fill="rgba(96, 165, 250, 0.3)" filter="url(#glow)" />
-                  </g>
-
-                  <g>
-                    <circle cx="200" cy="150" r="8" fill="#fbbf24" filter="url(#glow)">
-                      <animate attributeName="r" values="8;12;8" dur="2s" repeatCount="indefinite" />
-                    </circle>
-                    <circle cx="300" cy="170" r="8" fill="#60a5fa" filter="url(#glow)">
-                      <animate attributeName="r" values="8;12;8" dur="2.5s" repeatCount="indefinite" />
-                    </circle>
-                    <circle cx="350" cy="280" r="8" fill="#10b981" filter="url(#glow)">
-                      <animate attributeName="r" values="8;12;8" dur="2.2s" repeatCount="indefinite" />
-                    </circle>
-                    <circle cx="320" cy="400" r="8" fill="#f59e0b" filter="url(#glow)">
-                      <animate attributeName="r" values="8;12;8" dur="2.8s" repeatCount="indefinite" />
-                    </circle>
-                    <circle cx="180" cy="420" r="8" fill="#a78bfa" filter="url(#glow)">
-                      <animate attributeName="r" values="8;12;8" dur="2.3s" repeatCount="indefinite" />
-                    </circle>
-                    <circle cx="150" cy="300" r="8" fill="#ec4899" filter="url(#glow)">
-                      <animate attributeName="r" values="8;12;8" dur="2.6s" repeatCount="indefinite" />
-                    </circle>
-                  </g>
-
-                  <g stroke="rgba(255,255,255,0.3)" strokeWidth="2">
-                    <line x1="200" y1="150" x2="250" y2="300">
-                      <animate attributeName="stroke-opacity" values="0.2;0.6;0.2" dur="3s" repeatCount="indefinite" />
-                    </line>
-                    <line x1="300" y1="170" x2="250" y2="300">
-                      <animate attributeName="stroke-opacity" values="0.2;0.6;0.2" dur="3.5s" repeatCount="indefinite" />
-                    </line>
-                    <line x1="350" y1="280" x2="250" y2="300">
-                      <animate attributeName="stroke-opacity" values="0.2;0.6;0.2" dur="3.2s" repeatCount="indefinite" />
-                    </line>
-                    <line x1="320" y1="400" x2="250" y2="300">
-                      <animate attributeName="stroke-opacity" values="0.2;0.6;0.2" dur="3.8s" repeatCount="indefinite" />
-                    </line>
-                    <line x1="180" y1="420" x2="250" y2="300">
-                      <animate attributeName="stroke-opacity" values="0.2;0.6;0.2" dur="3.3s" repeatCount="indefinite" />
-                    </line>
-                    <line x1="150" y1="300" x2="250" y2="300">
-                      <animate attributeName="stroke-opacity" values="0.2;0.6;0.2" dur="3.6s" repeatCount="indefinite" />
-                    </line>
-                  </g>
-
-                  <g className="animate-pulse-glow">
-                    <circle cx="250" cy="300" r="60" fill="rgba(59, 130, 246, 0.3)" />
-                    <path d="M 240 280 Q 250 290 260 280 Q 250 285 240 280" fill="white" opacity="0.9" />
-                    <circle cx="245" cy="285" r="2" fill="white" />
-                    <circle cx="255" cy="285" r="2" fill="white" />
-                    <path d="M 240 310 Q 250 305 260 310" stroke="white" strokeWidth="2" fill="none" opacity="0.9" />
-                    <ellipse cx="250" cy="300" rx="50" ry="55" stroke="rgba(255,255,255,0.5)" strokeWidth="2" fill="none" />
-                  </g>
-                </svg>
+                <PhotoCarousel 
+                  images={carouselImages}
+                  autoPlayInterval={4000}
+                  showDots={true}
+                  showArrows={true}
+                />
 
                 <div className="absolute top-8 right-8 text-white text-sm physics-formula opacity-60 animate-float">
                   F = ma
