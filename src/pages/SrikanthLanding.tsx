@@ -19,27 +19,19 @@ export function SrikanthLanding() {
   const carouselImages = [
     {
       src: '/media/srikanth sir photo.PNG',
-      alt: 'Srikanth Sir - Physics Expert',
-      title: 'Expert Guidance',
-      description: 'Learn from Srikanth Sir with years of teaching experience'
+      alt: 'Srikanth Sir - Physics Expert'
     },
     {
       src: '/media/images/student-success-1.jpg',
-      alt: 'Student Success Stories',
-      title: 'Success Stories',
-      description: 'Join thousands of students achieving their goals'
+      alt: 'Student Success Stories'
     },
     {
       src: '/media/images/classroom-1.jpg',
-      alt: 'Interactive Learning',
-      title: 'Interactive Learning',
-      description: 'AI-powered platform for personalized learning'
+      alt: 'Interactive Learning'
     },
     {
       src: '/media/images/results-1.jpg',
-      alt: 'Top Results',
-      title: 'Top Results',
-      description: 'Achieve perfect scores with our comprehensive courses'
+      alt: 'Top Results'
     }
   ];
 
