@@ -84,16 +84,6 @@ export function PhotoCarousel({
                 target.src = `https://via.placeholder.com/800x600/1e40af/ffffff?text=${encodeURIComponent(image.alt)}`;
               }}
             />
-            {(image.title || image.description) && (
-              <div className="absolute bottom-0 left-0 right-0 bg-gradient-to-t from-black/80 via-black/50 to-transparent p-6">
-                {image.title && (
-                  <h3 className="text-white text-xl font-bold mb-2">{image.title}</h3>
-                )}
-                {image.description && (
-                  <p className="text-white/90 text-sm">{image.description}</p>
-                )}
-              </div>
-            )}
           </div>
         ))}
       </div>
