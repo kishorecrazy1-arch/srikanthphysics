@@ -60,14 +60,19 @@ export function PhotoCarousel({
       onMouseEnter={() => setIsPaused(true)}
       onMouseLeave={() => setIsPaused(false)}
     >
-      {/* Image Container */}
-      <div className="relative w-full h-full">
+      {/* Image Container - Horizontal Row */}
+      <div 
+        className="flex h-full transition-transform duration-700 ease-in-out"
+        style={{ 
+          transform: `translateX(-${currentIndex * 100}%)`,
+          width: `${images.length * 100}%`
+        }}
+      >
         {images.map((image, index) => (
           <div
             key={index}
-            className={`absolute inset-0 transition-opacity duration-700 ease-in-out ${
-              index === currentIndex ? 'opacity-100 z-10' : 'opacity-0 z-0'
-            }`}
+            className="relative flex-shrink-0 w-full h-full"
+            style={{ width: `${100 / images.length}%` }}
           >
             <img
               src={image.src}
