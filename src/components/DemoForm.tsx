@@ -159,7 +159,7 @@ export function DemoForm({ showCalendly = false }: DemoFormProps) {
         <div>
           <label className="block text-sm font-semibold text-gray-700 mb-1">
             <GraduationCap className="inline w-4 h-4 mr-1" />
-            Grade (Optional)
+            Grade
           </label>
           <select
             value={formData.grade || ''}
@@ -181,7 +181,7 @@ export function DemoForm({ showCalendly = false }: DemoFormProps) {
         <div>
           <label className="block text-sm font-semibold text-gray-700 mb-1">
             <GraduationCap className="inline w-4 h-4 mr-1" />
-            Board/Curriculum (Optional)
+            Courses
           </label>
           <select
             value={formData.board || ''}
@@ -189,7 +189,8 @@ export function DemoForm({ showCalendly = false }: DemoFormProps) {
             className="w-full px-4 py-3 border-2 border-gray-300 rounded-xl focus:ring-2 focus:ring-blue-500 focus:border-blue-500 transition-colors"
             disabled={isSubmitting}
           >
-            <option value="">Select board/curriculum</option>
+            <option value="">Select course</option>
+            <option value="Foundation Course">Foundation Course</option>
             <option value="AP Physics">AP Physics</option>
             <option value="AP Chemistry">AP Chemistry</option>
             <option value="AP Mathematics">AP Mathematics</option>
@@ -214,7 +215,7 @@ export function DemoForm({ showCalendly = false }: DemoFormProps) {
         <div>
           <label className="block text-sm font-semibold text-gray-700 mb-1">
             <MapPin className="inline w-4 h-4 mr-1" />
-            City (Optional)
+            City
           </label>
           <input
             type="text"
@@ -229,7 +230,7 @@ export function DemoForm({ showCalendly = false }: DemoFormProps) {
         <div>
           <label className="block text-sm font-semibold text-gray-700 mb-1">
             <Globe className="inline w-4 h-4 mr-1" />
-            Country (Optional)
+            Country
           </label>
           <input
             type="text"

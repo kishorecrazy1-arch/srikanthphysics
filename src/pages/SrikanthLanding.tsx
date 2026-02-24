@@ -151,12 +151,6 @@ export function SrikanthLanding() {
                   τ = Iα
                 </div>
 
-                <div className="absolute bottom-0 left-0 right-0 text-center">
-                  <div className="bg-white bg-opacity-10 backdrop-blur-sm rounded-xl px-6 py-4 inline-block border border-white border-opacity-20">
-                    <p className="text-white text-lg font-bold mb-1">AI-Powered Physics Learning</p>
-                    <p className="text-blue-200 text-sm">Personalized. Adaptive. Effective.</p>
-                  </div>
-                </div>
               </div>
             </div>
           </div>
