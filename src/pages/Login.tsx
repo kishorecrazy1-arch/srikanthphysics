@@ -51,6 +51,8 @@ export function Login() {
       // Check if error is due to email not confirmed
       if (err.message?.includes('email') && (err.message?.includes('confirm') || err.message?.includes('verified'))) {
         setError('Please confirm your email address (srikanthsacademyforphysics@gmail.com) before signing in. Check your inbox for the confirmation email.');
+      } else if (err.message?.includes('Failed to fetch') || err.message?.includes('NetworkError') || err.message?.includes('fetch')) {
+        setError('Connection error: Unable to reach the server. Please check your internet connection and ensure Supabase is configured correctly. If the problem persists, contact support.');
       } else {
       setError(err.message || 'Failed to sign in');
       }

@@ -8,7 +8,7 @@ import {
 import { Logo } from '../components/Logo';
 import { useEffect, useState } from 'react';
 import { CourseNavigation } from '../components/CourseNavigation';
-import { RAGChatbot } from '../components/AITutor/RAGChatbot';
+// import { RAGChatbot } from '../components/AITutor/RAGChatbot'; // Hidden - RAG section removed from landing page
 
 export function SrikanthLanding() {
   const navigate = useNavigate();
@@ -346,28 +346,6 @@ export function SrikanthLanding() {
         </div>
       </section>
 
-      {/* AI Tutor Demo Section */}
-      <section className="py-20 bg-gradient-to-br from-gray-50 to-blue-50" id="ai-tutor">
-        <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
-          <div className="text-center mb-12">
-            <h2 className="text-4xl md:text-5xl font-bold text-gray-900 mb-4">
-              🤖 Try Our AI Physics Tutor
-            </h2>
-            <p className="text-xl text-gray-600 mb-4">
-              Ask any physics question - powered by complete NCERT curriculum
-            </p>
-            <div className="inline-block bg-gradient-to-r from-green-500 to-emerald-500 text-white px-6 py-2 rounded-full font-semibold shadow-lg">
-              100% FREE • No signup required
-            </div>
-          </div>
-          
-          <div className="max-w-4xl mx-auto">
-            <div className="bg-white rounded-2xl shadow-2xl overflow-hidden">
-              <RAGChatbot />
-            </div>
-          </div>
-        </div>
-      </section>
 
       <section className="py-20 bg-gradient-to-br from-blue-900 to-blue-700" id="about">
         <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
