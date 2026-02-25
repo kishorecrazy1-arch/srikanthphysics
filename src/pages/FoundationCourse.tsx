@@ -406,7 +406,7 @@ export function FoundationCourse() {
             <button
               onClick={() => {
                 localStorage.setItem('selectedCourse', 'foundation');
-                navigate('/signup');
+                navigate('/demo');
               }}
               className="px-8 py-4 bg-white text-orange-600 rounded-xl font-bold hover:bg-orange-50 transition-all flex items-center gap-2"
             >

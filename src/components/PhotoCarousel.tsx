@@ -77,7 +77,7 @@ export function PhotoCarousel({
             <img
               src={image.src}
               alt={image.alt}
-              className="w-full h-full object-cover"
+              className="w-full h-full object-cover object-top"
               onError={(e) => {
                 // Fallback to placeholder if image fails to load
                 const target = e.currentTarget;
@@ -93,14 +93,14 @@ export function PhotoCarousel({
         <>
           <button
             onClick={goToPrevious}
-            className="absolute left-4 top-1/2 -translate-y-1/2 z-20 bg-white/90 hover:bg-white text-gray-800 rounded-full p-2 shadow-lg transition-all hover:scale-110"
+            className="absolute left-4 top-1/2 -translate-y-1/2 z-20 bg-gray-700/80 hover:bg-gray-700 text-white rounded-full p-2 shadow-lg transition-all hover:scale-110"
             aria-label="Previous image"
           >
             <ChevronLeft className="w-6 h-6" />
           </button>
           <button
             onClick={goToNext}
-            className="absolute right-4 top-1/2 -translate-y-1/2 z-20 bg-white/90 hover:bg-white text-gray-800 rounded-full p-2 shadow-lg transition-all hover:scale-110"
+            className="absolute right-4 top-1/2 -translate-y-1/2 z-20 bg-gray-700/80 hover:bg-gray-700 text-white rounded-full p-2 shadow-lg transition-all hover:scale-110"
             aria-label="Next image"
           >
             <ChevronRight className="w-6 h-6" />
