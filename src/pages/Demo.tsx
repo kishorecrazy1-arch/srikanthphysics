@@ -36,42 +36,47 @@ export function Demo() {
           {/* Left Side: Watch 2-Min Success Video */}
           <div className="order-2 lg:order-1">
             <div className="bg-white rounded-2xl shadow-xl p-8 h-full flex flex-col">
-              <button
-                onClick={() => {
-                  // TODO: Add actual video link
-                  window.open('#', '_blank');
-                }}
-                className="bg-white rounded-2xl shadow-lg p-6 hover:shadow-xl transition-all text-left group border-2 border-gray-200 hover:border-purple-500 w-full h-full flex flex-col"
-              >
-                <div className="flex items-center gap-4 mb-4">
-                  <div className="w-16 h-16 bg-gradient-to-r from-purple-600 to-pink-500 rounded-xl flex items-center justify-center group-hover:scale-110 transition-transform flex-shrink-0">
-                    <Play className="w-8 h-8 text-white" />
-                  </div>
-                  <h3 className="text-2xl font-bold text-gray-900">Watch 2-Min Success Video</h3>
+              <div className="flex items-center gap-4 mb-4">
+                <div className="w-16 h-16 bg-gradient-to-r from-purple-600 to-pink-500 rounded-xl flex items-center justify-center flex-shrink-0">
+                  <Play className="w-8 h-8 text-white" />
                 </div>
-                <p className="text-gray-600 text-lg mb-6 flex-grow">
-                  See how our students achieved perfect scores and transformed their physics journey
-                </p>
-                <div className="mt-auto">
-                  <div className="bg-gradient-to-r from-purple-50 to-pink-50 rounded-xl p-4 border border-purple-200">
-                    <p className="text-sm text-purple-800 font-semibold mb-2">✨ What you'll learn:</p>
-                    <ul className="space-y-2 text-sm text-purple-700">
-                      <li className="flex items-center gap-2">
-                        <CheckCircle className="w-4 h-4 text-purple-600 flex-shrink-0" />
-                        <span>Real student success stories</span>
-                      </li>
-                      <li className="flex items-center gap-2">
-                        <CheckCircle className="w-4 h-4 text-purple-600 flex-shrink-0" />
-                        <span>How our platform works</span>
-                      </li>
-                      <li className="flex items-center gap-2">
-                        <CheckCircle className="w-4 h-4 text-purple-600 flex-shrink-0" />
-                        <span>Tips for exam success</span>
-                      </li>
-                    </ul>
-                  </div>
+                <h3 className="text-2xl font-bold text-gray-900">Watch 2-Min Success Video</h3>
+              </div>
+              <p className="text-gray-600 text-lg mb-6">
+                See how our students achieved perfect scores and transformed their physics journey
+              </p>
+              
+              {/* Video Player */}
+              <div className="mb-6 rounded-xl overflow-hidden bg-gray-900">
+                <video
+                  className="w-full h-auto"
+                  controls
+                  poster="/media/images/srikanth sir photo.PNG"
+                >
+                  <source src="/media/videos/success-video.mp4" type="video/mp4" />
+                  Your browser does not support the video tag.
+                </video>
+              </div>
+
+              <div className="mt-auto">
+                <div className="bg-gradient-to-r from-purple-50 to-pink-50 rounded-xl p-4 border border-purple-200">
+                  <p className="text-sm text-purple-800 font-semibold mb-2">✨ What you'll learn:</p>
+                  <ul className="space-y-2 text-sm text-purple-700">
+                    <li className="flex items-center gap-2">
+                      <CheckCircle className="w-4 h-4 text-purple-600 flex-shrink-0" />
+                      <span>Real student success stories</span>
+                    </li>
+                    <li className="flex items-center gap-2">
+                      <CheckCircle className="w-4 h-4 text-purple-600 flex-shrink-0" />
+                      <span>How our platform works</span>
+                    </li>
+                    <li className="flex items-center gap-2">
+                      <CheckCircle className="w-4 h-4 text-purple-600 flex-shrink-0" />
+                      <span>Tips for exam success</span>
+                    </li>
+                  </ul>
                 </div>
-              </button>
+              </div>
             </div>
           </div>
 

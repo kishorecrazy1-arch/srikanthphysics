@@ -606,13 +606,6 @@ export function CourseDetails() {
               className="px-8 py-4 bg-white text-blue-600 rounded-xl font-bold hover:bg-blue-50 transition-all flex items-center gap-2 shadow-lg hover:shadow-xl"
             >
               <Play className="w-5 h-5" />
-              Start Free Demo
-            </button>
-            <button
-              onClick={() => navigate('/demo')}
-              className="px-8 py-4 bg-white/10 backdrop-blur-sm border border-white/20 rounded-xl font-bold hover:bg-white/20 transition-all flex items-center gap-2"
-            >
-              <Play className="w-5 h-5" />
               Start Learning Now
             </button>
             <button className="px-8 py-4 bg-white/10 backdrop-blur-sm border border-white/20 rounded-xl font-bold hover:bg-white/20 transition-all flex items-center gap-2">

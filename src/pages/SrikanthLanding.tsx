@@ -8,7 +8,6 @@ import {
 import { Logo } from '../components/Logo';
 import { useEffect, useState } from 'react';
 import { CourseNavigation } from '../components/CourseNavigation';
-import { PhotoCarousel } from '../components/PhotoCarousel';
 // import { RAGChatbot } from '../components/AITutor/RAGChatbot'; // Hidden - RAG section removed from landing page
 
 export function SrikanthLanding() {
@@ -104,20 +103,82 @@ export function SrikanthLanding() {
             </div>
 
             <div className="hidden lg:block relative">
-              <div className="relative w-full h-[600px] bg-gradient-to-br from-slate-50 via-white to-blue-50 rounded-3xl overflow-hidden">
-                <PhotoCarousel
-                  images={[
-                    {
-                      src: '/media/srikanth%20sir%20photo.PNG',
-                      alt: 'Srikanth Padavala - Physics Mentor',
-                      title: 'Srikanth Padavala',
-                      description: 'M.Tech | 13+ Years Experience'
-                    }
-                  ]}
-                  autoPlayInterval={5000}
-                  showDots={true}
-                  showArrows={true}
-                />
+              <div className="relative w-full h-[600px] bg-gradient-to-br from-blue-900 via-blue-800 to-blue-600 rounded-3xl overflow-hidden flex items-center justify-center">
+                {/* Circular Radial Graphic with Concentric Rings */}
+                <div className="relative w-full h-full flex items-center justify-center">
+                  <svg className="w-full h-full" viewBox="0 0 500 500" xmlns="http://www.w3.org/2000/svg">
+                    <defs>
+                      <filter id="glow">
+                        <feGaussianBlur stdDeviation="3" result="coloredBlur"/>
+                        <feMerge>
+                          <feMergeNode in="coloredBlur"/>
+                          <feMergeNode in="SourceGraphic"/>
+                        </feMerge>
+                      </filter>
+                      <radialGradient id="ringGradient" cx="50%" cy="50%">
+                        <stop offset="0%" style={{ stopColor: 'rgba(59, 130, 246, 0.3)', stopOpacity: 1 }} />
+                        <stop offset="100%" style={{ stopColor: 'rgba(59, 130, 246, 0.1)', stopOpacity: 1 }} />
+                      </radialGradient>
+                    </defs>
+
+                    {/* Concentric Rings */}
+                    <circle cx="250" cy="250" r="200" fill="none" stroke="rgba(255, 255, 255, 0.1)" strokeWidth="2" />
+                    <circle cx="250" cy="250" r="150" fill="none" stroke="rgba(255, 255, 255, 0.15)" strokeWidth="2" />
+                    <circle cx="250" cy="250" r="100" fill="none" stroke="rgba(255, 255, 255, 0.2)" strokeWidth="2" />
+                    <circle cx="250" cy="250" r="50" fill="url(#ringGradient)" opacity="0.3" />
+
+                    {/* Colored Dots on Rings */}
+                    {/* Yellow dots */}
+                    <circle cx="250" cy="50" r="8" fill="#fbbf24" filter="url(#glow)" className="animate-float">
+                      <animate attributeName="r" values="8;12;8" dur="2s" repeatCount="indefinite" />
+                    </circle>
+                    <circle cx="450" cy="250" r="8" fill="#fbbf24" filter="url(#glow)" className="animate-float" style={{ animationDelay: '0.5s' }}>
+                      <animate attributeName="r" values="8;12;8" dur="2.5s" repeatCount="indefinite" />
+                    </circle>
+
+                    {/* Blue dots */}
+                    <circle cx="250" cy="450" r="8" fill="#60a5fa" filter="url(#glow)" className="animate-float" style={{ animationDelay: '1s' }}>
+                      <animate attributeName="r" values="8;12;8" dur="2.2s" repeatCount="indefinite" />
+                    </circle>
+                    <circle cx="50" cy="250" r="8" fill="#60a5fa" filter="url(#glow)" className="animate-float" style={{ animationDelay: '1.5s' }}>
+                      <animate attributeName="r" values="8;12;8" dur="2.8s" repeatCount="indefinite" />
+                    </circle>
+
+                    {/* Green dots */}
+                    <circle cx="350" cy="150" r="8" fill="#10b981" filter="url(#glow)" className="animate-float" style={{ animationDelay: '0.3s' }}>
+                      <animate attributeName="r" values="8;12;8" dur="2.3s" repeatCount="indefinite" />
+                    </circle>
+                    <circle cx="150" cy="350" r="8" fill="#10b981" filter="url(#glow)" className="animate-float" style={{ animationDelay: '0.8s' }}>
+                      <animate attributeName="r" values="8;12;8" dur="2.6s" repeatCount="indefinite" />
+                    </circle>
+
+                    {/* Purple dots */}
+                    <circle cx="350" cy="350" r="8" fill="#a78bfa" filter="url(#glow)" className="animate-float" style={{ animationDelay: '0.6s' }}>
+                      <animate attributeName="r" values="8;12;8" dur="2.4s" repeatCount="indefinite" />
+                    </circle>
+                    <circle cx="150" cy="150" r="8" fill="#a78bfa" filter="url(#glow)" className="animate-float" style={{ animationDelay: '1.2s' }}>
+                      <animate attributeName="r" values="8;12;8" dur="2.7s" repeatCount="indefinite" />
+                    </circle>
+
+                    {/* Orange dots */}
+                    <circle cx="400" cy="200" r="8" fill="#f59e0b" filter="url(#glow)" className="animate-float" style={{ animationDelay: '0.4s' }}>
+                      <animate attributeName="r" values="8;12;8" dur="2.1s" repeatCount="indefinite" />
+                    </circle>
+                    <circle cx="100" cy="300" r="8" fill="#f59e0b" filter="url(#glow)" className="animate-float" style={{ animationDelay: '0.9s' }}>
+                      <animate attributeName="r" values="8;12;8" dur="2.9s" repeatCount="indefinite" />
+                    </circle>
+
+                    {/* Connecting lines from center to dots */}
+                    <line x1="250" y1="250" x2="250" y2="50" stroke="rgba(255, 255, 255, 0.1)" strokeWidth="1" />
+                    <line x1="250" y1="250" x2="450" y2="250" stroke="rgba(255, 255, 255, 0.1)" strokeWidth="1" />
+                    <line x1="250" y1="250" x2="250" y2="450" stroke="rgba(255, 255, 255, 0.1)" strokeWidth="1" />
+                    <line x1="250" y1="250" x2="50" y2="250" stroke="rgba(255, 255, 255, 0.1)" strokeWidth="1" />
+                    <line x1="250" y1="250" x2="350" y2="150" stroke="rgba(255, 255, 255, 0.1)" strokeWidth="1" />
+                    <line x1="250" y1="250" x2="150" y2="350" stroke="rgba(255, 255, 255, 0.1)" strokeWidth="1" />
+                    <line x1="250" y1="250" x2="350" y2="350" stroke="rgba(255, 255, 255, 0.1)" strokeWidth="1" />
+                    <line x1="250" y1="250" x2="150" y2="150" stroke="rgba(255, 255, 255, 0.1)" strokeWidth="1" />
+                  </svg>
+                </div>
                 
                 {/* Physics Formulas Overlay */}
                 <div className="absolute inset-0 pointer-events-none z-10">
