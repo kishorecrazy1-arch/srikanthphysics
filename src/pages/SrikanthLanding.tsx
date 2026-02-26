@@ -8,6 +8,7 @@ import {
 import { Logo } from '../components/Logo';
 import { useEffect, useState } from 'react';
 import { CourseNavigation } from '../components/CourseNavigation';
+import { PhotoCarousel } from '../components/PhotoCarousel';
 // import { RAGChatbot } from '../components/AITutor/RAGChatbot'; // Hidden - RAG section removed from landing page
 
 export function SrikanthLanding() {
@@ -55,49 +56,99 @@ export function SrikanthLanding() {
         </div>
 
         <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-8 relative z-10">
-          <div className="max-w-4xl mx-auto text-center">
-            <div className="inline-block mb-6">
-              <div className="flex items-center gap-3 bg-blue-600 px-6 py-3 rounded-xl text-white font-semibold shadow-lg">
-                <Star className="w-5 h-5 fill-yellow-400 text-yellow-400" />
-                <span className="text-base">Trusted by Students Worldwide</span>
+          <div className="grid lg:grid-cols-2 gap-12 items-center">
+            <div>
+              <div className="inline-block mb-6">
+                <div className="flex items-center gap-3 bg-blue-600 px-6 py-3 rounded-xl text-white font-semibold shadow-lg">
+                  <Star className="w-5 h-5 fill-yellow-400 text-yellow-400" />
+                  <span className="text-base">Trusted by Students Worldwide</span>
+                </div>
+              </div>
+
+              <h1 className="text-3xl md:text-5xl font-bold text-white mb-6 leading-tight">
+                Master Physics.<br/>
+                Ace Your Exam.<br/>
+                <span className="text-yellow-400">Transform Your Future.</span>
+              </h1>
+
+              <p className="text-lg text-blue-100 mb-4">
+                AI-powered daily practice for IIT JEE, NEET, and AP Physics students
+              </p>
+              <p className="text-base text-blue-200 mb-8">
+                Join students who achieved top ranks with Srikanth's Academy
+              </p>
+
+              <div className="flex flex-wrap gap-4 mb-8">
+                <button
+                  onClick={() => navigate('/courses')}
+                  className="px-8 py-4 bg-white text-blue-800 rounded-xl font-bold text-lg hover:bg-blue-50 transition-all shadow-2xl hover:shadow-3xl animate-pulse-glow flex items-center gap-2"
+                >
+                  Explore Courses <ArrowRight className="w-5 h-5" />
+                </button>
+                <button
+                  onClick={() => navigate('/demo')}
+                  className="px-8 py-4 bg-blue-700 bg-opacity-50 text-white rounded-xl font-bold text-lg hover:bg-opacity-70 transition-all border border-white border-opacity-30 flex items-center gap-2"
+                >
+                  <Play className="w-5 h-5" /> Start Your Journey
+                </button>
+              </div>
+
+              <div className="mt-8 flex items-center gap-2">
+                <div className="flex gap-1">
+                  {[1,2,3,4,5].map(i => (
+                    <Star key={i} className="w-5 h-5 fill-yellow-400 text-yellow-400" />
+                  ))}
+                </div>
+                <span className="text-white font-semibold">from students</span>
               </div>
             </div>
 
-            <h1 className="text-3xl md:text-5xl font-bold text-white mb-6 leading-tight">
-              Master Physics.<br/>
-              Ace Your Exam.<br/>
-              <span className="text-yellow-400">Transform Your Future.</span>
-            </h1>
+            <div className="hidden lg:block relative">
+              <div className="relative w-full h-[600px] bg-gradient-to-br from-slate-50 via-white to-blue-50 rounded-3xl overflow-hidden">
+                <PhotoCarousel
+                  images={[
+                    {
+                      src: '/media/srikanth%20sir%20photo.PNG',
+                      alt: 'Srikanth Padavala - Physics Mentor',
+                      title: 'Srikanth Padavala',
+                      description: 'M.Tech | 13+ Years Experience'
+                    }
+                  ]}
+                  autoPlayInterval={5000}
+                  showDots={true}
+                  showArrows={true}
+                />
+                
+                {/* Physics Formulas Overlay */}
+                <div className="absolute inset-0 pointer-events-none z-10">
+                  <div className="absolute top-8 right-8 text-white text-sm physics-formula opacity-60 animate-float drop-shadow-lg">
+                    F = ma
+                  </div>
+                  <div className="absolute bottom-32 left-8 text-white text-sm physics-formula opacity-60 animate-float drop-shadow-lg" style={{ animationDelay: '1s' }}>
+                    E = mc²
+                  </div>
+                  <div className="absolute top-24 left-12 text-white text-sm physics-formula opacity-60 animate-float drop-shadow-lg" style={{ animationDelay: '0.5s' }}>
+                    KE = ½mv²
+                  </div>
+                  <div className="absolute bottom-24 right-16 text-white text-sm physics-formula opacity-60 animate-float drop-shadow-lg" style={{ animationDelay: '1.5s' }}>
+                    P = mgh
+                  </div>
+                  <div className="absolute top-1/2 right-4 text-white text-xs physics-formula opacity-60 animate-float drop-shadow-lg" style={{ animationDelay: '0.8s' }}>
+                    v = u + at
+                  </div>
+                  <div className="absolute top-1/3 left-4 text-white text-xs physics-formula opacity-60 animate-float drop-shadow-lg" style={{ animationDelay: '1.2s' }}>
+                    τ = Iα
+                  </div>
+                </div>
 
-            <p className="text-lg text-blue-100 mb-4">
-              AI-powered daily practice for IIT JEE, NEET, and AP Physics students
-            </p>
-            <p className="text-base text-blue-200 mb-8">
-              Join students who achieved top ranks with Srikanth's Academy
-            </p>
-
-            <div className="flex flex-wrap justify-center gap-4 mb-8">
-              <button
-                onClick={() => navigate('/courses')}
-                className="px-8 py-4 bg-white text-blue-800 rounded-xl font-bold text-lg hover:bg-blue-50 transition-all shadow-2xl hover:shadow-3xl animate-pulse-glow flex items-center gap-2"
-              >
-                Explore Courses <ArrowRight className="w-5 h-5" />
-              </button>
-              <button
-                onClick={() => navigate('/demo')}
-                className="px-8 py-4 bg-blue-700 bg-opacity-50 text-white rounded-xl font-bold text-lg hover:bg-opacity-70 transition-all border border-white border-opacity-30 flex items-center gap-2"
-              >
-                <Play className="w-5 h-5" /> Start Your Journey
-              </button>
-            </div>
-
-            <div className="mt-8 flex items-center justify-center gap-2">
-              <div className="flex gap-1">
-                {[1,2,3,4,5].map(i => (
-                  <Star key={i} className="w-5 h-5 fill-yellow-400 text-yellow-400" />
-                ))}
+                {/* AI-Powered Physics Learning Box */}
+                <div className="absolute bottom-0 left-0 right-0 text-center p-4 z-20">
+                  <div className="bg-blue-900 bg-opacity-80 backdrop-blur-sm rounded-xl px-6 py-4 inline-block border border-white border-opacity-20">
+                    <p className="text-white text-lg font-bold mb-1">AI-Powered Physics Learning</p>
+                    <p className="text-blue-200 text-sm">Personalized. Adaptive. Effective.</p>
+                  </div>
+                </div>
               </div>
-              <span className="text-white font-semibold">from students</span>
             </div>
           </div>
         </div>
