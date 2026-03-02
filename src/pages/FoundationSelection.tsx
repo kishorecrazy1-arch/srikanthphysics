@@ -1,7 +1,7 @@
 import { useState } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { CourseNavigation } from '../components/CourseNavigation';
-import { Clock, Users, CheckCircle, ArrowRight } from 'lucide-react';
+import { Clock, Calendar, CheckCircle, ArrowRight } from 'lucide-react';
 
 interface FoundationBatch {
   id: string;
@@ -21,8 +21,8 @@ export function FoundationSelection() {
     {
       id: 'foundation-batch-1',
       name: 'Foundation Batch 1',
-      timing: '6:00 PM - 7:30 PM IST',
-      days: 'Monday, Wednesday, Friday',
+      timing: '6:00 PM IST',
+      days: 'Commencing from 16th March, 2026',
       duration: '3 months',
       seats: 'Limited seats available',
       status: 'available'
@@ -30,8 +30,8 @@ export function FoundationSelection() {
     {
       id: 'foundation-batch-2',
       name: 'Foundation Batch 2',
-      timing: '7:00 PM - 8:30 PM IST',
-      days: 'Tuesday, Thursday, Saturday',
+      timing: '7:00 PM IST',
+      days: 'Commencing from 6th April, 2026',
       duration: '3 months',
       seats: 'Limited seats available',
       status: 'available'
@@ -39,8 +39,8 @@ export function FoundationSelection() {
     {
       id: 'foundation-batch-3',
       name: 'Foundation Batch 3',
-      timing: '9:00 AM - 10:30 AM IST',
-      days: 'Saturday, Sunday',
+      timing: '6:00 PM IST',
+      days: 'Commencing from 20th April, 2026',
       duration: '3 months',
       seats: 'Limited seats available',
       status: 'available'
@@ -101,7 +101,7 @@ export function FoundationSelection() {
                 </div>
 
                 <div className="flex items-center gap-2 text-gray-600">
-                  <Users className="w-5 h-5 text-blue-600" />
+                  <Calendar className="w-5 h-5 text-blue-600" />
                   <span>{batch.days}</span>
                 </div>
 

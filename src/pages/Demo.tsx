@@ -13,9 +13,9 @@ export function Demo() {
   const getBatchInfo = (batchId: string | null) => {
     if (!batchId) return null;
     const batchMap: Record<string, { name: string; timing: string; days: string }> = {
-      'foundation-batch-1': { name: 'Foundation Batch 1', timing: '6:00 PM - 7:30 PM IST', days: 'Monday, Wednesday, Friday' },
-      'foundation-batch-2': { name: 'Foundation Batch 2', timing: '7:00 PM - 8:30 PM IST', days: 'Tuesday, Thursday, Saturday' },
-      'foundation-batch-3': { name: 'Foundation Batch 3', timing: '9:00 AM - 10:30 AM IST', days: 'Saturday, Sunday' }
+      'foundation-batch-1': { name: 'Foundation Batch 1', timing: '6:00 PM IST', days: 'Commencing from 16th March, 2026' },
+      'foundation-batch-2': { name: 'Foundation Batch 2', timing: '7:00 PM IST', days: 'Commencing from 6th April, 2026' },
+      'foundation-batch-3': { name: 'Foundation Batch 3', timing: '6:00 PM IST', days: 'Commencing from 20th April, 2026' }
     };
     return batchMap[batchId] || null;
   };
