@@ -205,27 +205,35 @@ export function DemoForm({ showCalendly = false }: DemoFormProps) {
             value={formData.board || ''}
             onChange={(e) => handleChange('board', e.target.value)}
             className="w-full px-4 py-3 border-2 border-gray-300 rounded-xl focus:ring-2 focus:ring-blue-500 focus:border-blue-500 transition-colors"
-            disabled={isSubmitting}
+            disabled={isSubmitting || !!selectedBatch}
           >
             <option value="">Select course</option>
-            <option value="Foundation Batch 1">Foundation Batch 1</option>
-            <option value="Foundation Batch 2">Foundation Batch 2</option>
-            <option value="Foundation Batch 3">Foundation Batch 3</option>
-            <option value="AP Physics">AP Physics</option>
-            <option value="AP Chemistry">AP Chemistry</option>
-            <option value="AP Mathematics">AP Mathematics</option>
-            <option value="AP Biology">AP Biology</option>
-            <option value="AP Computer Science">AP Computer Science</option>
-            <option value="CBSE">CBSE</option>
-            <option value="ICSE">ICSE</option>
-            <option value="IB">IB (International Baccalaureate)</option>
-            <option value="IGCSE">IGCSE</option>
-            <option value="State Board">State Board</option>
-            <option value="SAT">SAT</option>
-            <option value="ACT">ACT</option>
-            <option value="IIT JEE">IIT JEE</option>
-            <option value="NEET">NEET</option>
-            <option value="Other">Other</option>
+            {selectedBatch ? (
+              // If a batch is selected, only show that batch
+              <option value={getBatchLabel(selectedBatch)}>{getBatchLabel(selectedBatch)}</option>
+            ) : (
+              // Otherwise show all courses
+              <>
+                <option value="Foundation Batch 1">Foundation Batch 1</option>
+                <option value="Foundation Batch 2">Foundation Batch 2</option>
+                <option value="Foundation Batch 3">Foundation Batch 3</option>
+                <option value="AP Physics">AP Physics</option>
+                <option value="AP Chemistry">AP Chemistry</option>
+                <option value="AP Mathematics">AP Mathematics</option>
+                <option value="AP Biology">AP Biology</option>
+                <option value="AP Computer Science">AP Computer Science</option>
+                <option value="CBSE">CBSE</option>
+                <option value="ICSE">ICSE</option>
+                <option value="IB">IB (International Baccalaureate)</option>
+                <option value="IGCSE">IGCSE</option>
+                <option value="State Board">State Board</option>
+                <option value="SAT">SAT</option>
+                <option value="ACT">ACT</option>
+                <option value="IIT JEE">IIT JEE</option>
+                <option value="NEET">NEET</option>
+                <option value="Other">Other</option>
+              </>
+            )}
           </select>
         </div>
       </div>
