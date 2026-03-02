@@ -374,17 +374,12 @@ export function FoundationCourse() {
             <div key={topicIndex} className="relative">
               <div className={`relative rounded-3xl border-4 border-transparent bg-gradient-to-r ${data.color} p-1`}>
                 <div className="bg-slate-900 rounded-2xl p-8">
-                  <div className="flex items-center justify-center gap-4 mb-4">
+                  <div className="flex items-center justify-center gap-4 mb-8">
                     <div className={`w-16 h-16 ${data.iconBg} rounded-2xl flex items-center justify-center text-white shadow-xl`}>
                       {data.icon}
                     </div>
-                    <div className="flex-1">
-                      <div className="flex items-center justify-between mb-2">
-                        <div className="text-sm text-slate-400 font-semibold">UNIT {topicIndex + 1}</div>
-                        <div className="text-sm text-slate-400 font-semibold bg-slate-800 px-3 py-1 rounded-lg">
-                          {data.duration}
-                        </div>
-                      </div>
+                    <div>
+                      <div className="text-sm text-slate-400 font-semibold">UNIT {topicIndex + 1}</div>
                       <h3 className="text-3xl font-bold">{topicName}</h3>
                     </div>
                   </div>
@@ -461,7 +456,18 @@ export function FoundationCourse() {
               <Play className="w-5 h-5" />
               Start Learning Now
             </button>
-            <button className="px-8 py-4 bg-white/10 backdrop-blur-sm border border-white/20 rounded-xl font-bold hover:bg-white/20 transition-all flex items-center gap-2">
+            <button
+              onClick={() => {
+                // Download the foundation syllabus PDF
+                const link = document.createElement('a');
+                link.href = '/FOUNDATION SYLLABUS (2).pdf';
+                link.download = 'Foundation Course Syllabus.pdf';
+                document.body.appendChild(link);
+                link.click();
+                document.body.removeChild(link);
+              }}
+              className="px-8 py-4 bg-white/10 backdrop-blur-sm border border-white/20 rounded-xl font-bold hover:bg-white/20 transition-all flex items-center gap-2"
+            >
               <Download className="w-5 h-5" />
               Download Syllabus
             </button>
