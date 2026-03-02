@@ -1,12 +1,26 @@
 import { DemoForm } from '../components/DemoForm';
 import { CourseNavigation } from '../components/CourseNavigation';
-import { BookOpen, CheckCircle, ArrowLeft, Play } from 'lucide-react';
-import { useNavigate } from 'react-router-dom';
+import { BookOpen, CheckCircle, ArrowLeft, Play, Clock } from 'lucide-react';
+import { useNavigate, useLocation } from 'react-router-dom';
 import { useAuthStore } from '../store/authStore';
 
 export function Demo() {
   const navigate = useNavigate();
+  const location = useLocation();
   const { user } = useAuthStore();
+  const selectedBatch = (location.state as any)?.selectedBatch || localStorage.getItem('selectedBatch');
+  
+  const getBatchInfo = (batchId: string | null) => {
+    if (!batchId) return null;
+    const batchMap: Record<string, { name: string; timing: string; days: string }> = {
+      'foundation-batch-1': { name: 'Foundation Batch 1', timing: '6:00 PM - 7:30 PM IST', days: 'Monday, Wednesday, Friday' },
+      'foundation-batch-2': { name: 'Foundation Batch 2', timing: '7:00 PM - 8:30 PM IST', days: 'Tuesday, Thursday, Saturday' },
+      'foundation-batch-3': { name: 'Foundation Batch 3', timing: '9:00 AM - 10:30 AM IST', days: 'Saturday, Sunday' }
+    };
+    return batchMap[batchId] || null;
+  };
+
+  const batchInfo = getBatchInfo(selectedBatch);
 
   return (
     <div className="min-h-screen bg-gradient-to-br from-blue-50 via-white to-cyan-50">
@@ -88,6 +102,20 @@ export function Demo() {
                   <p className="text-gray-600">Fill in your details and we'll contact you</p>
                 </div>
               </div>
+
+              {batchInfo && (
+                <div className="mb-6 p-4 bg-gradient-to-r from-blue-50 to-cyan-50 rounded-xl border border-blue-200">
+                  <div className="flex items-center gap-2 mb-2">
+                    <CheckCircle className="w-5 h-5 text-blue-600" />
+                    <h3 className="font-bold text-gray-900">{batchInfo.name}</h3>
+                  </div>
+                  <div className="flex items-center gap-2 text-sm text-gray-700">
+                    <Clock className="w-4 h-4 text-blue-600" />
+                    <span>{batchInfo.timing}</span>
+                  </div>
+                  <p className="text-sm text-gray-600 mt-1">{batchInfo.days}</p>
+                </div>
+              )}
 
               <DemoForm showCalendly={false} />
 

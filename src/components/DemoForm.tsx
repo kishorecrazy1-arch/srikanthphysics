@@ -1,5 +1,5 @@
-import { useState } from 'react';
-import { useNavigate } from 'react-router-dom';
+import { useState, useEffect } from 'react';
+import { useNavigate, useLocation } from 'react-router-dom';
 import { User, Mail, Phone, GraduationCap, MapPin, Globe, CheckCircle, AlertCircle, Loader2 } from 'lucide-react';
 import { demoFormSchema, type DemoFormData } from '../lib/demoSchemas';
 import { submitDemoLead } from '../services/demoService';
@@ -10,16 +10,34 @@ interface DemoFormProps {
 
 export function DemoForm({ showCalendly = false }: DemoFormProps) {
   const navigate = useNavigate();
+  const location = useLocation();
+  const selectedBatch = (location.state as any)?.selectedBatch || localStorage.getItem('selectedBatch');
+  
   const [formData, setFormData] = useState<Partial<DemoFormData>>({
     name: '',
     email: '',
     phone: '',
     grade: '',
-    board: '',
+    board: selectedBatch ? getBatchLabel(selectedBatch) : '',
     city: '',
     country: '',
     agreeToContact: false,
   });
+
+  function getBatchLabel(batchId: string): string {
+    const batchMap: Record<string, string> = {
+      'foundation-batch-1': 'Foundation Batch 1',
+      'foundation-batch-2': 'Foundation Batch 2',
+      'foundation-batch-3': 'Foundation Batch 3'
+    };
+    return batchMap[batchId] || '';
+  }
+
+  useEffect(() => {
+    if (selectedBatch) {
+      setFormData(prev => ({ ...prev, board: getBatchLabel(selectedBatch) }));
+    }
+  }, [selectedBatch]);
   const [errors, setErrors] = useState<Partial<Record<keyof DemoFormData, string>>>({});
   const [isSubmitting, setIsSubmitting] = useState(false);
   const [submitError, setSubmitError] = useState<string | null>(null);
@@ -190,7 +208,9 @@ export function DemoForm({ showCalendly = false }: DemoFormProps) {
             disabled={isSubmitting}
           >
             <option value="">Select course</option>
-            <option value="Foundation Course">Foundation Course</option>
+            <option value="Foundation Batch 1">Foundation Batch 1</option>
+            <option value="Foundation Batch 2">Foundation Batch 2</option>
+            <option value="Foundation Batch 3">Foundation Batch 3</option>
             <option value="AP Physics">AP Physics</option>
             <option value="AP Chemistry">AP Chemistry</option>
             <option value="AP Mathematics">AP Mathematics</option>

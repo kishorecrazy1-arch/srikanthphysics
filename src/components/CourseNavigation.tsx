@@ -3,16 +3,24 @@ import { useNavigate } from 'react-router-dom';
 import { Info, GraduationCap, Sparkles, HeadphonesIcon, ChevronDown, Brain } from 'lucide-react';
 import { Logo } from './Logo';
 
+interface TabItem {
+  id: string;
+  label: string;
+  icon: any;
+  path: string;
+  onClick?: () => void;
+}
+
 export function CourseNavigation() {
   const navigate = useNavigate();
   const [activeTab, setActiveTab] = useState('ap-physics');
   const [showCoursesDropdown, setShowCoursesDropdown] = useState(false);
 
-  const mainTabs = [
+  const mainTabs: TabItem[] = [
     { id: 'about', label: 'About', icon: Info, path: '#about' },
     { id: 'success', label: 'Success Stories', icon: Sparkles, path: '#success' },
     { id: 'support', label: 'Support', icon: HeadphonesIcon, path: '#support' },
-    { id: 'ai-tutor', label: 'AI Physics Tutor (FREE)', icon: Brain, path: '/ai-tutor.html' }
+    { id: 'foundation', label: 'Foundation Course', icon: GraduationCap, path: '/foundation', onClick: () => navigate('/foundation') }
   ];
 
   const courses = [
@@ -46,14 +54,25 @@ export function CourseNavigation() {
             {/* Main Navigation Tabs */}
             <div className="hidden md:flex items-center gap-1">
               {mainTabs.map((tab) => (
-                <a
-                  key={tab.id}
-                  href={tab.path}
-                  className="flex items-center gap-2 px-4 py-2 rounded-lg text-gray-700 hover:bg-white hover:text-blue-600 transition-all font-medium"
-                >
-                  <tab.icon className="w-4 h-4" />
-                  <span>{tab.label}</span>
-                </a>
+                tab.onClick ? (
+                  <button
+                    key={tab.id}
+                    onClick={tab.onClick}
+                    className="flex items-center gap-2 px-4 py-2 rounded-lg text-gray-700 hover:bg-white hover:text-blue-600 transition-all font-medium"
+                  >
+                    <tab.icon className="w-4 h-4" />
+                    <span>{tab.label}</span>
+                  </button>
+                ) : (
+                  <a
+                    key={tab.id}
+                    href={tab.path}
+                    className="flex items-center gap-2 px-4 py-2 rounded-lg text-gray-700 hover:bg-white hover:text-blue-600 transition-all font-medium"
+                  >
+                    <tab.icon className="w-4 h-4" />
+                    <span>{tab.label}</span>
+                  </a>
+                )
               ))}
 
               {/* Courses Dropdown */}
@@ -99,7 +118,7 @@ export function CourseNavigation() {
                 Sign In
               </button>
               <button
-                onClick={() => navigate('/demo')}
+                onClick={() => navigate('/foundation')}
                 className="px-6 py-2 bg-gradient-to-r from-blue-800 to-blue-600 text-white rounded-lg font-semibold hover:opacity-90 transition-opacity shadow-lg"
               >
                 Register
@@ -114,14 +133,25 @@ export function CourseNavigation() {
         <div className="max-w-7xl mx-auto px-4 py-2">
           <div className="flex items-center justify-around text-xs">
             {mainTabs.map((tab) => (
-              <a
-                key={tab.id}
-                href={tab.path}
-                className="flex flex-col items-center gap-1 text-gray-600 hover:text-blue-600"
-              >
-                <tab.icon className="w-5 h-5" />
-                <span className="text-center">{tab.label}</span>
-              </a>
+              tab.onClick ? (
+                <button
+                  key={tab.id}
+                  onClick={tab.onClick}
+                  className="flex flex-col items-center gap-1 text-gray-600 hover:text-blue-600"
+                >
+                  <tab.icon className="w-5 h-5" />
+                  <span className="text-center">{tab.label}</span>
+                </button>
+              ) : (
+                <a
+                  key={tab.id}
+                  href={tab.path}
+                  className="flex flex-col items-center gap-1 text-gray-600 hover:text-blue-600"
+                >
+                  <tab.icon className="w-5 h-5" />
+                  <span className="text-center">{tab.label}</span>
+                </a>
+              )
             ))}
           </div>
         </div>

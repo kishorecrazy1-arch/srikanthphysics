@@ -28,6 +28,7 @@ import { APPhysicsMechanics } from './pages/APPhysicsMechanics';
 import { APPhysicsEM } from './pages/APPhysicsEM';
 import { APPhysics2 } from './pages/APPhysics2';
 import { FoundationCourse } from './pages/FoundationCourse';
+import { FoundationSelection } from './pages/FoundationSelection';
 import { AdminGeneratePracticeBank } from './pages/AdminGeneratePracticeBank';
 import { Demo } from './pages/Demo';
 import { DemoSuccess } from './pages/DemoSuccess';
@@ -59,6 +60,7 @@ function App() {
         <Route path="/login" element={<Login />} />
         <Route path="/signup" element={<Signup />} />
         <Route path="/reset-password" element={<ResetPassword />} />
+        <Route path="/foundation" element={<FoundationSelection />} />
         <Route path="/demo" element={<Demo />} />
         <Route path="/demo/success" element={<DemoSuccess />} />
         <Route path="/courses" element={<Courses />} />
