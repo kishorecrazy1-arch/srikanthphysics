@@ -118,7 +118,7 @@ export function CourseNavigation() {
                 Sign In
               </button>
               <button
-                onClick={() => navigate('/foundation')}
+                onClick={() => navigate('/demo')}
                 className="px-6 py-2 bg-gradient-to-r from-blue-800 to-blue-600 text-white rounded-lg font-semibold hover:opacity-90 transition-opacity shadow-lg"
               >
                 Register
