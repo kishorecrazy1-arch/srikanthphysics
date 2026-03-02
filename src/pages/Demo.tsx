@@ -23,11 +23,8 @@ export function Demo() {
         </button>
         {/* Header */}
         <div className="text-center mb-12">
-          <h1 className="text-4xl md:text-5xl font-bold text-gray-900 mb-4">
-            Book Your Free Demo
-          </h1>
           <p className="text-xl text-gray-600 max-w-2xl mx-auto">
-            Experience our AI-powered learning platform and see how we can help you score a perfect 5
+            Experience our AI-powered learning platform and see how we can help to get full score
           </p>
         </div>
 
@@ -80,7 +77,7 @@ export function Demo() {
             </div>
           </div>
 
-          {/* Right Side: Book Your Demo Form */}
+          {/* Right Side: Demo Form */}
           <div className="order-1 lg:order-2">
             <div className="bg-white rounded-2xl shadow-xl p-8">
               <div className="flex items-center gap-3 mb-6">
@@ -88,7 +85,6 @@ export function Demo() {
                   <BookOpen className="w-6 h-6 text-white" />
                 </div>
                 <div>
-                  <h2 className="text-2xl font-bold text-gray-900">Book Your Demo</h2>
                   <p className="text-gray-600">Fill in your details and we'll contact you</p>
                 </div>
               </div>

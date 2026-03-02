@@ -40,6 +40,10 @@ export async function submitDemoLead(
     return { success: true };
   }
 
+  // Log webhook URL for debugging
+  console.log('📤 Sending to webhook URL:', webhookUrl);
+  console.log('📦 Payload:', payload);
+
   // Try to send to webhook, but don't fail the form if webhook fails
   try {
     const response = await fetch(webhookUrl, {
@@ -50,14 +54,31 @@ export async function submitDemoLead(
       body: JSON.stringify(payload),
     });
 
+    const responseText = await response.text();
+    
+    if (!response.ok) {
+      console.error('❌ n8n webhook error:', responseText);
+      console.error('🔗 Webhook URL used:', webhookUrl);
+      // Still return success - webhook failure shouldn't block form submission
+      console.warn('⚠️ Form submitted successfully, but webhook call failed. Data:', payload);
+      return { success: true };
+    }
+
+    console.log('✅ Webhook call successful! Status:', response.status);
+    console.log('📥 Response:', responseText);
+    return { success: true };
+
     if (!response.ok) {
       const errorText = await response.text();
       console.error('n8n webhook error:', errorText);
+      console.error('Webhook URL used:', webhookUrl);
       // Still return success - webhook failure shouldn't block form submission
       console.warn('Form submitted successfully, but webhook call failed. Data:', payload);
       return { success: true };
     }
 
+    const responseData = await response.text();
+    console.log('✅ Webhook call successful! Response:', responseData);
     return { success: true };
   } catch (error) {
     console.error('Error calling webhook:', error);

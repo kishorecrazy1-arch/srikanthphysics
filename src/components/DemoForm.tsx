@@ -290,7 +290,7 @@ export function DemoForm({ showCalendly = false }: DemoFormProps) {
         ) : (
           <>
             <CheckCircle className="w-5 h-5" />
-            Book Free Demo
+            Submit
           </>
         )}
       </button>

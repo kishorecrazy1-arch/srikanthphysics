@@ -16,21 +16,9 @@ export function CourseNavigation() {
   ];
 
   const courses = [
-    { id: 'foundation', label: 'Foundation Course', icon: '🏗️' },
-    { id: 'ap-physics', label: 'AP Physics 1', icon: '⚡' },
-    { id: 'ap-physics-2', label: 'AP Physics 2', icon: '🔬' },
-    { id: 'ap-physics-mechanics', label: 'AP Physics C: Mechanics', icon: '📐' },
-    { id: 'ap-physics-em', label: 'AP Physics C: E&M', icon: '⚡' },
-    { id: 'ib-physics', label: 'IB Physics', icon: '🌍' },
-    { id: 'aqa-physics', label: 'AQA Physics', icon: '📚' },
-    { id: 'igcse', label: 'IGCSE', icon: '🎓' },
-    { id: 'sat', label: 'SAT Physics', icon: '📊' },
-    { id: 'iit-jee', label: 'IIT JEE', icon: '🎯' },
-    { id: 'neet', label: 'NEET', icon: '🏥' },
-    { id: 'imat', label: 'IMAT', icon: '🇮🇹' },
-    { id: 'cbse', label: 'CBSE', icon: '📖' },
-    { id: 'icse', label: 'ICSE', icon: '📘' },
-    { id: 'quantum', label: 'Quantum Mechanics', icon: '⚛️' }
+    { id: 'foundation-batch-1', label: 'Foundation Batch 1', icon: '🏗️' },
+    { id: 'foundation-batch-2', label: 'Foundation Batch 2', icon: '🏗️' },
+    { id: 'foundation-batch-3', label: 'Foundation Batch 3', icon: '🏗️' }
   ];
 
   const courseTabs = [
