@@ -1,11 +1,29 @@
-import { useState } from 'react';
+import { useState, useEffect } from 'react';
 import { useNavigate } from 'react-router-dom';
-import { Zap, Star, Users, BookOpen, TrendingUp, CheckCircle, Target, Award, Download, Play, Clock, Activity, GraduationCap, Brain, Calendar, Lightbulb, Waves, Gauge, Atom, Magnet } from 'lucide-react';
+import { Zap, Star, Users, BookOpen, TrendingUp, CheckCircle, Target, Award, Download, Play, Clock, Activity, GraduationCap, Brain, Calendar, Lightbulb, Waves, Gauge, Atom, Magnet, X } from 'lucide-react';
 import { CourseNavigation } from '../components/CourseNavigation';
 
 export function FoundationCourse() {
   const navigate = useNavigate();
   const [expandedSubtopic, setExpandedSubtopic] = useState<string | null>(null);
+  const [registrationData, setRegistrationData] = useState<{ name: string; email: string; batch: string; batchName: string } | null>(null);
+  const [showSuccessBanner, setShowSuccessBanner] = useState(false);
+
+  useEffect(() => {
+    // Check if user just registered for a foundation batch
+    const stored = sessionStorage.getItem('foundationRegistration');
+    if (stored) {
+      try {
+        const data = JSON.parse(stored);
+        setRegistrationData(data);
+        setShowSuccessBanner(true);
+        // Clear the registration data from sessionStorage after displaying
+        sessionStorage.removeItem('foundationRegistration');
+      } catch {
+        // Invalid data, ignore
+      }
+    }
+  }, []);
 
   const stats = [
     { label: 'Perfect Foundation', value: '100%', icon: <Star />, color: 'text-yellow-500' },
@@ -257,6 +275,36 @@ export function FoundationCourse() {
   return (
     <div className="min-h-screen bg-gradient-to-br from-blue-950 via-blue-900 to-slate-900 text-white">
       <CourseNavigation />
+
+      {/* Success Banner */}
+      {showSuccessBanner && registrationData && (
+        <div className="max-w-7xl mx-auto px-6 pt-6">
+          <div className="bg-gradient-to-r from-green-600 to-emerald-600 rounded-2xl p-6 shadow-xl border border-green-500/30 relative">
+            <button
+              onClick={() => setShowSuccessBanner(false)}
+              className="absolute top-4 right-4 text-white/80 hover:text-white transition-colors"
+            >
+              <X className="w-5 h-5" />
+            </button>
+            <div className="flex items-start gap-4">
+              <div className="flex-shrink-0">
+                <div className="w-12 h-12 bg-white/20 rounded-full flex items-center justify-center">
+                  <CheckCircle className="w-7 h-7 text-white" />
+                </div>
+              </div>
+              <div className="flex-1">
+                <h3 className="text-2xl font-bold mb-2">Registration Successful! 🎉</h3>
+                <p className="text-green-50 mb-1">
+                  Thanks, <span className="font-semibold">{registrationData.name}</span>! You've successfully registered for <span className="font-semibold">{registrationData.batchName}</span>.
+                </p>
+                <p className="text-green-100 text-sm">
+                  We'll reach out to <span className="font-semibold">{registrationData.email}</span> within 24 hours with further details.
+                </p>
+              </div>
+            </div>
+          </div>
+        </div>
+      )}
 
       <div className="relative overflow-hidden">
         <div className="absolute inset-0 bg-gradient-to-br from-blue-500/20 via-purple-500/10 to-orange-500/20" />

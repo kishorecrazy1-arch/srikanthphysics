@@ -79,14 +79,54 @@ export function DemoForm({ showCalendly = false }: DemoFormProps) {
       const result = await submitDemoLead(validation.data);
 
       if (result.success) {
-        // Store form data in sessionStorage for success page
-        sessionStorage.setItem('demoLead', JSON.stringify({
-          name: validation.data.name,
-          email: validation.data.email,
-        }));
-        
-        // Redirect to success page
-        navigate('/demo/success');
+        // Check if this is a foundation batch registration
+        // Check both selectedBatch and board field
+        const batchId = selectedBatch || (validation.data.board?.includes('Foundation Batch') ? validation.data.board : null);
+        const isFoundationBatch = batchId && (
+          batchId === 'foundation-batch-1' ||
+          batchId === 'foundation-batch-2' ||
+          batchId === 'foundation-batch-3' ||
+          validation.data.board === 'Foundation Batch 1' ||
+          validation.data.board === 'Foundation Batch 2' ||
+          validation.data.board === 'Foundation Batch 3'
+        );
+
+        if (isFoundationBatch) {
+          // Determine the batch ID and name
+          let finalBatchId = selectedBatch;
+          let finalBatchName = validation.data.board || '';
+          
+          if (!finalBatchId && validation.data.board) {
+            // Extract batch ID from board name
+            if (validation.data.board === 'Foundation Batch 1') finalBatchId = 'foundation-batch-1';
+            else if (validation.data.board === 'Foundation Batch 2') finalBatchId = 'foundation-batch-2';
+            else if (validation.data.board === 'Foundation Batch 3') finalBatchId = 'foundation-batch-3';
+          }
+          
+          if (finalBatchId) {
+            finalBatchName = getBatchLabel(finalBatchId);
+          }
+          
+          // Store form data and selected batch
+          sessionStorage.setItem('foundationRegistration', JSON.stringify({
+            name: validation.data.name,
+            email: validation.data.email,
+            batch: finalBatchId || 'foundation-batch-1',
+            batchName: finalBatchName
+          }));
+          
+          // Redirect to Foundation Course syllabus page
+          navigate('/course/foundation');
+        } else {
+          // Store form data in sessionStorage for success page
+          sessionStorage.setItem('demoLead', JSON.stringify({
+            name: validation.data.name,
+            email: validation.data.email,
+          }));
+          
+          // Redirect to success page
+          navigate('/demo/success');
+        }
       } else {
         setSubmitError(result.error || 'Failed to submit form. Please try again.');
       }
