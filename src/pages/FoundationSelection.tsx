@@ -21,27 +21,27 @@ export function FoundationSelection() {
     {
       id: 'foundation-batch-1',
       name: 'Foundation Batch 1',
-      timing: '6:00 PM IST',
+      timing: '7:00 PM IST',
       days: 'Commencing from 16th March, 2026',
-      duration: '3 months',
+      duration: '1 month',
       seats: 'Limited seats available',
       status: 'available'
     },
     {
       id: 'foundation-batch-2',
       name: 'Foundation Batch 2',
-      timing: '7:00 PM IST',
+      timing: '6:00 PM IST',
       days: 'Commencing from 6th April, 2026',
-      duration: '3 months',
+      duration: '1 month',
       seats: 'Limited seats available',
       status: 'available'
     },
     {
       id: 'foundation-batch-3',
       name: 'Foundation Batch 3',
-      timing: '6:00 PM IST',
+      timing: '7:00 PM IST',
       days: 'Commencing from 20th April, 2026',
-      duration: '3 months',
+      duration: '1 month',
       seats: 'Limited seats available',
       status: 'available'
     }

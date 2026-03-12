@@ -23,7 +23,7 @@ export function FoundationSelection() {
       name: 'Foundation Batch 1',
       timing: '7:00 PM IST',
       days: 'Commencing from 16th March, 2026',
-      duration: '3 months',
+      duration: '1 month',
       seats: 'Limited seats available',
       status: 'available'
     },
@@ -32,7 +32,7 @@ export function FoundationSelection() {
       name: 'Foundation Batch 2',
       timing: '6:00 PM IST',
       days: 'Commencing from 6th April, 2026',
-      duration: '3 months',
+      duration: '1 month',
       seats: 'Limited seats available',
       status: 'available'
     },
@@ -41,7 +41,7 @@ export function FoundationSelection() {
       name: 'Foundation Batch 3',
       timing: '7:00 PM IST',
       days: 'Commencing from 20th April, 2026',
-      duration: '3 months',
+      duration: '1 month',
       seats: 'Limited seats available',
       status: 'available'
     }

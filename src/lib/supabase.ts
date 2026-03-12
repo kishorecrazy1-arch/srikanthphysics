@@ -1,30 +1,18 @@
 import { createClient } from '@supabase/supabase-js';
 
-const supabaseUrl = import.meta.env.VITE_SUPABASE_URL;
-const supabaseAnonKey = import.meta.env.VITE_SUPABASE_ANON_KEY;
+const supabaseUrl = import.meta.env.VITE_SUPABASE_URL || '';
+const supabaseAnonKey = import.meta.env.VITE_SUPABASE_ANON_KEY || '';
 
-if (!supabaseUrl || !supabaseAnonKey) {
-  const missingVars = [];
-  if (!supabaseUrl) missingVars.push('VITE_SUPABASE_URL');
-  if (!supabaseAnonKey) missingVars.push('VITE_SUPABASE_ANON_KEY');
-  
-  console.error('❌ Missing Supabase environment variables:', missingVars.join(', '));
-  console.error('Please check your .env file and ensure all required variables are set.');
-  throw new Error(`Missing Supabase environment variables: ${missingVars.join(', ')}`);
+// Allow app to load locally without .env; Supabase calls will fail until vars are set
+if (!import.meta.env.VITE_SUPABASE_URL || !import.meta.env.VITE_SUPABASE_ANON_KEY) {
+  console.warn('⚠️ Missing VITE_SUPABASE_URL or VITE_SUPABASE_ANON_KEY. Add them to .env for auth and DB.');
 }
 
-// Validate URL format
-try {
-  new URL(supabaseUrl);
-} catch (urlError) {
-  console.error('❌ Invalid Supabase URL format:', supabaseUrl);
-  throw new Error(`Invalid Supabase URL format. Please check VITE_SUPABASE_URL in your .env file.`);
-}
+const hasValidConfig = supabaseUrl && supabaseAnonKey && (() => {
+  try { new URL(supabaseUrl); return true; } catch { return false; }
+})();
 
-console.log('✅ Supabase client initialized');
-console.log('📍 Supabase URL:', supabaseUrl.substring(0, 30) + '...');
-
-export const supabase = createClient(supabaseUrl, supabaseAnonKey, {
+const options = {
   auth: {
     persistSession: true,
     autoRefreshToken: true,
@@ -34,4 +22,8 @@ export const supabase = createClient(supabaseUrl, supabaseAnonKey, {
       eventsPerSecond: 10,
     },
   },
-});
+};
+
+export const supabase = hasValidConfig
+  ? createClient(supabaseUrl, supabaseAnonKey, options)
+  : createClient('https://placeholder.supabase.co', 'placeholder-anon-key', options);
