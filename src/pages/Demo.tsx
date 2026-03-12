@@ -42,29 +42,12 @@ export function Demo() {
           </p>
         </div>
 
-        {/* Register section first, then 2 min watch video below */}
-        <div className="space-y-8">
-          {/* 1. Register – form and foundation timings */}
+        {/* Left: Student info | Right: Foundation course + 2 min video */}
+        <div className="grid lg:grid-cols-2 gap-8">
+          {/* LEFT: Student information (Register form) */}
           <div className="bg-white rounded-2xl shadow-xl p-8">
             <h2 className="text-2xl font-bold text-gray-900 mb-2">Register</h2>
             <p className="text-gray-600 mb-6">Fill in your details and we'll contact you</p>
-
-            {/* First block: Foundation timings (Batch 1 timings summary) */}
-            {batchInfo && (
-              <div className="mb-6 p-4 bg-gradient-to-r from-blue-50 to-cyan-50 rounded-xl border border-blue-200">
-                <div className="flex items-center gap-2 mb-2">
-                  <CheckCircle className="w-5 h-5 text-blue-600" />
-                  <h3 className="font-bold text-gray-900">{batchInfo.name}</h3>
-                </div>
-                <div className="flex items-center gap-2 text-sm text-gray-700">
-                  <Clock className="w-4 h-4 text-blue-600" />
-                  <span>{batchInfo.timing}</span>
-                  <span className="text-gray-500">•</span>
-                  <span>Duration: {batchInfo.duration}</span>
-                </div>
-                <p className="text-sm text-gray-600 mt-1">{batchInfo.days}</p>
-              </div>
-            )}
 
             <DemoForm showCalendly={false} />
 
@@ -87,45 +70,67 @@ export function Demo() {
             </div>
           </div>
 
-          {/* 2. 2 min watch video – below Register */}
-          <div className="bg-white rounded-2xl shadow-xl p-8">
-            <div className="flex items-center gap-4 mb-4">
-              <div className="w-16 h-16 bg-gradient-to-r from-purple-600 to-pink-500 rounded-xl flex items-center justify-center flex-shrink-0">
-                <Play className="w-8 h-8 text-white" />
+          {/* RIGHT: Foundation course + 2 min video below */}
+          <div className="space-y-6">
+            {/* Foundation course info */}
+            {batchInfo && (
+              <div className="bg-white rounded-2xl shadow-xl p-8">
+                <h3 className="text-xl font-bold text-gray-900 mb-4">Foundation Course</h3>
+                <div className="p-4 bg-gradient-to-r from-blue-50 to-cyan-50 rounded-xl border border-blue-200">
+                  <div className="flex items-center gap-2 mb-2">
+                    <CheckCircle className="w-5 h-5 text-blue-600" />
+                    <h4 className="font-bold text-gray-900">{batchInfo.name}</h4>
+                  </div>
+                  <div className="flex items-center gap-2 text-sm text-gray-700">
+                    <Clock className="w-4 h-4 text-blue-600" />
+                    <span>{batchInfo.timing}</span>
+                    <span className="text-gray-500">•</span>
+                    <span>Duration: {batchInfo.duration}</span>
+                  </div>
+                  <p className="text-sm text-gray-600 mt-1">{batchInfo.days}</p>
+                </div>
               </div>
-              <h3 className="text-2xl font-bold text-gray-900">2 min watch video</h3>
+            )}
+
+            {/* 2 min watch video */}
+            <div className="bg-white rounded-2xl shadow-xl p-8">
+              <div className="flex items-center gap-4 mb-4">
+                <div className="w-16 h-16 bg-gradient-to-r from-purple-600 to-pink-500 rounded-xl flex items-center justify-center flex-shrink-0">
+                  <Play className="w-8 h-8 text-white" />
+                </div>
+                <h3 className="text-2xl font-bold text-gray-900">2 min watch video</h3>
+              </div>
+              <p className="text-gray-600 text-lg mb-6">
+                See how our students achieved perfect scores and transformed their physics journey
+              </p>
+              <div className="rounded-xl overflow-hidden bg-gray-900">
+                <video
+                  className="w-full h-auto"
+                  controls
+                  poster="/media/srikanth sir photo.PNG"
+                >
+                  <source src="/media/videos/success-video.mp4" type="video/mp4" />
+                  Your browser does not support the video tag.
+                </video>
+              </div>
+              <div className="mt-6 bg-gradient-to-r from-purple-50 to-pink-50 rounded-xl p-4 border border-purple-200">
+                <p className="text-sm text-purple-800 font-semibold mb-2">✨ What you'll learn:</p>
+                <ul className="space-y-2 text-sm text-purple-700">
+                  <li className="flex items-center gap-2">
+                    <CheckCircle className="w-4 h-4 text-purple-600 flex-shrink-0" />
+                    <span>Real student success stories</span>
+                  </li>
+                  <li className="flex items-center gap-2">
+                    <CheckCircle className="w-4 h-4 text-purple-600 flex-shrink-0" />
+                    <span>How our platform works</span>
+                  </li>
+                  <li className="flex items-center gap-2">
+                    <CheckCircle className="w-4 h-4 text-purple-600 flex-shrink-0" />
+                    <span>Tips for exam success</span>
+                  </li>
+                </ul>
+              </div>
             </div>
-            <p className="text-gray-600 text-lg mb-6">
-              See how our students achieved perfect scores and transformed their physics journey
-            </p>
-            <div className="rounded-xl overflow-hidden bg-gray-900">
-              <video
-                className="w-full h-auto"
-                controls
-                poster="/media/srikanth sir photo.PNG"
-              >
-                <source src="/media/videos/success-video.mp4" type="video/mp4" />
-                Your browser does not support the video tag.
-              </video>
-            </div>
-            <div className="mt-6 bg-gradient-to-r from-purple-50 to-pink-50 rounded-xl p-4 border border-purple-200">
-              <p className="text-sm text-purple-800 font-semibold mb-2">✨ What you'll learn:</p>
-              <ul className="space-y-2 text-sm text-purple-700">
-                <li className="flex items-center gap-2">
-                  <CheckCircle className="w-4 h-4 text-purple-600 flex-shrink-0" />
-                  <span>Real student success stories</span>
-                </li>
-                <li className="flex items-center gap-2">
-                  <CheckCircle className="w-4 h-4 text-purple-600 flex-shrink-0" />
-                  <span>How our platform works</span>
-                </li>
-                <li className="flex items-center gap-2">
-                  <CheckCircle className="w-4 h-4 text-purple-600 flex-shrink-0" />
-                  <span>Tips for exam success</span>
-                </li>
-              </ul>
-            </div>
-          </div>
         </div>
       </div>
     </div>

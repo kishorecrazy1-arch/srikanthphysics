@@ -3,6 +3,7 @@ import { useNavigate } from 'react-router-dom';
 import { CourseNavigation } from '../components/CourseNavigation';
 import { Clock, Calendar, CheckCircle, ArrowRight } from 'lucide-react';
 
+// Foundation batch selection – 1 month duration
 interface FoundationBatch {
   id: string;
   name: string;
