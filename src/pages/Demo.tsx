@@ -10,17 +10,11 @@ export function Demo() {
   const { user } = useAuthStore();
   const selectedBatch = (location.state as any)?.selectedBatch || localStorage.getItem('selectedBatch');
   
-  const getBatchInfo = (batchId: string | null) => {
-    if (!batchId) return null;
-    const batchMap: Record<string, { name: string; timing: string; days: string; duration: string }> = {
-      'foundation-batch-1': { name: 'Foundation Batch 1', timing: '7:00 PM IST', days: 'Commencing from 16th March, 2026', duration: '1 month' },
-      'foundation-batch-2': { name: 'Foundation Batch 2', timing: '6:00 PM IST', days: 'Commencing from 6th April, 2026', duration: '1 month' },
-      'foundation-batch-3': { name: 'Foundation Batch 3', timing: '7:00 PM IST', days: 'Commencing from 20th April, 2026', duration: '1 month' }
-    };
-    return batchMap[batchId] || null;
-  };
-
-  const batchInfo = getBatchInfo(selectedBatch);
+  const allBatches = [
+    { id: 'foundation-batch-1', name: 'Foundation Batch 1', timing: '7:00 PM IST', days: 'Commencing from 16th March, 2026', duration: '1 month' },
+    { id: 'foundation-batch-2', name: 'Foundation Batch 2', timing: '6:00 PM IST', days: 'Commencing from 6th April, 2026', duration: '1 month' },
+    { id: 'foundation-batch-3', name: 'Foundation Batch 3', timing: '7:00 PM IST', days: 'Commencing from 20th April, 2026', duration: '1 month' }
+  ];
 
   return (
     <div className="min-h-screen bg-gradient-to-br from-blue-50 via-white to-cyan-50">
@@ -72,25 +66,28 @@ export function Demo() {
 
           {/* RIGHT: Foundation course + 2 min video below */}
           <div className="space-y-6">
-            {/* Foundation course info */}
-            {batchInfo && (
-              <div className="bg-white rounded-2xl shadow-xl p-8">
-                <h3 className="text-xl font-bold text-gray-900 mb-4">Foundation Course</h3>
-                <div className="p-4 bg-gradient-to-r from-blue-50 to-cyan-50 rounded-xl border border-blue-200">
-                  <div className="flex items-center gap-2 mb-2">
-                    <CheckCircle className="w-5 h-5 text-blue-600" />
-                    <h4 className="font-bold text-gray-900">{batchInfo.name}</h4>
+            {/* Foundation course info - all 3 batches for students to compare timings */}
+            <div className="bg-white rounded-2xl shadow-xl p-8">
+              <h3 className="text-xl font-bold text-gray-900 mb-4">Foundation Course – Choose Your Batch</h3>
+              <p className="text-gray-600 text-sm mb-4">Check timings below and register for the batch that suits you</p>
+              <div className="space-y-3">
+                {allBatches.map((batch) => (
+                  <div key={batch.id} className="p-4 bg-gradient-to-r from-blue-50 to-cyan-50 rounded-xl border border-blue-200">
+                    <div className="flex items-center gap-2 mb-2">
+                      <CheckCircle className="w-5 h-5 text-blue-600 flex-shrink-0" />
+                      <h4 className="font-bold text-gray-900">{batch.name}</h4>
+                    </div>
+                    <div className="flex items-center gap-2 text-sm text-gray-700">
+                      <Clock className="w-4 h-4 text-blue-600 flex-shrink-0" />
+                      <span>{batch.timing}</span>
+                      <span className="text-gray-500">•</span>
+                      <span>Duration: {batch.duration}</span>
+                    </div>
+                    <p className="text-sm text-gray-600 mt-1">{batch.days}</p>
                   </div>
-                  <div className="flex items-center gap-2 text-sm text-gray-700">
-                    <Clock className="w-4 h-4 text-blue-600" />
-                    <span>{batchInfo.timing}</span>
-                    <span className="text-gray-500">•</span>
-                    <span>Duration: {batchInfo.duration}</span>
-                  </div>
-                  <p className="text-sm text-gray-600 mt-1">{batchInfo.days}</p>
-                </div>
+                ))}
               </div>
-            )}
+            </div>
 
             {/* 2 min watch video */}
             <div className="bg-white rounded-2xl shadow-xl p-8">
