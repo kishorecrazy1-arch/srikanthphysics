@@ -34,19 +34,26 @@ export function Login() {
 
     try {
       await signIn(email, password);
-      
-      // Check email verification status
-      const { emailVerified } = useAuthStore.getState();
-      
+
+      const { emailVerified, approvalRedirectTo, approvalCourseType, approvalUser } = useAuthStore.getState();
+
       if (emailVerified === false) {
-        // Email not confirmed - ProtectedRoute will show EmailConfirmationRequired page
-        // Navigate to dashboard, which will check and redirect if needed
         navigate('/dashboard');
         return;
       }
-      
-      // Email is confirmed - navigate to dashboard
-      navigate('/dashboard');
+
+      // Store course/redirect from n8n for Foundation dashboard (and correct redirect)
+      const redirectTo = approvalRedirectTo || '/dashboard';
+      if (approvalCourseType) {
+        try {
+          localStorage.setItem('courseType', approvalCourseType);
+          if (approvalUser?.course) localStorage.setItem('userCourse', approvalUser.course);
+          if (approvalUser?.batch) localStorage.setItem('userBatch', approvalUser.batch);
+          if (approvalUser?.name) localStorage.setItem('userName', approvalUser.name);
+          if (approvalUser?.email) localStorage.setItem('userEmail', approvalUser.email);
+        } catch (_) {}
+      }
+      navigate(redirectTo);
     } catch (err: any) {
       // Check if error is due to email not confirmed
       if (err.message?.includes('email') && (err.message?.includes('confirm') || err.message?.includes('verified'))) {

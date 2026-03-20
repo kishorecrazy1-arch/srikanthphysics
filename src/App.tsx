@@ -35,6 +35,7 @@ import { DemoSuccess } from './pages/DemoSuccess';
 import { Courses } from './pages/Courses';
 import { PaymentSuccess } from './pages/PaymentSuccess';
 import { ApproveSubscription } from './pages/ApproveSubscription';
+import FoundationDashboard from './pages/FoundationDashboard';
 import { Layout } from './components/Layout';
 import { ProtectedRoute } from './components/ProtectedRoute';
 import { Chatbot } from './components/Chatbot';
@@ -85,6 +86,14 @@ function App() {
               <Layout>
                 <Dashboard />
               </Layout>
+            </ProtectedRoute>
+          }
+        />
+        <Route
+          path="/foundation-dashboard"
+          element={
+            <ProtectedRoute>
+              <FoundationDashboard />
             </ProtectedRoute>
           }
         />

@@ -3,13 +3,17 @@ import { supabase } from '../lib/supabase';
 import { User } from '../types';
 import { sendSignupNotification } from '../services/signupService';
 import { sendSigninNotification } from '../services/signinService';
-import { checkUserApproval } from '../services/approvalCheckService';
+import { checkUserApproval, type ApprovalCheckUser } from '../services/approvalCheckService';
 
 interface AuthState {
   user: User | null;
   loading: boolean;
   emailVerified: boolean | null; // null = unknown, true = verified, false = not verified
   approved: boolean | null; // null = unknown, true = approved, false = not approved (from Google Sheet)
+  /** Set from n8n approval response: where to redirect (e.g. /dashboard or /foundation-dashboard) */
+  approvalRedirectTo: string | null;
+  approvalCourseType: string | null;
+  approvalUser: ApprovalCheckUser | null;
   signUp: (email: string, password: string, userData: Omit<User, 'id' | 'currentStreak' | 'longestStreak' | 'totalQuestions' | 'correctAnswers' | 'skillLevel' | 'createdAt'>) => Promise<void>;
   signIn: (email: string, password: string) => Promise<void>;
   signOut: () => Promise<void>;
@@ -23,6 +27,9 @@ export const useAuthStore = create<AuthState>((set, get) => ({
   loading: true,
   emailVerified: null,
   approved: null,
+  approvalRedirectTo: null,
+  approvalCourseType: null,
+  approvalUser: null,
 
   signUp: async (email, password, userData) => {
     // Include user data in metadata for trigger function
@@ -125,15 +132,19 @@ export const useAuthStore = create<AuthState>((set, get) => ({
     // Check approval status from Google Sheet via n8n
     const user = get().user;
     if (user) {
-      // Check approval status
       const approvalResult = await checkUserApproval({
         email: user.email,
         name: user.name,
         userId: user.id,
         mobile: user.phoneNumber,
       });
-      
-      set({ approved: approvalResult.approved });
+
+      set({
+        approved: approvalResult.approved,
+        approvalRedirectTo: approvalResult.redirectTo || null,
+        approvalCourseType: approvalResult.courseType || null,
+        approvalUser: approvalResult.user || null,
+      });
       
       // Send sign-in notification to srikanthsacademyforphysics@gmail.com
       // This happens in the background and doesn't block sign-in
@@ -147,14 +158,18 @@ export const useAuthStore = create<AuthState>((set, get) => ({
         // Don't throw - sign-in should succeed even if notification fails
       });
     } else if (data.user) {
-      // If user profile not loaded yet, check with auth data
       const approvalResult = await checkUserApproval({
         email: email,
         name: data.user.user_metadata?.name || email.split('@')[0],
         userId: data.user.id,
       });
-      
-      set({ approved: approvalResult.approved });
+
+      set({
+        approved: approvalResult.approved,
+        approvalRedirectTo: approvalResult.redirectTo || null,
+        approvalCourseType: approvalResult.courseType || null,
+        approvalUser: approvalResult.user || null,
+      });
       
       // Send sign-in notification
       sendSigninNotification({
@@ -171,7 +186,14 @@ export const useAuthStore = create<AuthState>((set, get) => ({
   signOut: async () => {
     const { error } = await supabase.auth.signOut();
     if (error) throw error;
-    set({ user: null, emailVerified: null, approved: null });
+    set({
+      user: null,
+      emailVerified: null,
+      approved: null,
+      approvalRedirectTo: null,
+      approvalCourseType: null,
+      approvalUser: null,
+    });
   },
 
   checkApproval: async () => {
@@ -188,11 +210,15 @@ export const useAuthStore = create<AuthState>((set, get) => ({
         userId: user.id,
         mobile: user.phoneNumber,
       });
-      
-      set({ approved: approvalResult.approved });
+
+      set({
+        approved: approvalResult.approved,
+        approvalRedirectTo: approvalResult.redirectTo || null,
+        approvalCourseType: approvalResult.courseType || null,
+        approvalUser: approvalResult.user || null,
+      });
     } catch (error) {
       console.error('Error checking approval:', error);
-      // Don't update approval status on error
     }
   },
 

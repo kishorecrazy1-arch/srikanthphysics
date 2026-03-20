@@ -1,10 +1,11 @@
-import { Navigate } from 'react-router-dom';
+import { Navigate, useLocation } from 'react-router-dom';
 import { useAuthStore } from '../store/authStore';
 import { ApprovalRequired } from '../pages/ApprovalRequired';
 import { EmailConfirmationRequired } from '../pages/EmailConfirmationRequired';
 
 export function ProtectedRoute({ children }: { children: React.ReactNode }) {
-  const { user, loading, emailVerified, approved } = useAuthStore();
+  const location = useLocation();
+  const { user, loading, emailVerified, approved, approvalRedirectTo, approvalCourseType, approvalUser } = useAuthStore();
 
   // Check for test mode - bypasses all subscription checks
   const testMode = typeof window !== 'undefined' && localStorage.getItem('testMode') === 'true';
@@ -54,5 +55,17 @@ export function ProtectedRoute({ children }: { children: React.ReactNode }) {
   }
 
   // User is approved (approved === true) and email is confirmed
+  // If n8n said redirect to foundation-dashboard but user landed on /dashboard (e.g. OAuth), redirect and set localStorage
+  if (approvalRedirectTo && approvalRedirectTo !== location.pathname) {
+    try {
+      localStorage.setItem('courseType', approvalCourseType || 'ap_physics');
+      if (approvalUser?.course) localStorage.setItem('userCourse', approvalUser.course);
+      if (approvalUser?.batch) localStorage.setItem('userBatch', approvalUser.batch);
+      if (approvalUser?.name) localStorage.setItem('userName', approvalUser.name);
+      if (approvalUser?.email) localStorage.setItem('userEmail', approvalUser.email);
+    } catch (_) {}
+    return <Navigate to={approvalRedirectTo} replace />;
+  }
+
   return <>{children}</>;
 }

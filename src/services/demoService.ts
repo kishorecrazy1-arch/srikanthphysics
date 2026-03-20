@@ -1,7 +1,8 @@
 import type { DemoFormData } from '../lib/demoSchemas';
 
 /**
- * Payload structure matching n8n webhook expectations
+ * Payload structure matching n8n webhook expectations.
+ * course/batch: so Srikanth Academy can identify e.g. Foundation Batch 1,2,3 or AP Physics in emails.
  */
 export interface DemoLeadPayload {
   name: string;
@@ -11,6 +12,8 @@ export interface DemoLeadPayload {
   board?: string;
   city?: string;
   country?: string;
+  /** Course or batch selected (e.g. "Foundation Batch 1", "AP Physics") — for email and sheet */
+  course?: string;
 }
 
 /**
@@ -31,6 +34,7 @@ export async function submitDemoLead(
     board: formData.board || undefined,
     city: formData.city || undefined,
     country: formData.country || undefined,
+    course: formData.board || undefined, // Course/batch (e.g. Foundation Batch 1, AP Physics) for email
   };
 
   // If webhook is not configured, still return success (webhook is optional)
@@ -66,19 +70,6 @@ export async function submitDemoLead(
 
     console.log('✅ Webhook call successful! Status:', response.status);
     console.log('📥 Response:', responseText);
-    return { success: true };
-
-    if (!response.ok) {
-      const errorText = await response.text();
-      console.error('n8n webhook error:', errorText);
-      console.error('Webhook URL used:', webhookUrl);
-      // Still return success - webhook failure shouldn't block form submission
-      console.warn('Form submitted successfully, but webhook call failed. Data:', payload);
-      return { success: true };
-    }
-
-    const responseData = await response.text();
-    console.log('✅ Webhook call successful! Response:', responseData);
     return { success: true };
   } catch (error) {
     console.error('Error calling webhook:', error);

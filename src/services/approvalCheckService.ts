@@ -9,9 +9,21 @@ export interface ApprovalCheckPayload {
   mobile?: string;
 }
 
+export interface ApprovalCheckUser {
+  name?: string;
+  email?: string;
+  mobile?: string;
+  userId?: string;
+  status?: string;
+  course?: string;
+  batch?: string;
+}
+
 export interface ApprovalCheckResponse {
   approved: boolean;
   redirectTo?: string;
+  courseType?: string;
+  user?: ApprovalCheckUser;
   message?: string;
 }
 
@@ -63,12 +75,14 @@ export async function checkUserApproval(
     }
 
     const data = await response.json();
-    
-    // n8n should return: { approved: true/false, redirectTo: "/dashboard" or "/approval-pending" }
+
+    // n8n returns: { approved, redirectTo, courseType, user: { name, email, mobile, userId, status, course, batch } }
     return {
       approved: data.approved === true,
       redirectTo: data.redirectTo || (data.approved ? '/dashboard' : '/approval-pending'),
-      message: data.message
+      courseType: data.courseType || 'ap_physics',
+      user: data.user,
+      message: data.message,
     };
   } catch (error) {
     console.error('Error calling approval check webhook:', error);
