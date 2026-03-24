@@ -82,11 +82,32 @@ export function Signup() {
 
     try {
       await signUp(formData.email, formData.password, formData);
-      
-      // After signup, send users to login to continue with sign-in flow
+
+      const { user, emailVerified, approvalRedirectTo, approvalCourseType, approvalUser } =
+        useAuthStore.getState();
+
+      if (user) {
+        if (emailVerified === false) {
+          navigate('/dashboard');
+          return;
+        }
+        const redirectTo = approvalRedirectTo || '/dashboard';
+        if (approvalCourseType) {
+          try {
+            localStorage.setItem('courseType', approvalCourseType);
+            if (approvalUser?.course) localStorage.setItem('userCourse', approvalUser.course);
+            if (approvalUser?.batch) localStorage.setItem('userBatch', approvalUser.batch);
+            if (approvalUser?.name) localStorage.setItem('userName', approvalUser.name);
+            if (approvalUser?.email) localStorage.setItem('userEmail', approvalUser.email);
+          } catch (_) {}
+        }
+        navigate(redirectTo);
+        return;
+      }
+
       navigate('/login', {
         state: {
-          message: 'Account created successfully. Please sign in to continue.',
+          message: 'Account created. Sign in with your email and password. Your details have been recorded.',
           email: formData.email,
         },
       });
@@ -111,7 +132,7 @@ export function Signup() {
       if (err.message?.includes('provider is not enabled') || err.error_code === 'validation_failed') {
         setError('Google sign-in is not enabled. Please use email sign-up or contact support.');
       } else {
-      setError(err.message || 'Failed to sign in with Google');
+        setError(err.message || 'Failed to sign in with Google');
       }
     }
   };
@@ -130,7 +151,7 @@ export function Signup() {
       if (err.message?.includes('provider is not enabled') || err.error_code === 'validation_failed') {
         setError('Apple sign-in is not enabled. Please use email sign-up or contact support.');
       } else {
-      setError(err.message || 'Failed to sign in with Apple');
+        setError(err.message || 'Failed to sign in with Apple');
       }
     }
   };

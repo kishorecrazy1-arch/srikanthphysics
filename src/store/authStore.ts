@@ -32,7 +32,6 @@ export const useAuthStore = create<AuthState>((set, get) => ({
   approvalUser: null,
 
   signUp: async (email, password, userData) => {
-    // Include user data in metadata for trigger function
     const { data: authData, error: authError } = await supabase.auth.signUp({
       email,
       password,
@@ -43,24 +42,33 @@ export const useAuthStore = create<AuthState>((set, get) => ({
           phone_number: userData.phoneNumber,
           grade: userData.grade,
           course_type: userData.courseType,
-        }
-      }
+        },
+      },
     });
 
     if (authError) throw authError;
     if (!authData.user) throw new Error('No user returned from signup');
 
-    // Try to sign in immediately after signup (no email confirmation required)
     const { error: signInError } = await supabase.auth.signInWithPassword({
       email,
       password,
     });
 
     if (signInError) {
-      // If sign-in fails, user might need to confirm email, but we'll still proceed
-      // The trigger will create the profile
       console.warn('Sign-in after signup failed:', signInError);
     }
+
+    // n8n → Google Sheet (and optional notifications); do not block on failure
+    sendSignupNotification({
+      name: userData.name,
+      email: userData.email,
+      countryCode: userData.countryCode,
+      phoneNumber: userData.phoneNumber,
+      grade: userData.grade,
+      courseType: userData.courseType,
+    }).catch(error => {
+      console.error('Failed to send signup notification:', error);
+    });
 
     // Try to insert profile if trigger didn't create it
     const { error: profileError } = await supabase
@@ -91,25 +99,13 @@ export const useAuthStore = create<AuthState>((set, get) => ({
       questions_correct: 0,
     }));
 
-    await supabase.from('topic_mastery').insert(masteryInserts);
+    const { error: masteryError } = await supabase.from('topic_mastery').insert(masteryInserts);
+    if (masteryError) {
+      console.warn('topic_mastery insert after signup:', masteryError);
+    }
 
-    // Send signup notification to srikanthsacademyforphysics@gmail.com
-    // This happens in the background and doesn't block signup
-    sendSignupNotification({
-      name: userData.name,
-      email: userData.email,
-      countryCode: userData.countryCode,
-      phoneNumber: userData.phoneNumber,
-      grade: userData.grade,
-      courseType: userData.courseType,
-    }).catch(error => {
-      console.error('Failed to send signup notification:', error);
-      // Don't throw - signup should succeed even if notification fails
-    });
-
-    // Fetch user profile if sign-in was successful
     if (!signInError) {
-    await get().fetchUserProfile();
+      await get().fetchUserProfile();
     }
   },
 
@@ -128,34 +124,16 @@ export const useAuthStore = create<AuthState>((set, get) => ({
     }
     
     await get().fetchUserProfile();
-    
-    // Check approval status from Google Sheet via n8n
+
     const user = get().user;
     if (user) {
-      const approvalResult = await checkUserApproval({
-        email: user.email,
-        name: user.name,
-        userId: user.id,
-        mobile: user.phoneNumber,
-      });
-
-      set({
-        approved: approvalResult.approved,
-        approvalRedirectTo: approvalResult.redirectTo || null,
-        approvalCourseType: approvalResult.courseType || null,
-        approvalUser: approvalResult.user || null,
-      });
-      
-      // Send sign-in notification to srikanthsacademyforphysics@gmail.com
-      // This happens in the background and doesn't block sign-in
       sendSigninNotification({
         name: user.name,
         email: user.email,
         userId: user.id,
-        lastSignIn: data.user.last_sign_in_at || undefined,
+        lastSignIn: data.user?.last_sign_in_at || undefined,
       }).catch(error => {
         console.error('Failed to send sign-in notification:', error);
-        // Don't throw - sign-in should succeed even if notification fails
       });
     } else if (data.user) {
       const approvalResult = await checkUserApproval({
@@ -266,9 +244,8 @@ export const useAuthStore = create<AuthState>((set, get) => ({
           },
           loading: false,
         });
-        
-        // Check approval status after profile is loaded
-        get().checkApproval();
+
+        await get().checkApproval();
       } else {
         // No profile found - user not authenticated or profile doesn't exist
         set({ user: null, loading: false, approved: null });

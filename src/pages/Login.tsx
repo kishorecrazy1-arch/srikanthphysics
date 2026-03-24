@@ -61,7 +61,7 @@ export function Login() {
       } else if (err.message?.includes('Failed to fetch') || err.message?.includes('NetworkError') || err.message?.includes('fetch')) {
         setError('Connection error: Unable to reach the server. Please check your internet connection and ensure Supabase is configured correctly. If the problem persists, contact support.');
       } else {
-      setError(err.message || 'Failed to sign in');
+        setError(err.message || 'Failed to sign in');
       }
     } finally {
       setLoading(false);
@@ -88,7 +88,7 @@ export function Login() {
       } else if (err.message?.includes('Failed to fetch') || err.message?.includes('DNS') || err.message?.includes('NXDOMAIN')) {
         setError('Supabase connection error: The Supabase project may be paused or the URL is incorrect. Please check your Supabase project status at https://supabase.com/dashboard. You can use email sign-in instead.');
       } else {
-      setError(err.message || 'Failed to sign in with Google');
+        setError(err.message || 'Failed to sign in with Google');
       }
     }
   };
@@ -107,7 +107,7 @@ export function Login() {
       if (err.message?.includes('provider is not enabled') || err.error_code === 'validation_failed') {
         setError('Apple sign-in is not enabled. Please use email sign-in or contact support.');
       } else {
-      setError(err.message || 'Failed to sign in with Apple');
+        setError(err.message || 'Failed to sign in with Apple');
       }
     }
   };

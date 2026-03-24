@@ -7,8 +7,14 @@ export function ProtectedRoute({ children }: { children: React.ReactNode }) {
   const location = useLocation();
   const { user, loading, emailVerified, approved, approvalRedirectTo, approvalCourseType, approvalUser } = useAuthStore();
 
-  // Check for test mode - bypasses all subscription checks
-  const testMode = typeof window !== 'undefined' && localStorage.getItem('testMode') === 'true';
+  // Dev only: bypass auth for UI preview (main.tsx sets this from ?testMode=1)
+  const testMode =
+    import.meta.env.DEV &&
+    typeof window !== 'undefined' &&
+    localStorage.getItem('testMode') === 'true';
+  if (testMode) {
+    return <>{children}</>;
+  }
 
   if (loading) {
     return (
@@ -21,14 +27,8 @@ export function ProtectedRoute({ children }: { children: React.ReactNode }) {
     );
   }
 
-  // Redirect to login if not authenticated
   if (!user) {
     return <Navigate to="/login" replace />;
-  }
-
-  // Test mode: Skip all checks and grant full access
-  if (testMode) {
-    return <>{children}</>;
   }
 
   // Check email confirmation first - if not verified, show email confirmation page
