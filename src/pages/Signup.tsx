@@ -83,8 +83,13 @@ export function Signup() {
     try {
       await signUp(formData.email, formData.password, formData);
       
-      // Navigate to demo page after successful signup
-      navigate('/demo');
+      // After signup, send users to login to continue with sign-in flow
+      navigate('/login', {
+        state: {
+          message: 'Account created successfully. Please sign in to continue.',
+          email: formData.email,
+        },
+      });
     } catch (err: any) {
       setError(err.message || 'Failed to create account');
     } finally {
