@@ -14,6 +14,8 @@ export interface DemoLeadPayload {
   country?: string;
   /** Course or batch selected (e.g. "Foundation Batch 1", "AP Physics") — for email and sheet */
   course?: string;
+  /** Alias for n8n workflows that read `courses` instead of `course` */
+  courses?: string;
   referrer?: string;
   timestamp?: string;
 }
@@ -38,6 +40,10 @@ export async function submitDemoLead(
     batch?: string;
   };
 
+  // Courses dropdown in DemoForm uses `board`; also accept `courses` / `course` / `batch`
+  const courseValue =
+    (fd.board || fd.courses || fd.course || fd.batch || '').trim() || undefined;
+
   const payload: DemoLeadPayload = {
     name: (fd.fullName || fd.name || '').trim(),
     email: (fd.emailAddress || fd.email || '').trim(),
@@ -46,8 +52,8 @@ export async function submitDemoLead(
     board: fd.board ? String(fd.board) : undefined,
     city: fd.city ? String(fd.city).trim() : undefined,
     country: fd.country ? String(fd.country).trim() : undefined,
-    course:
-      (fd.courses || fd.course || fd.batch || fd.board || '').trim() || undefined,
+    course: courseValue,
+    courses: courseValue,
     referrer: typeof window !== 'undefined' ? window.location.href : undefined,
     timestamp: new Date().toISOString(),
   };

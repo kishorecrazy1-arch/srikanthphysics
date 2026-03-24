@@ -7,8 +7,24 @@ export function ApprovalPending() {
   const navigate = useNavigate();
   const signOut = useAuthStore((s) => s.signOut);
 
-  const userName = useMemo(() => localStorage.getItem('userName') || 'Student', []);
-  const userCourse = useMemo(() => localStorage.getItem('userCourse') || 'Not assigned yet', []);
+  const { userName, userCourse } = useMemo(() => {
+    try {
+      const raw = localStorage.getItem('webhookUser');
+      if (raw) {
+        const w = JSON.parse(raw) as { name?: string; course?: string };
+        return {
+          userName: w.name || localStorage.getItem('userName') || 'Student',
+          userCourse: w.course || localStorage.getItem('userCourse') || 'Not assigned yet',
+        };
+      }
+    } catch {
+      /* ignore */
+    }
+    return {
+      userName: localStorage.getItem('userName') || 'Student',
+      userCourse: localStorage.getItem('userCourse') || 'Not assigned yet',
+    };
+  }, []);
 
   async function handleLogout() {
     try {
@@ -16,6 +32,7 @@ export function ApprovalPending() {
     } catch (_) {
       // Continue cleanup even if Supabase signout fails
     }
+    localStorage.removeItem('webhookUser');
     localStorage.removeItem('userName');
     localStorage.removeItem('userEmail');
     localStorage.removeItem('userCourse');

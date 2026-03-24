@@ -1,6 +1,5 @@
 import { Navigate, useLocation } from 'react-router-dom';
 import { useAuthStore } from '../store/authStore';
-import { ApprovalRequired } from '../pages/ApprovalRequired';
 import { EmailConfirmationRequired } from '../pages/EmailConfirmationRequired';
 
 export function ProtectedRoute({ children }: { children: React.ReactNode }) {
@@ -39,7 +38,7 @@ export function ProtectedRoute({ children }: { children: React.ReactNode }) {
   // Check approval status from Google Sheet (via n8n)
   // approved can be: null (checking), true (approved), false (not approved)
   if (approved === false) {
-    return <ApprovalRequired />;
+    return <Navigate to="/approval-pending" replace />;
   }
 
   // If approval status is still being checked (null), show loading

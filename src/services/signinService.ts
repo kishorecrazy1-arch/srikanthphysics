@@ -22,6 +22,17 @@ function getApprovalUrl(userId: string): string {
   return `${baseUrl}/approve-subscription?userId=${userId}`;
 }
 
+/** Avoid duplicate emails when sign-in triggers multiple notification calls in one burst */
+let lastSigninNotifyUserId = '';
+let lastSigninNotifyAt = 0;
+const SIGNIN_NOTIFY_DEDUP_MS = 10_000;
+
+/** Call on sign-out so the next login always sends a notification */
+export function resetSigninNotificationDedupe(): void {
+  lastSigninNotifyUserId = '';
+  lastSigninNotifyAt = 0;
+}
+
 /**
  * Send sign-in notification to n8n webhook
  * Note: Webhook is optional - sign-in will still succeed if webhook is not configured
@@ -34,6 +45,16 @@ export async function sendSigninNotification(
     lastSignIn?: string;
   }
 ): Promise<{ success: boolean; error?: string }> {
+  const now = Date.now();
+  if (
+    userData.userId === lastSigninNotifyUserId &&
+    now - lastSigninNotifyAt < SIGNIN_NOTIFY_DEDUP_MS
+  ) {
+    return { success: true };
+  }
+  lastSigninNotifyUserId = userData.userId;
+  lastSigninNotifyAt = now;
+
   const webhookUrl = import.meta.env.VITE_N8N_SIGNIN_WEBHOOK_URL || 
                      import.meta.env.VITE_N8N_WEBHOOK_URL;
 

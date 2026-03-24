@@ -35,24 +35,16 @@ export function Login() {
     try {
       await signIn(email, password);
 
-      const { emailVerified, approvalRedirectTo, approvalCourseType, approvalUser } = useAuthStore.getState();
+      const { emailVerified, approved, approvalRedirectTo } = useAuthStore.getState();
 
       if (emailVerified === false) {
         navigate('/dashboard');
         return;
       }
 
-      // Store course/redirect from n8n for Foundation dashboard (and correct redirect)
-      const redirectTo = approvalRedirectTo || '/dashboard';
-      if (approvalCourseType) {
-        try {
-          localStorage.setItem('courseType', approvalCourseType);
-          if (approvalUser?.course) localStorage.setItem('userCourse', approvalUser.course);
-          if (approvalUser?.batch) localStorage.setItem('userBatch', approvalUser.batch);
-          if (approvalUser?.name) localStorage.setItem('userName', approvalUser.name);
-          if (approvalUser?.email) localStorage.setItem('userEmail', approvalUser.email);
-        } catch (_) {}
-      }
+      // Use n8n signin-check response (Zustand), not stale localStorage
+      const redirectTo =
+        approved === true ? approvalRedirectTo || '/dashboard' : '/approval-pending';
       navigate(redirectTo);
     } catch (err: any) {
       // Check if error is due to email not confirmed

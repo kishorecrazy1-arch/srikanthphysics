@@ -100,24 +100,15 @@ export function Signup() {
     try {
       await signUp(formData.email, formData.password, formData);
 
-      const { user, emailVerified, approvalRedirectTo, approvalCourseType, approvalUser } =
-        useAuthStore.getState();
+      const { user, emailVerified, approved, approvalRedirectTo } = useAuthStore.getState();
 
       if (user) {
         if (emailVerified === false) {
           navigate('/dashboard');
           return;
         }
-        const redirectTo = approvalRedirectTo || '/dashboard';
-        if (approvalCourseType) {
-          try {
-            localStorage.setItem('courseType', approvalCourseType);
-            if (approvalUser?.course) localStorage.setItem('userCourse', approvalUser.course);
-            if (approvalUser?.batch) localStorage.setItem('userBatch', approvalUser.batch);
-            if (approvalUser?.name) localStorage.setItem('userName', approvalUser.name);
-            if (approvalUser?.email) localStorage.setItem('userEmail', approvalUser.email);
-          } catch (_) {}
-        }
+        const redirectTo =
+          approved === true ? approvalRedirectTo || '/dashboard' : '/approval-pending';
         navigate(redirectTo);
         return;
       }
