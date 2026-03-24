@@ -35,6 +35,7 @@ import { DemoSuccess } from './pages/DemoSuccess';
 import { Courses } from './pages/Courses';
 import { PaymentSuccess } from './pages/PaymentSuccess';
 import { ApproveSubscription } from './pages/ApproveSubscription';
+import { ApprovalPending } from './pages/ApprovalPending';
 import FoundationDashboard from './pages/FoundationDashboard';
 import { Layout } from './components/Layout';
 import { ProtectedRoute } from './components/ProtectedRoute';
@@ -60,6 +61,7 @@ function App() {
         <Route path="/course/neet" element={<NEETPhysics />} />
         <Route path="/login" element={<Login />} />
         <Route path="/signup" element={<Signup />} />
+        <Route path="/approval-pending" element={<ApprovalPending />} />
         <Route path="/reset-password" element={<ResetPassword />} />
         <Route path="/foundation" element={<FoundationSelection />} />
         <Route path="/demo" element={<Demo />} />
