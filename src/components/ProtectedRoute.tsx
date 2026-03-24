@@ -55,7 +55,12 @@ export function ProtectedRoute({ children }: { children: React.ReactNode }) {
 
   // User is approved (approved === true) and email is confirmed
   // If n8n said redirect to foundation-dashboard but user landed on /dashboard (e.g. OAuth), redirect and set localStorage
-  if (approvalRedirectTo && approvalRedirectTo !== location.pathname) {
+  // Allow sub-routes (e.g. /foundation-dashboard/practice) — only redirect when path is outside that destination tree
+  const onApprovalDestination =
+    !approvalRedirectTo ||
+    location.pathname === approvalRedirectTo ||
+    (approvalRedirectTo !== '/' && location.pathname.startsWith(`${approvalRedirectTo.replace(/\/$/, '')}/`));
+  if (approvalRedirectTo && !onApprovalDestination) {
     try {
       localStorage.setItem('courseType', approvalCourseType || 'ap_physics');
       if (approvalUser?.course) localStorage.setItem('userCourse', approvalUser.course);
