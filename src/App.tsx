@@ -37,6 +37,11 @@ import { PaymentSuccess } from './pages/PaymentSuccess';
 import { ApproveSubscription } from './pages/ApproveSubscription';
 import { ApprovalPending } from './pages/ApprovalPending';
 import FoundationDashboard from './pages/FoundationDashboard';
+import { FoundationDailyPractice } from './pages/FoundationDailyPractice';
+import { FoundationMotionSimulator } from './pages/FoundationMotionSimulator';
+import { FoundationGraphMastery } from './pages/FoundationGraphMastery';
+import { FoundationMockTest } from './pages/FoundationMockTest';
+import { FoundationAnalytics } from './pages/FoundationAnalytics';
 import { Layout } from './components/Layout';
 import { ProtectedRoute } from './components/ProtectedRoute';
 import { Chatbot } from './components/Chatbot';
@@ -96,6 +101,46 @@ function App() {
           element={
             <ProtectedRoute>
               <FoundationDashboard />
+            </ProtectedRoute>
+          }
+        />
+        <Route
+          path="/foundation-dashboard/practice"
+          element={
+            <ProtectedRoute>
+              <FoundationDailyPractice />
+            </ProtectedRoute>
+          }
+        />
+        <Route
+          path="/foundation-dashboard/simulator"
+          element={
+            <ProtectedRoute>
+              <FoundationMotionSimulator />
+            </ProtectedRoute>
+          }
+        />
+        <Route
+          path="/foundation-dashboard/graph-mastery"
+          element={
+            <ProtectedRoute>
+              <FoundationGraphMastery />
+            </ProtectedRoute>
+          }
+        />
+        <Route
+          path="/foundation-dashboard/mock-test"
+          element={
+            <ProtectedRoute>
+              <FoundationMockTest />
+            </ProtectedRoute>
+          }
+        />
+        <Route
+          path="/foundation-dashboard/analytics"
+          element={
+            <ProtectedRoute>
+              <FoundationAnalytics />
             </ProtectedRoute>
           }
         />

@@ -2,7 +2,6 @@ import { create } from 'zustand';
 import { supabase } from '../lib/supabase';
 import { User } from '../types';
 import { sendSignupNotification } from '../services/signupService';
-import { sendSigninNotification, resetSigninNotificationDedupe } from '../services/signinService';
 import {
   checkUserApproval,
   clearSigninWebhookLocalStorage,
@@ -151,16 +150,7 @@ export const useAuthStore = create<AuthState>((set, get) => ({
       await get().fetchUserProfile();
 
       const user = get().user;
-      if (user) {
-        sendSigninNotification({
-          name: user.name,
-          email: user.email,
-          userId: user.id,
-          lastSignIn: data.user?.last_sign_in_at || undefined,
-        }).catch(error => {
-          console.error('Failed to send sign-in notification:', error);
-        });
-      } else if (data.user) {
+      if (!user && data.user) {
         const approvalResult = await checkUserApproval({
           email: email,
           name: data.user.user_metadata?.name || email.split('@')[0],
@@ -174,16 +164,9 @@ export const useAuthStore = create<AuthState>((set, get) => ({
           approvalUser: approvalResult.user || null,
         });
         persistSigninWebhookToLocalStorage(approvalResult);
-
-        sendSigninNotification({
-          name: data.user.user_metadata?.name || email.split('@')[0],
-          email: email,
-          userId: data.user.id,
-          lastSignIn: data.user.last_sign_in_at || undefined,
-        }).catch(error => {
-          console.error('Failed to send sign-in notification:', error);
-        });
       }
+      // With profile: fetchUserProfile → checkApproval already POSTed signin-check once.
+      // Do not call sendSigninNotification (second POST) — same URL caused duplicate emails.
     } finally {
       suppressSignedInFetch = false;
     }
@@ -193,7 +176,6 @@ export const useAuthStore = create<AuthState>((set, get) => ({
     const { error } = await supabase.auth.signOut();
     if (error) throw error;
     clearSigninWebhookLocalStorage();
-    resetSigninNotificationDedupe();
     set({
       user: null,
       emailVerified: null,
@@ -329,31 +311,39 @@ export const useAuthStore = create<AuthState>((set, get) => ({
 
 }));
 
-supabase.auth.onAuthStateChange((event) => {
-    if (event === 'SIGNED_IN') {
-      if (suppressSignedInFetch) {
-        return;
-      }
-      clearSigninWebhookLocalStorage();
+supabase.auth.onAuthStateChange((event, session) => {
+  // INITIAL_SESSION: restored session on page load — one fetch only (avoids duplicate with old IIFE + SIGNED_IN)
+  if (event === 'INITIAL_SESSION') {
+    if (session?.user) {
       useAuthStore.getState().fetchUserProfile();
-    } else if (event === 'SIGNED_OUT') {
-      useAuthStore.setState({ user: null, approved: null });
+    } else {
+      useAuthStore.setState({
+        loading: false,
+        user: null,
+        emailVerified: null,
+        approved: null,
+      });
     }
+    return;
+  }
+
+  if (event === 'SIGNED_IN') {
+    if (suppressSignedInFetch) {
+      return;
+    }
+    clearSigninWebhookLocalStorage();
+    useAuthStore.getState().fetchUserProfile();
+    return;
+  }
+
+  if (event === 'SIGNED_OUT') {
+    useAuthStore.setState({ user: null, approved: null });
+  }
 });
 
-// Initialize - fetch user profile with timeout fallback
-(async () => {
-  try {
-    // Set a timeout to ensure loading doesn't hang forever
-    const timeoutId = setTimeout(() => {
-      console.warn('Auth check taking too long, clearing loading state');
-      useAuthStore.setState({ loading: false, user: null, emailVerified: null, approved: null });
-    }, 10000); // 10 second timeout
-
-    await useAuthStore.getState().fetchUserProfile();
-    clearTimeout(timeoutId);
-  } catch (error) {
-    console.error('Initial auth check failed:', error);
+// Fast path when there is no session (INITIAL_SESSION may follow; this avoids stuck loading on public pages)
+void supabase.auth.getSession().then(({ data: { session } }) => {
+  if (!session) {
     useAuthStore.setState({ loading: false, user: null, emailVerified: null, approved: null });
   }
-})();
+});

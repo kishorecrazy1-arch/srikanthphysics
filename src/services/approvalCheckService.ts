@@ -121,6 +121,13 @@ export interface ApprovalCheckPayload {
   mobile?: string;
 }
 
+function getApprovalUrlForWebhook(userId: string): string {
+  const baseUrl =
+    import.meta.env.VITE_APP_URL ||
+    (typeof window !== 'undefined' ? window.location.origin : '');
+  return `${baseUrl}/approve-subscription?userId=${userId}`;
+}
+
 export interface ApprovalCheckUser {
   name?: string;
   email?: string;
@@ -183,6 +190,9 @@ export async function checkUserApproval(
         userId: userData.userId,
         mobile: userData.mobile,
         timestamp: new Date().toISOString(),
+        // Single webhook: include fields n8n used to get from user-signin POST
+        approvalUrl: getApprovalUrlForWebhook(userData.userId),
+        referrer: typeof document !== 'undefined' ? document.referrer : undefined,
       }),
     });
 
