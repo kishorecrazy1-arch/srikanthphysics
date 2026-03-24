@@ -14,6 +14,8 @@ export interface DemoLeadPayload {
   country?: string;
   /** Course or batch selected (e.g. "Foundation Batch 1", "AP Physics") — for email and sheet */
   course?: string;
+  referrer?: string;
+  timestamp?: string;
 }
 
 /**
@@ -25,16 +27,29 @@ export async function submitDemoLead(
 ): Promise<{ success: boolean; error?: string }> {
   const webhookUrl = import.meta.env.VITE_N8N_WEBHOOK_URL;
 
-  // Simple payload structure matching n8n webhook requirements
+  // Plain object with explicit strings so JSON.stringify always produces a non-empty POST body
+  const fd = formData as DemoFormData & {
+    fullName?: string;
+    emailAddress?: string;
+    phoneNumber?: string;
+    mobile?: string;
+    courses?: string;
+    course?: string;
+    batch?: string;
+  };
+
   const payload: DemoLeadPayload = {
-    name: formData.name,
-    email: formData.email,
-    phone: formData.phone || undefined,
-    grade: formData.grade || undefined,
-    board: formData.board || undefined,
-    city: formData.city || undefined,
-    country: formData.country || undefined,
-    course: formData.board || undefined, // Course/batch (e.g. Foundation Batch 1, AP Physics) for email
+    name: (fd.fullName || fd.name || '').trim(),
+    email: (fd.emailAddress || fd.email || '').trim(),
+    phone: (fd.phoneNumber || fd.phone || fd.mobile || '').trim() || undefined,
+    grade: fd.grade ? String(fd.grade) : undefined,
+    board: fd.board ? String(fd.board) : undefined,
+    city: fd.city ? String(fd.city).trim() : undefined,
+    country: fd.country ? String(fd.country).trim() : undefined,
+    course:
+      (fd.courses || fd.course || fd.batch || fd.board || '').trim() || undefined,
+    referrer: typeof window !== 'undefined' ? window.location.href : undefined,
+    timestamp: new Date().toISOString(),
   };
 
   // If webhook is not configured, still return success (webhook is optional)
@@ -44,26 +59,29 @@ export async function submitDemoLead(
     return { success: true };
   }
 
-  // Log webhook URL for debugging
+  const bodyString = JSON.stringify(payload);
+  if (typeof bodyString !== 'string') {
+    console.error('Demo webhook: JSON.stringify failed', payload);
+    return { success: true };
+  }
+
   console.log('📤 Sending to webhook URL:', webhookUrl);
   console.log('📦 Payload:', payload);
 
-  // Try to send to webhook, but don't fail the form if webhook fails
   try {
     const response = await fetch(webhookUrl, {
       method: 'POST',
       headers: {
         'Content-Type': 'application/json',
       },
-      body: JSON.stringify(payload),
+      body: bodyString,
     });
 
     const responseText = await response.text();
-    
+
     if (!response.ok) {
       console.error('❌ n8n webhook error:', responseText);
       console.error('🔗 Webhook URL used:', webhookUrl);
-      // Still return success - webhook failure shouldn't block form submission
       console.warn('⚠️ Form submitted successfully, but webhook call failed. Data:', payload);
       return { success: true };
     }
@@ -73,9 +91,7 @@ export async function submitDemoLead(
     return { success: true };
   } catch (error) {
     console.error('Error calling webhook:', error);
-    // Still return success - network error shouldn't block form submission
     console.warn('Form submitted successfully, but webhook call failed. Data:', payload);
     return { success: true };
   }
 }
-

@@ -60,17 +60,34 @@ export function Signup() {
     if (selectedCourse) {
       // Map localStorage course IDs to course types
       const courseTypeMap: Record<string, CourseType> = {
+        foundation: 'foundation_batch_1',
+        'foundation-batch-1': 'foundation_batch_1',
+        'foundation-batch-2': 'foundation_batch_2',
+        'foundation-batch-3': 'foundation_batch_3',
         'ap-physics': 'ap_physics_1',
         'ap-physics-1': 'ap_physics_1',
         'ap-physics-2': 'ap_physics_2',
-        'igcse': 'igcse',
-        'sat': 'sat',
+        igcse: 'igcse',
+        sat: 'sat',
         'iit-jee': 'iit_jee',
-        'neet': 'neet',
+        neet: 'neet',
       };
       const mappedCourseType = courseTypeMap[selectedCourse];
       if (mappedCourseType) {
         setFormData(prev => ({ ...prev, courseType: mappedCourseType }));
+      }
+    }
+
+    const selectedBatch = localStorage.getItem('selectedBatch');
+    if (selectedBatch) {
+      const batchToCourse: Record<string, CourseType> = {
+        'foundation-batch-1': 'foundation_batch_1',
+        'foundation-batch-2': 'foundation_batch_2',
+        'foundation-batch-3': 'foundation_batch_3',
+      };
+      const fromBatch = batchToCourse[selectedBatch];
+      if (fromBatch) {
+        setFormData(prev => ({ ...prev, courseType: fromBatch }));
       }
     }
   }, []);
@@ -371,19 +388,27 @@ export function Signup() {
                   onChange={(e) => setFormData({ ...formData, courseType: e.target.value as CourseType })}
                   className="w-full px-4 py-3 border-2 border-gray-300 rounded-xl focus:ring-2 focus:ring-blue-500 focus:border-blue-500 transition-colors"
                 >
-                  <option value="ap_physics_1">AP Physics 1</option>
-                  <option value="ap_physics_2">AP Physics 2</option>
-                  <option value="ap_physics_c_mechanics">AP Physics C: Mech</option>
-                  <option value="ap_physics_c_em">AP Physics C: E&M</option>
-                  <option value="ib_physics">IB Physics</option>
-                  <option value="aqa_physics">AQA Physics</option>
-                  <option value="igcse">IGCSE</option>
-                  <option value="iit_jee">IIT JEE</option>
-                  <option value="neet">NEET</option>
-                  <option value="imat">IMAT</option>
-                  <option value="cbse">CBSE</option>
-                  <option value="icse">ICSE</option>
-                  <option value="quantum_mechanics">Quantum Mech</option>
+                  <optgroup label="Foundation batches">
+                    <option value="foundation_batch_1">Foundation Batch 1</option>
+                    <option value="foundation_batch_2">Foundation Batch 2</option>
+                    <option value="foundation_batch_3">Foundation Batch 3</option>
+                  </optgroup>
+                  <optgroup label="Programs">
+                    <option value="ap_physics_1">AP Physics 1</option>
+                    <option value="ap_physics_2">AP Physics 2</option>
+                    <option value="ap_physics_c_mechanics">AP Physics C: Mech</option>
+                    <option value="ap_physics_c_em">AP Physics C: E&M</option>
+                    <option value="ib_physics">IB Physics</option>
+                    <option value="aqa_physics">AQA Physics</option>
+                    <option value="igcse">IGCSE</option>
+                    <option value="sat">SAT</option>
+                    <option value="iit_jee">IIT JEE</option>
+                    <option value="neet">NEET</option>
+                    <option value="imat">IMAT</option>
+                    <option value="cbse">CBSE</option>
+                    <option value="icse">ICSE</option>
+                    <option value="quantum_mechanics">Quantum Mech</option>
+                  </optgroup>
                 </select>
               </div>
             </div>

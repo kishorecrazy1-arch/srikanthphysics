@@ -1,4 +1,7 @@
 export type CourseType =
+  | 'foundation_batch_1'
+  | 'foundation_batch_2'
+  | 'foundation_batch_3'
   | 'ap_physics_1'
   | 'ap_physics_2'
   | 'ap_physics_c_mechanics'
@@ -6,6 +9,7 @@ export type CourseType =
   | 'ib_physics'
   | 'aqa_physics'
   | 'igcse'
+  | 'sat'
   | 'iit_jee'
   | 'neet'
   | 'imat'
