@@ -3,6 +3,7 @@ import { Clock, Calculator, BookOpen, Flag, ChevronLeft, ChevronRight, Save, Arr
 import { useNavigate } from 'react-router-dom';
 import { LineChart, Line, XAxis, YAxis, CartesianGrid, ResponsiveContainer } from 'recharts';
 import { FOUNDATION_SYLLABUS } from '../lib/foundationSyllabus';
+import { getFoundationAnalytics, mergeFoundationAnalytics, bumpTopicProgress } from '../lib/foundationStorage';
 
 interface Question {
   id: number;
@@ -61,14 +62,18 @@ export function FoundationMockTest() {
   const [currentQuestion, setCurrentQuestion] = useState(0);
   const [timeRemaining, setTimeRemaining] = useState(90 * 60);
   const [showCalculator, setShowCalculator] = useState(false);
+  const [submitting, setSubmitting] = useState(false);
 
   const [questions, setQuestions] = useState<Question[]>(() => buildFoundationMockQuestions());
 
   useEffect(() => {
     const timer = setInterval(() => {
       setTimeRemaining(prev => {
-        if (prev <= 0) {
+        if (prev <= 1) {
           clearInterval(timer);
+          if (!submitting) {
+            handleSubmitTest(true);
+          }
           return 0;
         }
         return prev - 1;
@@ -111,6 +116,54 @@ export function FoundationMockTest() {
     if (currentQuestion > 0) {
       setCurrentQuestion(currentQuestion - 1);
     }
+  };
+
+  const getCorrectAnswerIndex = (q: Question) => {
+    // Deterministic answer key for mock data set
+    return q.id % 4;
+  };
+
+  const handleSubmitTest = (fromTimer = false) => {
+    if (submitting) return;
+    if (!fromTimer) {
+      const ok = window.confirm('Submit test now? You cannot change answers after submitting.');
+      if (!ok) return;
+    }
+
+    setSubmitting(true);
+    const answered = questions.filter((q) => q.selectedAnswer !== undefined).length;
+    const correct = questions.reduce((sum, q) => {
+      if (q.selectedAnswer === undefined) return sum;
+      return sum + (q.selectedAnswer === getCorrectAnswerIndex(q) ? 1 : 0);
+    }, 0);
+
+    const currentAnalytics = getFoundationAnalytics();
+    mergeFoundationAnalytics({
+      questionsSolved: currentAnalytics.questionsSolved + questions.length,
+      correctAnswers: currentAnalytics.correctAnswers + correct,
+    });
+
+    questions.forEach((q) => {
+      if (q.selectedAnswer === undefined) return;
+      const isCorrect = q.selectedAnswer === getCorrectAnswerIndex(q);
+      bumpTopicProgress(q.topic, isCorrect ? 1 : 0, 1);
+    });
+
+    const timeSpentSeconds = 90 * 60 - timeRemaining;
+    const accuracy = Math.round((correct / questions.length) * 100);
+    localStorage.setItem(
+      'foundationLastMockTestResult',
+      JSON.stringify({
+        submittedAt: new Date().toISOString(),
+        answered,
+        correct,
+        total: questions.length,
+        accuracy,
+        timeSpentSeconds,
+      })
+    );
+
+    navigate('/foundation-dashboard/analytics');
   };
 
   const answeredCount = questions.filter(q => q.selectedAnswer !== undefined).length;
@@ -165,8 +218,12 @@ export function FoundationMockTest() {
                 Calculator
               </button>
 
-              <button className="bg-gradient-to-r from-green-600 to-emerald-600 hover:from-green-700 hover:to-emerald-700 px-8 py-3 rounded-xl font-bold transition-all hover:scale-105 shadow-lg shadow-green-500/30">
-                Submit Test
+              <button
+                onClick={() => handleSubmitTest(false)}
+                disabled={submitting}
+                className="bg-gradient-to-r from-green-600 to-emerald-600 hover:from-green-700 hover:to-emerald-700 disabled:opacity-60 disabled:cursor-not-allowed px-8 py-3 rounded-xl font-bold transition-all hover:scale-105 shadow-lg shadow-green-500/30"
+              >
+                {submitting ? 'Submitting...' : 'Submit Test'}
               </button>
             </div>
           </div>

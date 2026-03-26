@@ -4,6 +4,7 @@ import { User } from '../types';
 import { sendSignupNotification } from '../services/signupService';
 import {
   checkUserApproval,
+  clearSigninNotificationDedupe,
   clearSigninWebhookLocalStorage,
   persistSigninWebhookToLocalStorage,
   type ApprovalCheckUser,
@@ -173,9 +174,13 @@ export const useAuthStore = create<AuthState>((set, get) => ({
   },
 
   signOut: async () => {
+    const currentUserId = get().user?.id;
     const { error } = await supabase.auth.signOut();
     if (error) throw error;
     clearSigninWebhookLocalStorage();
+    if (currentUserId) {
+      clearSigninNotificationDedupe(currentUserId);
+    }
     set({
       user: null,
       emailVerified: null,

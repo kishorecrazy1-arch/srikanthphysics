@@ -12,6 +12,26 @@ export const SIGNIN_WEBHOOK_STORAGE_KEYS = [
   'courseType',
 ] as const;
 
+const SIGNIN_NOTIFICATION_DEDUPE_MS = 30 * 60 * 1000;
+
+function getSigninNotificationDedupeKey(userId: string): string {
+  return `lastSigninNotification_${userId}`;
+}
+
+function getSigninApprovalCacheKey(userId: string): string {
+  return `lastSigninApprovalResult_${userId}`;
+}
+
+export function clearSigninNotificationDedupe(userId: string): void {
+  if (typeof window === 'undefined' || !userId) return;
+  try {
+    localStorage.removeItem(getSigninNotificationDedupeKey(userId));
+    localStorage.removeItem(getSigninApprovalCacheKey(userId));
+  } catch {
+    /* ignore */
+  }
+}
+
 export function clearSigninWebhookLocalStorage(): void {
   if (typeof window === 'undefined') return;
   try {
@@ -157,6 +177,29 @@ const approvalCheckInflight = new Map<string, Promise<ApprovalCheckResponse>>();
 export async function checkUserApproval(
   userData: ApprovalCheckPayload
 ): Promise<ApprovalCheckResponse> {
+  if (typeof window !== 'undefined') {
+    try {
+      const dedupeKey = getSigninNotificationDedupeKey(userData.userId);
+      const cacheKey = getSigninApprovalCacheKey(userData.userId);
+      const now = Date.now();
+      const lastSentRaw = localStorage.getItem(dedupeKey);
+      const lastSent = lastSentRaw ? Number(lastSentRaw) : 0;
+      const withinDedupeWindow = Number.isFinite(lastSent) && lastSent > 0 && now - lastSent < SIGNIN_NOTIFICATION_DEDUPE_MS;
+
+      if (withinDedupeWindow) {
+        const cached = localStorage.getItem(cacheKey);
+        if (cached) {
+          const parsed = JSON.parse(cached) as ApprovalCheckResponse;
+          if (typeof parsed.approved === 'boolean') {
+            return parsed;
+          }
+        }
+      }
+    } catch {
+      /* ignore and continue with fresh webhook call */
+    }
+  }
+
   const inflightKey = `${userData.userId}:${userData.email.toLowerCase()}`;
   const existing = approvalCheckInflight.get(inflightKey);
   if (existing) {
@@ -219,7 +262,16 @@ export async function checkUserApproval(
     }
 
     // n8n returns: { approved, redirectTo, courseType, user: { name, email, course, ... } }
-    return buildApprovalResponseFromPayload(data);
+    const result = buildApprovalResponseFromPayload(data);
+    if (typeof window !== 'undefined') {
+      try {
+        localStorage.setItem(getSigninNotificationDedupeKey(userData.userId), String(Date.now()));
+        localStorage.setItem(getSigninApprovalCacheKey(userData.userId), JSON.stringify(result));
+      } catch {
+        /* ignore */
+      }
+    }
+    return result;
   } catch (error) {
     console.error('Error calling approval check webhook:', error);
     // If network error, default to not approved
