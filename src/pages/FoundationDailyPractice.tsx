@@ -27,6 +27,8 @@ interface GeneratedQuestion {
 /** `kind: config` = key not in bundle; `kind: api` = Anthropic rejected the request */
 type QuestionGenError = { error: true; kind: 'config' | 'api'; apiMessage?: string };
 
+const TOTAL_SESSION_QUESTIONS = 10;
+
 export function FoundationDailyPractice() {
   const navigate = useNavigate();
   const signOut = useAuthStore((s) => s.signOut);
@@ -42,6 +44,11 @@ export function FoundationDailyPractice() {
   const [todayCount, setTodayCount] = useState(0);
   const [correctToday, setCorrectToday] = useState(0);
   const [sidebarOpen, setSidebarOpen] = useState(true);
+  const [sessionActive, setSessionActive] = useState(false);
+  const [sessionComplete, setSessionComplete] = useState(false);
+  const [currentQuestionNumber, setCurrentQuestionNumber] = useState(1);
+  const [answeredCount, setAnsweredCount] = useState(0);
+  const [correctCount, setCorrectCount] = useState(0);
 
   const stored = getUserInfoFromStorage();
   const userInfo = {
@@ -74,6 +81,17 @@ export function FoundationDailyPractice() {
       setStreak(0);
     }
   }, [email]);
+
+  function resetSessionState() {
+    setSessionActive(false);
+    setSessionComplete(false);
+    setCurrentQuestionNumber(1);
+    setAnsweredCount(0);
+    setCorrectCount(0);
+    setSelected(null);
+    setRevealed(false);
+    setQuestion(null);
+  }
 
   async function generateQuestion() {
     setLoading(true);
@@ -129,29 +147,6 @@ Return ONLY valid JSON, no markdown, no backticks:
       const clean = text.replace(/```json\n?/g, '').replace(/```\n?/g, '').trim();
       const parsed = JSON.parse(clean) as GeneratedQuestion;
       setQuestion(parsed);
-
-      const todayKey = `foundation_today_${email}_${new Date().toDateString()}`;
-      const newCount = todayCount + 1;
-      localStorage.setItem(todayKey, String(newCount));
-      localStorage.setItem('foundationTodayCount', String(newCount));
-      setTodayCount(newCount);
-
-      const lastActiveKey = `foundation_lastactive_${email}`;
-      const streakKey = `foundation_streak_${email}`;
-      const lastActive = localStorage.getItem(lastActiveKey);
-      const todayStr = new Date().toDateString();
-      if (lastActive !== todayStr) {
-        const yesterday = new Date();
-        yesterday.setDate(yesterday.getDate() - 1);
-        const newStreak = lastActive === yesterday.toDateString() ? streak + 1 : 1;
-        localStorage.setItem(streakKey, String(newStreak));
-        localStorage.setItem('foundationStreak', String(newStreak));
-        setStreak(newStreak);
-        localStorage.setItem(lastActiveKey, todayStr);
-      }
-
-      const a = getFoundationAnalytics();
-      mergeFoundationAnalytics({ questionsSolved: a.questionsSolved + 1 });
     } catch (e) {
       console.error('Question generation error:', e);
       const msg = e instanceof Error ? e.message : String(e);
@@ -160,18 +155,72 @@ Return ONLY valid JSON, no markdown, no backticks:
     setLoading(false);
   }
 
+  function finalizeSession() {
+    const todayKey = `foundation_today_${email}_${new Date().toDateString()}`;
+    const correctKey = `foundation_correct_${email}_${new Date().toDateString()}`;
+    const newTodayCount = todayCount + answeredCount;
+    const newCorrectToday = correctToday + correctCount;
+    localStorage.setItem(todayKey, String(newTodayCount));
+    localStorage.setItem(correctKey, String(newCorrectToday));
+    localStorage.setItem('foundationTodayCount', String(newTodayCount));
+    setTodayCount(newTodayCount);
+    setCorrectToday(newCorrectToday);
+
+    const sessionAccuracy = answeredCount > 0 ? Math.round((correctCount / answeredCount) * 100) : 0;
+    const lastActiveKey = `foundation_lastactive_${email}`;
+    const streakKey = `foundation_streak_${email}`;
+    const todayStr = new Date().toDateString();
+    const lastActive = localStorage.getItem(lastActiveKey);
+    if (sessionAccuracy >= 60 && lastActive !== todayStr) {
+      const yesterday = new Date();
+      yesterday.setDate(yesterday.getDate() - 1);
+      const newStreak = lastActive === yesterday.toDateString() ? streak + 1 : 1;
+      localStorage.setItem(streakKey, String(newStreak));
+      localStorage.setItem('foundationStreak', String(newStreak));
+      localStorage.setItem(lastActiveKey, todayStr);
+      setStreak(newStreak);
+    }
+
+    const analytics = getFoundationAnalytics();
+    mergeFoundationAnalytics({
+      questionsSolved: analytics.questionsSolved + answeredCount,
+      correctAnswers: analytics.correctAnswers + correctCount,
+    });
+    bumpTopicProgress(activeUnit.name, correctCount, answeredCount);
+
+    setSessionActive(false);
+    setSessionComplete(true);
+    setQuestion(null);
+    setSelected(null);
+    setRevealed(false);
+  }
+
+  function startPracticeSession() {
+    setSessionActive(true);
+    setSessionComplete(false);
+    setCurrentQuestionNumber(1);
+    setAnsweredCount(0);
+    setCorrectCount(0);
+    void generateQuestion();
+  }
+
+  function handleNextQuestion() {
+    if (!sessionActive) return;
+    if (currentQuestionNumber >= TOTAL_SESSION_QUESTIONS) {
+      finalizeSession();
+      return;
+    }
+    setCurrentQuestionNumber((n) => n + 1);
+    void generateQuestion();
+  }
+
   function handleAnswer(opt: string) {
     if (revealed || !question || 'error' in question) return;
     setSelected(opt);
     setRevealed(true);
+    setAnsweredCount((n) => n + 1);
     if (opt === question.correct) {
-      const correctKey = `foundation_correct_${email}_${new Date().toDateString()}`;
-      const newCorrect = correctToday + 1;
-      localStorage.setItem(correctKey, String(newCorrect));
-      setCorrectToday(newCorrect);
-      const a = getFoundationAnalytics();
-      mergeFoundationAnalytics({ correctAnswers: a.correctAnswers + 1 });
-      bumpTopicProgress(activeUnit.name, 1, 1);
+      setCorrectCount((n) => n + 1);
     }
   }
 
@@ -181,6 +230,7 @@ Return ONLY valid JSON, no markdown, no backticks:
   }
 
   const accuracy = todayCount > 0 ? Math.round((correctToday / todayCount) * 100) : 0;
+  const sessionAccuracy = answeredCount > 0 ? Math.round((correctCount / answeredCount) * 100) : 0;
 
   const activeAccent = UNIT_ACCENTS[(activeUnit.id - 1) % UNIT_ACCENTS.length];
 
@@ -257,7 +307,7 @@ Return ONLY valid JSON, no markdown, no backticks:
                     onClick={() => {
                       setActiveUnit(unit);
                       setActiveTopic(unit.topics[0]);
-                      setQuestion(null);
+                      resetSessionState();
                     }}
                     className={`w-full text-left px-3 py-2.5 rounded-xl mb-1 text-sm transition-all flex items-start gap-2 border ${
                       isActive
@@ -339,7 +389,7 @@ Return ONLY valid JSON, no markdown, no backticks:
                     type="button"
                     onClick={() => {
                       setActiveTopic(topic);
-                      setQuestion(null);
+                      resetSessionState();
                     }}
                     className={`px-3 py-1.5 rounded-full text-sm font-medium transition-all ${
                       activeTopic === topic
@@ -355,10 +405,10 @@ Return ONLY valid JSON, no markdown, no backticks:
           </div>
 
           <div className="max-w-2xl">
-            {!question && !loading && (
+            {!question && !loading && !sessionComplete && (
               <div className="bg-slate-800/50 backdrop-blur-sm border border-slate-700/50 rounded-2xl p-8 text-center shadow-lg">
                 <div className="text-6xl mb-4">🎯</div>
-                <h3 className="text-xl font-bold mb-1 text-white">Ready to practice?</h3>
+                <h3 className="text-xl font-bold mb-1 text-white">Ready for a 10-question session?</h3>
                 <p className="text-slate-400 text-sm mb-1">
                   Unit: <span className="text-cyan-400">{activeUnit.name}</span>
                 </p>
@@ -367,10 +417,10 @@ Return ONLY valid JSON, no markdown, no backticks:
                 </p>
                 <button
                   type="button"
-                  onClick={generateQuestion}
+                  onClick={startPracticeSession}
                   className="bg-gradient-to-r from-blue-600 to-cyan-500 hover:from-blue-500 hover:to-cyan-400 text-white font-bold py-3 px-8 rounded-xl transition-all transform hover:scale-[1.02] shadow-lg shadow-cyan-500/20"
                 >
-                  ✨ Generate question
+                  ✨ Start 10-question practice
                 </button>
               </div>
             )}
@@ -424,7 +474,9 @@ Return ONLY valid JSON, no markdown, no backticks:
                     <span className="bg-slate-800/80 text-slate-400 text-xs px-3 py-1 rounded-full border border-slate-600/50">
                       {question.difficulty || 'Medium'}
                     </span>
-                    <span className="ml-auto text-slate-500 text-xs">Q#{todayCount}</span>
+                    <span className="ml-auto text-slate-500 text-xs">
+                      Question {currentQuestionNumber} of {TOTAL_SESSION_QUESTIONS}
+                    </span>
                   </div>
                   <p className="text-base font-medium leading-relaxed text-white">{question.question}</p>
                   {question.formula && (
@@ -501,10 +553,10 @@ Return ONLY valid JSON, no markdown, no backticks:
                     <div className="flex gap-3 pt-1">
                       <button
                         type="button"
-                        onClick={generateQuestion}
+                        onClick={handleNextQuestion}
                         className="flex-1 bg-gradient-to-r from-blue-600 to-cyan-500 hover:from-blue-500 hover:to-cyan-400 text-white font-bold py-2.5 px-4 rounded-xl transition-all text-sm shadow-md shadow-cyan-500/15"
                       >
-                        Next question →
+                        {currentQuestionNumber >= TOTAL_SESSION_QUESTIONS ? 'Finish session →' : 'Next question →'}
                       </button>
                       <button
                         type="button"
@@ -512,7 +564,7 @@ Return ONLY valid JSON, no markdown, no backticks:
                           const idx = activeUnit.topics.indexOf(activeTopic);
                           const next = activeUnit.topics[(idx + 1) % activeUnit.topics.length];
                           setActiveTopic(next);
-                          setQuestion(null);
+                          resetSessionState();
                         }}
                         className="bg-slate-800/80 hover:bg-slate-700 text-slate-300 font-medium py-2.5 px-4 rounded-xl transition-all text-sm border border-slate-600/50"
                       >
@@ -521,6 +573,51 @@ Return ONLY valid JSON, no markdown, no backticks:
                     </div>
                   </div>
                 )}
+              </div>
+            )}
+
+            {sessionComplete && !loading && (
+              <div className="bg-slate-800/50 backdrop-blur-sm border border-slate-700/50 rounded-2xl p-8 text-center shadow-lg">
+                <div className="text-5xl mb-3">🏁</div>
+                <h3 className="text-2xl font-bold text-white mb-2">Session complete</h3>
+                <p className="text-slate-300 mb-4">
+                  You scored <span className="text-green-400 font-semibold">{correctCount}</span> / {TOTAL_SESSION_QUESTIONS}
+                </p>
+                <div className="grid grid-cols-3 gap-3 max-w-md mx-auto mb-4">
+                  <div className="bg-slate-900/60 rounded-lg py-2">
+                    <div className="text-cyan-300 font-bold">{answeredCount}</div>
+                    <div className="text-slate-400 text-xs">Attempted</div>
+                  </div>
+                  <div className="bg-slate-900/60 rounded-lg py-2">
+                    <div className="text-green-300 font-bold">{correctCount}</div>
+                    <div className="text-slate-400 text-xs">Correct</div>
+                  </div>
+                  <div className="bg-slate-900/60 rounded-lg py-2">
+                    <div className="text-orange-300 font-bold">{sessionAccuracy}%</div>
+                    <div className="text-slate-400 text-xs">Accuracy</div>
+                  </div>
+                </div>
+                <div className="flex gap-3 justify-center">
+                  <button
+                    type="button"
+                    onClick={startPracticeSession}
+                    className="bg-gradient-to-r from-blue-600 to-cyan-500 hover:from-blue-500 hover:to-cyan-400 text-white font-bold py-2.5 px-6 rounded-xl"
+                  >
+                    Practice again
+                  </button>
+                  <button
+                    type="button"
+                    onClick={() => {
+                      const idx = activeUnit.topics.indexOf(activeTopic);
+                      const next = activeUnit.topics[(idx + 1) % activeUnit.topics.length];
+                      setActiveTopic(next);
+                      resetSessionState();
+                    }}
+                    className="bg-slate-800/80 hover:bg-slate-700 text-slate-300 font-medium py-2.5 px-6 rounded-xl border border-slate-600/50"
+                  >
+                    Change topic
+                  </button>
+                </div>
               </div>
             )}
           </div>
