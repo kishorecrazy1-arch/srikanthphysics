@@ -103,42 +103,29 @@ Return ONLY valid JSON, no markdown, no backticks:
   "tip": "One short memory tip or trick for this concept"
 }`;
 
-    const apiKey = String(import.meta.env.VITE_ANTHROPIC_API_KEY ?? '').trim();
-    if (!apiKey || apiKey.length < 20) {
-      setQuestion({ error: true, kind: 'config' });
-      setLoading(false);
-      return;
-    }
-    // eslint-disable-next-line no-console -- dev-only hint; never log the key
-    if (import.meta.env.DEV) {
-      console.info(
-        '[Foundation] VITE_ANTHROPIC_API_KEY is loaded (length %d). If questions still fail, the error is from Anthropic, not .env.',
-        apiKey.length
-      );
-    }
-
     try {
-      const res = await fetch('https://api.anthropic.com/v1/messages', {
+      const res = await fetch('/api/foundation-question', {
         method: 'POST',
         headers: {
           'Content-Type': 'application/json',
-          'x-api-key': apiKey,
-          'anthropic-version': '2023-06-01',
         },
         body: JSON.stringify({
-          model: 'claude-sonnet-4-20250514',
-          max_tokens: 1000,
-          messages: [{ role: 'user', content: prompt }],
+          prompt,
         }),
       });
 
       if (!res.ok) {
         const err = await res.json().catch(() => ({}));
-        throw new Error(err.error?.message || `HTTP ${res.status}`);
+        if (err.code === 'missing_config') {
+          setQuestion({ error: true, kind: 'config' });
+          setLoading(false);
+          return;
+        }
+        throw new Error(err.error || err.message || `HTTP ${res.status}`);
       }
 
       const data = await res.json();
-      const text = data?.content?.[0]?.text ?? '{}';
+      const text = data?.text ?? '{}';
       const clean = text.replace(/```json\n?/g, '').replace(/```\n?/g, '').trim();
       const parsed = JSON.parse(clean) as GeneratedQuestion;
       setQuestion(parsed);
@@ -401,17 +388,17 @@ Return ONLY valid JSON, no markdown, no backticks:
                   <>
                     <p className="text-red-300 font-medium">⚠️ API key not loaded in the app</p>
                     <p className="text-slate-400 text-sm text-left max-w-lg mx-auto">
-                      The browser build does not include <code className="text-cyan-400">VITE_ANTHROPIC_API_KEY</code>.
-                      Put it in a <code className="text-cyan-400">.env</code> file in the same folder as{' '}
-                      <code className="text-cyan-400">vite.config.ts</code>, restart <code className="text-cyan-400">npm run dev</code>,
-                      and for production add the same variable in your host (Vercel/Netlify) and redeploy.
+                      The server could not find <code className="text-cyan-400">ANTHROPIC_API_KEY</code> (or{' '}
+                      <code className="text-cyan-400">VITE_ANTHROPIC_API_KEY</code>). Add it in your host environment
+                      variables, then redeploy.
                     </p>
                   </>
                 ) : (
                   <>
                     <p className="text-red-300 font-medium">⚠️ Anthropic request failed</p>
                     <p className="text-slate-400 text-sm break-words max-w-lg mx-auto">
-                      {('apiMessage' in question && question.apiMessage) || 'Unknown error'}. If the key is valid, check billing, model access, or CORS (API is called from the browser).
+                      {('apiMessage' in question && question.apiMessage) || 'Unknown error'}. If the key is valid, check
+                      Anthropic billing/model access.
                     </p>
                   </>
                 )}
