@@ -3,7 +3,7 @@ import { Clock, Calculator, BookOpen, Flag, ChevronLeft, ChevronRight, Save, Arr
 import { useNavigate } from 'react-router-dom';
 import { LineChart, Line, XAxis, YAxis, CartesianGrid, ResponsiveContainer } from 'recharts';
 import { FOUNDATION_SYLLABUS } from '../lib/foundationSyllabus';
-import { getFoundationAnalytics, mergeFoundationAnalytics, bumpTopicProgress } from '../lib/foundationStorage';
+import { getFoundationAnalytics, mergeFoundationAnalytics, bumpTopicProgress, appendFoundationExamResult } from '../lib/foundationStorage';
 
 interface Question {
   id: number;
@@ -151,10 +151,21 @@ export function FoundationMockTest() {
 
     const timeSpentSeconds = 90 * 60 - timeRemaining;
     const accuracy = Math.round((correct / questions.length) * 100);
+    const submittedAt = new Date().toISOString();
+    appendFoundationExamResult({
+      submittedAt,
+      examType: 'mock-test',
+      answered,
+      correct,
+      total: questions.length,
+      accuracy,
+      timeSpentSeconds,
+    });
+
     localStorage.setItem(
       'foundationLastMockTestResult',
       JSON.stringify({
-        submittedAt: new Date().toISOString(),
+        submittedAt,
         answered,
         correct,
         total: questions.length,

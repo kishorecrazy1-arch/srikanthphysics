@@ -1,52 +1,76 @@
-import { useState } from 'react';
-import { TrendingUp, TrendingDown, Download, Target, Zap, Clock, BookOpen, Star } from 'lucide-react';
+import { useMemo, useState } from 'react';
+import { Download, Target, Zap, Clock } from 'lucide-react';
 import { Link } from 'react-router-dom';
 import { FOUNDATION_SYLLABUS } from '../lib/foundationSyllabus';
-import { getFoundationAnalytics, getFoundationTopicProgress } from '../lib/foundationStorage';
-import { LineChart, Line, BarChart, Bar, RadarChart, Radar, PieChart, Pie, Cell, XAxis, YAxis, CartesianGrid, Tooltip, Legend, ResponsiveContainer, PolarGrid, PolarAngleAxis, PolarRadiusAxis } from 'recharts';
-
-const weeklyData = [
-  { day: 'Mon', score: 65 },
-  { day: 'Tue', score: 72 },
-  { day: 'Wed', score: 68 },
-  { day: 'Thu', score: 78 },
-  { day: 'Fri', score: 85 },
-  { day: 'Sat', score: 82 },
-  { day: 'Sun', score: 88 }
-];
+import { getFoundationTopicProgress, getFoundationExamHistory } from '../lib/foundationStorage';
+import { LineChart, Line, BarChart, Bar, XAxis, YAxis, CartesianGrid, Tooltip, ResponsiveContainer, Cell } from 'recharts';
 
 const defaultTopicColors = ['#10b981', '#3b82f6', '#f59e0b', '#f97316', '#ef4444', '#8b5cf6', '#14b8a6'];
 
-const skillsData = [
-  { skill: 'Speed', value: 85 },
-  { skill: 'Accuracy', value: 73 },
-  { skill: 'Conceptual', value: 68 },
-  { skill: 'Problem Solving', value: 75 },
-  { skill: 'FRQs', value: 70 }
-];
-
-const questionDistribution = [
-  { name: 'MCQ', value: 65, color: '#3b82f6' },
-  { name: 'FRQ', value: 25, color: '#8b5cf6' },
-  { name: 'Graph', value: 10, color: '#14b8a6' }
-];
-
 export function FoundationAnalytics() {
   const [timeFilter, setTimeFilter] = useState('7days');
-
-  const analytics = getFoundationAnalytics();
   const topicProgress = getFoundationTopicProgress();
+  const examHistory = getFoundationExamHistory();
 
-  const topicData = FOUNDATION_SYLLABUS.slice(0, 6).map((u, i) => ({
-    topic: u.name.length > 14 ? u.name.slice(0, 12) + '…' : u.name,
-    score: Math.min(100, topicProgress[u.name] ?? 50 + (i * 3) % 40),
-    color: defaultTopicColors[i % defaultTopicColors.length],
-  }));
+  const filteredExams = useMemo(() => {
+    const now = Date.now();
+    const maxAgeMs =
+      timeFilter === '7days'
+        ? 7 * 24 * 60 * 60 * 1000
+        : timeFilter === '30days'
+          ? 30 * 24 * 60 * 60 * 1000
+          : timeFilter === '90days'
+            ? 90 * 24 * 60 * 60 * 1000
+            : Number.POSITIVE_INFINITY;
+    return examHistory.filter((exam) => now - new Date(exam.submittedAt).getTime() <= maxAgeMs);
+  }, [examHistory, timeFilter]);
 
-  const overall =
-    analytics.questionsSolved > 0
-      ? Math.round((analytics.correctAnswers / Math.max(1, analytics.questionsSolved)) * 100)
-      : 0;
+  const totals = useMemo(() => {
+    const examsTaken = filteredExams.length;
+    const answered = filteredExams.reduce((sum, exam) => sum + exam.answered, 0);
+    const correct = filteredExams.reduce((sum, exam) => sum + exam.correct, 0);
+    const totalTimeSeconds = filteredExams.reduce((sum, exam) => sum + (exam.timeSpentSeconds ?? 0), 0);
+    const overallScore = answered > 0 ? Math.round((correct / answered) * 100) : 0;
+    const avgTimePerQuestionSeconds = answered > 0 ? Math.round(totalTimeSeconds / answered) : 0;
+    return { examsTaken, answered, correct, overallScore, avgTimePerQuestionSeconds };
+  }, [filteredExams]);
+
+  const weeklyData = useMemo(() => {
+    const grouped = new Map<string, { label: string; correct: number; answered: number }>();
+    filteredExams.forEach((exam) => {
+      const date = new Date(exam.submittedAt);
+      const key = date.toISOString().slice(0, 10);
+      const label = date.toLocaleDateString(undefined, { month: 'short', day: 'numeric' });
+      const cur = grouped.get(key) ?? { label, correct: 0, answered: 0 };
+      cur.correct += exam.correct;
+      cur.answered += exam.answered;
+      grouped.set(key, cur);
+    });
+
+    return Array.from(grouped.entries())
+      .sort(([a], [b]) => a.localeCompare(b))
+      .slice(-7)
+      .map(([, value]) => ({
+        day: value.label,
+        score: value.answered > 0 ? Math.round((value.correct / value.answered) * 100) : 0,
+      }));
+  }, [filteredExams]);
+
+  const topicData = useMemo(() => {
+    return FOUNDATION_SYLLABUS
+      .map((u, i) => ({
+        topic: u.name.length > 14 ? `${u.name.slice(0, 12)}…` : u.name,
+        score: topicProgress[u.name] ?? 0,
+        color: defaultTopicColors[i % defaultTopicColors.length],
+      }))
+      .filter((item) => item.score > 0);
+  }, [topicProgress]);
+
+  const latestExam = filteredExams.length > 0 ? filteredExams[0] : null;
+  const avgTimeText =
+    totals.avgTimePerQuestionSeconds > 0
+      ? `${Math.floor(totals.avgTimePerQuestionSeconds / 60)}:${String(totals.avgTimePerQuestionSeconds % 60).padStart(2, '0')}`
+      : '--:--';
 
   return (
     <div className="min-h-screen bg-gradient-to-br from-blue-950 via-blue-900 to-slate-900">
@@ -84,14 +108,10 @@ export function FoundationAnalytics() {
           <div className="bg-slate-800/50 backdrop-blur-sm border border-slate-700/50 rounded-xl p-6 shadow-sm">
             <div className="flex items-center justify-between mb-4">
               <div className="p-3 bg-blue-500/20 rounded-xl">
-                <TrendingUp className="w-6 h-6 text-blue-400" />
-              </div>
-              <div className="flex items-center gap-1 text-green-400 text-sm font-semibold">
-                <TrendingUp className="w-4 h-4" />
-                +12%
+                <Target className="w-6 h-6 text-blue-400" />
               </div>
             </div>
-            <div className="text-3xl font-bold text-white mb-1">{overall || 73}%</div>
+            <div className="text-3xl font-bold text-white mb-1">{totals.overallScore}%</div>
             <div className="text-sm text-slate-300">Overall Score</div>
           </div>
 
@@ -100,10 +120,9 @@ export function FoundationAnalytics() {
               <div className="p-3 bg-green-500/20 rounded-xl">
                 <Target className="w-6 h-6 text-green-400" />
               </div>
-              <div className="text-green-400 text-sm font-semibold">+23</div>
             </div>
-            <div className="text-3xl font-bold text-white mb-1">{analytics.questionsSolved || 847}</div>
-            <div className="text-sm text-slate-300">Questions Solved</div>
+            <div className="text-3xl font-bold text-white mb-1">{totals.answered}</div>
+            <div className="text-sm text-slate-300">Questions Attempted</div>
           </div>
 
           <div className="bg-slate-800/50 backdrop-blur-sm border border-slate-700/50 rounded-xl p-6 shadow-sm">
@@ -111,10 +130,9 @@ export function FoundationAnalytics() {
               <div className="p-3 bg-purple-500/20 rounded-xl">
                 <Clock className="w-6 h-6 text-purple-400" />
               </div>
-              <div className="text-green-400 text-sm font-semibold">+3.2h</div>
             </div>
-            <div className="text-3xl font-bold text-white mb-1">42.5h</div>
-            <div className="text-sm text-slate-300">Study Time</div>
+            <div className="text-3xl font-bold text-white mb-1">{totals.examsTaken}</div>
+            <div className="text-sm text-slate-300">Exams Submitted</div>
           </div>
 
           <div className="bg-slate-800/50 backdrop-blur-sm border border-slate-700/50 rounded-xl p-6 shadow-sm">
@@ -122,31 +140,26 @@ export function FoundationAnalytics() {
               <div className="p-3 bg-orange-500/20 rounded-xl">
                 <Zap className="w-6 h-6 text-orange-400" />
               </div>
-              <div className="flex items-center gap-1 text-green-400 text-sm font-semibold">
-                <TrendingDown className="w-4 h-4" />
-                -5s
-              </div>
             </div>
-            <div className="text-3xl font-bold text-white mb-1">2:15</div>
+            <div className="text-3xl font-bold text-white mb-1">{avgTimeText}</div>
             <div className="text-sm text-slate-300">Avg Time/Question</div>
           </div>
         </div>
+
+        {filteredExams.length === 0 && (
+          <div className="bg-slate-800/50 border border-slate-700/50 rounded-xl p-8 mb-6 text-center">
+            <p className="text-white font-semibold mb-2">No exam performance data found for this period.</p>
+            <p className="text-slate-300 text-sm">
+              Submit a mock test to populate analytics with real scores.
+            </p>
+          </div>
+        )}
 
         <div className="grid lg:grid-cols-3 gap-6 mb-6">
           <div className="lg:col-span-2 space-y-6">
             <div className="bg-slate-800/50 backdrop-blur-sm border border-slate-700/50 rounded-xl p-8 shadow-sm">
               <div className="flex items-center justify-between mb-6">
                 <h2 className="text-2xl font-bold text-white">Weekly Performance</h2>
-                <div className="flex items-center gap-4 text-sm">
-                  <div className="flex items-center gap-2">
-                    <span className="text-slate-300">Weekly Avg:</span>
-                    <span className="text-blue-400 font-bold">76.9%</span>
-                  </div>
-                  <div className="flex items-center gap-1 text-green-400 font-semibold">
-                    <TrendingUp className="w-4 h-4" />
-                    +12% improvement
-                  </div>
-                </div>
               </div>
               <ResponsiveContainer width="100%" height={300}>
                 <LineChart data={weeklyData}>
@@ -161,7 +174,7 @@ export function FoundationAnalytics() {
                       color: '#ffffff'
                     }}
                   />
-                  <Line type="monotone" dataKey="score" stroke="#3b82f6" strokeWidth={3} dot={{ fill: '#3b82f6', r: 6 }} />
+                  <Line type="monotone" dataKey="score" stroke="#3b82f6" strokeWidth={3} dot={{ fill: '#3b82f6', r: 5 }} />
                 </LineChart>
               </ResponsiveContainer>
             </div>
@@ -189,196 +202,57 @@ export function FoundationAnalytics() {
                 </BarChart>
               </ResponsiveContainer>
             </div>
-
-            <div className="bg-slate-800/50 backdrop-blur-sm border border-slate-700/50 rounded-xl p-8 shadow-sm">
-              <h2 className="text-2xl font-bold text-white mb-6">Detailed Topic Analysis</h2>
-              <div className="space-y-4">
-                {topicData.map((topic) => (
-                  <div key={topic.topic} className="bg-slate-900/50 rounded-xl p-6 border border-slate-700/50">
-                    <div className="flex items-center justify-between mb-4">
-                      <div>
-                        <h3 className="text-lg font-bold text-white">{topic.topic}</h3>
-                        <p className="text-sm text-slate-300">124 questions attempted</p>
-                      </div>
-                      <div className="text-right">
-                        <div className="text-3xl font-bold" style={{ color: topic.color }}>
-                          {topic.score}%
-                        </div>
-                        <div className="flex items-center gap-1 text-sm mt-1">
-                          {topic.score >= 80 ? (
-                            <><TrendingUp className="w-4 h-4 text-green-400" /><span className="text-green-400">Strong</span></>
-                          ) : topic.score >= 70 ? (
-                            <span className="text-yellow-400">Good</span>
-                          ) : (
-                            <><TrendingDown className="w-4 h-4 text-red-400" /><span className="text-red-400">Needs Work</span></>
-                          )}
-                        </div>
-                      </div>
-                    </div>
-                    <div className="grid grid-cols-2 gap-3 mb-4">
-                      <div className="flex items-center gap-2">
-                        <span className="px-2 py-1 bg-red-500/20 text-red-400 rounded text-xs font-semibold">Weak</span>
-                        <span className="text-sm text-slate-300">Inclined planes</span>
-                      </div>
-                      <div className="flex items-center gap-2">
-                        <span className="px-2 py-1 bg-green-500/20 text-green-400 rounded text-xs font-semibold">Strong</span>
-                        <span className="text-sm text-slate-300">Free body diagrams</span>
-                      </div>
-                    </div>
-                    <div className="w-full bg-slate-700 rounded-full h-2">
-                      <div
-                        className="h-2 rounded-full transition-all"
-                        style={{ width: `${topic.score}%`, backgroundColor: topic.color }}
-                      />
-                    </div>
-                  </div>
-                ))}
-              </div>
-            </div>
           </div>
 
           <div className="space-y-6">
             <div className="bg-slate-800/50 backdrop-blur-sm border border-slate-700/50 rounded-xl p-8 shadow-sm">
-              <h2 className="text-2xl font-bold text-white mb-6">Skills Radar</h2>
-              <ResponsiveContainer width="100%" height={300}>
-                <RadarChart data={skillsData}>
-                  <PolarGrid stroke="rgba(148, 163, 184, 0.2)" />
-                  <PolarAngleAxis dataKey="skill" stroke="#94a3b8" />
-                  <PolarRadiusAxis stroke="#94a3b8" />
-                  <Radar name="Skills" dataKey="value" stroke="#8b5cf6" fill="#8b5cf6" fillOpacity={0.6} />
-                </RadarChart>
-              </ResponsiveContainer>
-              <div className="text-center mt-4">
-                <div className="text-3xl font-bold text-purple-400">74.2%</div>
-                <div className="text-sm text-slate-300">Overall Skills Rating</div>
-              </div>
+              <h2 className="text-2xl font-bold text-white mb-4">Latest Exam</h2>
+              {latestExam ? (
+                <div className="space-y-3 text-sm">
+                  <div className="flex justify-between">
+                    <span className="text-slate-300">Date</span>
+                    <span className="text-white font-semibold">
+                      {new Date(latestExam.submittedAt).toLocaleString()}
+                    </span>
+                  </div>
+                  <div className="flex justify-between">
+                    <span className="text-slate-300">Type</span>
+                    <span className="text-white font-semibold">{latestExam.examType}</span>
+                  </div>
+                  <div className="flex justify-between">
+                    <span className="text-slate-300">Score</span>
+                    <span className="text-green-400 font-bold">{latestExam.accuracy}%</span>
+                  </div>
+                  <div className="flex justify-between">
+                    <span className="text-slate-300">Correct / Attempted</span>
+                    <span className="text-white font-semibold">
+                      {latestExam.correct} / {latestExam.answered}
+                    </span>
+                  </div>
+                </div>
+              ) : (
+                <p className="text-slate-300 text-sm">No exam submissions available.</p>
+              )}
             </div>
 
             <div className="bg-slate-800/50 backdrop-blur-sm border border-slate-700/50 rounded-xl p-8 shadow-sm">
-              <h2 className="text-2xl font-bold text-white mb-6">Question Distribution</h2>
-              <ResponsiveContainer width="100%" height={250}>
-                <PieChart>
-                  <Pie
-                    data={questionDistribution}
-                    cx="50%"
-                    cy="50%"
-                    innerRadius={60}
-                    outerRadius={90}
-                    paddingAngle={5}
-                    dataKey="value"
-                  >
-                    {questionDistribution.map((entry, index) => (
-                      <Cell key={`cell-${index}`} fill={entry.color} />
-                    ))}
-                  </Pie>
-                  <Tooltip />
-                </PieChart>
-              </ResponsiveContainer>
-              <div className="space-y-2 mt-4">
-                {questionDistribution.map((item) => (
-                  <div key={item.name} className="flex items-center justify-between">
-                    <div className="flex items-center gap-2">
-                      <div className="w-3 h-3 rounded-full" style={{ backgroundColor: item.color }}></div>
-                      <span className="text-sm text-slate-300">{item.name}</span>
-                    </div>
-                    <span className="text-sm font-bold text-white">{item.value}%</span>
+              <h2 className="text-2xl font-bold text-white mb-6">Recent Exam Scores</h2>
+              <div className="space-y-2">
+                {filteredExams.slice(0, 5).map((exam) => (
+                  <div key={exam.id} className="flex items-center justify-between bg-slate-900/40 rounded-lg px-3 py-2">
+                    <span className="text-sm text-slate-300">
+                      {new Date(exam.submittedAt).toLocaleDateString()}
+                    </span>
+                    <span className="text-sm font-bold text-white">
+                      {exam.correct}/{exam.answered} ({exam.accuracy}%)
+                    </span>
                   </div>
                 ))}
+                {filteredExams.length === 0 && (
+                  <p className="text-sm text-slate-300">No exam records for this time range.</p>
+                )}
               </div>
             </div>
-
-            <div className="bg-green-500/20 rounded-xl p-6 border border-green-500/30">
-              <h3 className="text-lg font-bold mb-4 text-green-400">Strengths</h3>
-              <ul className="space-y-2 text-sm">
-                <li className="flex items-start gap-2">
-                  <span className="text-green-400">•</span>
-                  <span className="text-slate-300">Strong performance in MCQ questions</span>
-                </li>
-                <li className="flex items-start gap-2">
-                  <span className="text-green-400">•</span>
-                  <span className="text-slate-300">Fast problem-solving speed</span>
-                </li>
-                <li className="flex items-start gap-2">
-                  <span className="text-green-400">•</span>
-                  <span className="text-slate-300">Consistent daily practice</span>
-                </li>
-              </ul>
-            </div>
-
-            <div className="bg-red-500/20 rounded-xl p-6 border border-red-500/30">
-              <h3 className="text-lg font-bold mb-4 text-red-400">Areas to Improve</h3>
-              <ul className="space-y-2 text-sm">
-                <li className="flex items-start gap-2">
-                  <span className="text-red-400">•</span>
-                  <span className="text-slate-300">Rotational motion concepts</span>
-                </li>
-                <li className="flex items-start gap-2">
-                  <span className="text-red-400">•</span>
-                  <span className="text-slate-300">Complex FRQ problems</span>
-                </li>
-                <li className="flex items-start gap-2">
-                  <span className="text-red-400">•</span>
-                  <span className="text-slate-300">Graph interpretation speed</span>
-                </li>
-              </ul>
-            </div>
-
-            <div className="bg-slate-800/50 backdrop-blur-sm border border-slate-700/50 rounded-xl p-6 shadow-sm">
-              <h3 className="text-lg font-bold mb-4 text-indigo-400 flex items-center gap-2">
-                <Star className="w-5 h-5" />
-                AI Recommendations
-              </h3>
-              <div className="space-y-3 mb-4">
-                <div className="bg-indigo-900/30 rounded-lg p-4 border border-indigo-500/30">
-                  <p className="text-sm text-indigo-200">
-                    <span className="font-semibold">Focus on Rotation:</span> Practice 10 rotational motion questions daily to improve your 55% score.
-                  </p>
-                </div>
-                <div className="bg-purple-900/30 rounded-lg p-4 border border-purple-500/30">
-                  <p className="text-sm text-purple-200">
-                    <span className="font-semibold">FRQ Practice:</span> Complete 3 FRQ practice sets this week to build confidence in complex problems.
-                  </p>
-                </div>
-                <div className="bg-blue-900/30 rounded-lg p-4 border border-blue-500/30">
-                  <p className="text-sm text-blue-200">
-                    <span className="font-semibold">Graph Speed:</span> Use the Graph Generator to practice interpreting motion graphs faster.
-                  </p>
-                </div>
-              </div>
-              <button className="w-full bg-gradient-to-r from-purple-600 to-pink-600 hover:from-purple-700 hover:to-pink-700 text-white py-3 rounded-xl font-bold transition-all hover:scale-[1.02] shadow-lg shadow-purple-500/30">
-                Generate Practice Plan
-              </button>
-            </div>
-          </div>
-        </div>
-
-        <div className="grid grid-cols-4 gap-6">
-          <div className="bg-slate-800/50 backdrop-blur-sm border border-slate-700/50 rounded-xl p-6 shadow-sm text-center">
-            <BookOpen className="w-8 h-8 text-blue-400 mx-auto mb-3" />
-            <div className="text-2xl font-bold text-white mb-1">1:45</div>
-            <div className="text-sm text-slate-300 mb-2">Fastest Topic</div>
-            <div className="text-xs text-blue-400">Kinematics</div>
-          </div>
-
-          <div className="bg-slate-800/50 backdrop-blur-sm border border-slate-700/50 rounded-xl p-6 shadow-sm text-center">
-            <Clock className="w-8 h-8 text-orange-400 mx-auto mb-3" />
-            <div className="text-2xl font-bold text-white mb-1">3:20</div>
-            <div className="text-sm text-slate-300 mb-2">Slowest Topic</div>
-            <div className="text-xs text-orange-400">Rotation</div>
-          </div>
-
-          <div className="bg-slate-800/50 backdrop-blur-sm border border-slate-700/50 rounded-xl p-6 shadow-sm text-center">
-            <TrendingDown className="w-8 h-8 text-red-400 mx-auto mb-3" />
-            <div className="text-2xl font-bold text-white mb-1">8.5 min</div>
-            <div className="text-sm text-slate-300 mb-2">Time Wasted</div>
-            <div className="text-xs text-red-400">On wrong answers</div>
-          </div>
-
-          <div className="bg-slate-800/50 backdrop-blur-sm border border-slate-700/50 rounded-xl p-6 shadow-sm text-center">
-            <Target className="w-8 h-8 text-green-400 mx-auto mb-3" />
-            <div className="text-2xl font-bold text-white mb-1">76%</div>
-            <div className="text-sm text-slate-300 mb-2">Efficiency</div>
-            <div className="text-xs text-green-400">Overall rating</div>
           </div>
         </div>
       </div>

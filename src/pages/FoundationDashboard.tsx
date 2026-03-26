@@ -8,6 +8,9 @@ import {
   ClipboardList,
   BarChart3,
   LogOut,
+  CheckCircle,
+  Target,
+  TrendingUp,
 } from 'lucide-react';
 import { useAuthStore } from '../store/authStore';
 import { FOUNDATION_SYLLABUS } from '../lib/foundationSyllabus';
@@ -177,6 +180,62 @@ export default function FoundationDashboard() {
 
         <h2 className="text-2xl font-bold mb-4">Topics &amp; tools</h2>
         <p className="text-slate-400 mb-6">Jump into any section — same dark theme as AP Physics.</p>
+
+        <div className="mb-10">
+          <h2 className="text-2xl font-bold mb-4">Today&apos;s Tasks</h2>
+          <div className="grid md:grid-cols-3 gap-6">
+            <div className="bg-gradient-to-br from-blue-900/40 to-cyan-900/30 rounded-xl p-6 border border-blue-500/30 hover:border-blue-400/60 transition-all">
+              <div className="flex items-center gap-2 mb-4">
+                <div className="w-8 h-8 bg-blue-500 rounded-lg flex items-center justify-center">
+                  <CheckCircle className="w-5 h-5 text-white" />
+                </div>
+                <h3 className="text-lg font-bold text-white">Morning Pulse</h3>
+              </div>
+              <p className="text-slate-300 mb-4 text-sm">Quick warmup to start your Foundation practice.</p>
+              <Link
+                to="/foundation-dashboard/practice"
+                className="inline-flex w-full justify-center bg-gradient-to-r from-blue-600 to-cyan-500 text-white py-2 rounded-lg font-semibold hover:opacity-90 transition-opacity"
+              >
+                Start
+              </Link>
+            </div>
+
+            <div className="bg-gradient-to-br from-green-900/40 to-emerald-900/30 rounded-xl p-6 border border-green-500/30 hover:border-green-400/60 transition-all">
+              <div className="flex items-center gap-2 mb-4">
+                <div className="w-8 h-8 bg-green-500 rounded-lg flex items-center justify-center">
+                  <TrendingUp className="w-5 h-5 text-white" />
+                </div>
+                <h3 className="text-lg font-bold text-white">Daily Homework</h3>
+              </div>
+              <p className="text-slate-300 mb-2 text-sm">Complete a 10-question Foundation homework session.</p>
+              <p className="text-xs text-green-300 mb-4">
+                Today: {stats.todayCount} attempted, {stats.correct} correct
+              </p>
+              <Link
+                to="/foundation-dashboard/practice"
+                className="inline-flex w-full justify-center bg-gradient-to-r from-green-600 to-emerald-500 text-white py-2 rounded-lg font-semibold hover:opacity-90 transition-opacity"
+              >
+                Start Homework
+              </Link>
+            </div>
+
+            <div className="bg-gradient-to-br from-yellow-900/40 to-orange-900/30 rounded-xl p-6 border border-yellow-500/30 hover:border-yellow-400/60 transition-all">
+              <div className="flex items-center gap-2 mb-4">
+                <div className="w-8 h-8 bg-yellow-500 rounded-lg flex items-center justify-center">
+                  <Target className="w-5 h-5 text-white" />
+                </div>
+                <h3 className="text-lg font-bold text-white">Challenge Test</h3>
+              </div>
+              <p className="text-slate-300 mb-4 text-sm">Take the timed mock test and measure exam readiness.</p>
+              <Link
+                to="/foundation-dashboard/mock-test"
+                className="inline-flex w-full justify-center bg-gradient-to-r from-yellow-600 to-orange-500 text-white py-2 rounded-lg font-semibold hover:opacity-90 transition-opacity"
+              >
+                Start Challenge
+              </Link>
+            </div>
+          </div>
+        </div>
 
         <div className="grid sm:grid-cols-2 lg:grid-cols-3 gap-6">
           {SECTIONS.map((s) => {
