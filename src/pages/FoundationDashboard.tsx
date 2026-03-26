@@ -212,7 +212,7 @@ export default function FoundationDashboard() {
                 Today: {stats.todayCount} attempted, {stats.correct} correct
               </p>
               <Link
-                to="/foundation-dashboard/practice"
+                to="/foundation-dashboard/homework"
                 className="inline-flex w-full justify-center bg-gradient-to-r from-green-600 to-emerald-500 text-white py-2 rounded-lg font-semibold hover:opacity-90 transition-opacity"
               >
                 Start Homework

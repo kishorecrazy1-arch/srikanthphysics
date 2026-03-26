@@ -1,5 +1,5 @@
 import { useState, useEffect } from 'react';
-import { useNavigate } from 'react-router-dom';
+import { useNavigate, useLocation } from 'react-router-dom';
 import { ArrowLeft } from 'lucide-react';
 import { useAuthStore } from '../store/authStore';
 import { FOUNDATION_SYLLABUS, UNIT_ACCENTS } from '../lib/foundationSyllabus';
@@ -31,8 +31,10 @@ const TOTAL_SESSION_QUESTIONS = 10;
 
 export function FoundationDailyPractice() {
   const navigate = useNavigate();
+  const location = useLocation();
   const signOut = useAuthStore((s) => s.signOut);
   const authUser = useAuthStore((s) => s.user);
+  const isHomeworkMode = new URLSearchParams(location.search).get('mode') === 'homework';
 
   const [activeUnit, setActiveUnit] = useState(FOUNDATION_SYLLABUS[0]);
   const [activeTopic, setActiveTopic] = useState(FOUNDATION_SYLLABUS[0].topics[0]);
@@ -259,7 +261,9 @@ Return ONLY valid JSON, no markdown, no backticks:
           </div>
           <div>
             <p className="font-bold text-sm leading-tight text-white">Srikanth&apos;s Academy</p>
-            <p className="text-xs text-cyan-300 leading-tight">Daily Practice · {userInfo.batch}</p>
+            <p className="text-xs text-cyan-300 leading-tight">
+              {isHomeworkMode ? 'Daily Homework' : 'Daily Practice'} · {userInfo.batch}
+            </p>
           </div>
         </div>
 
@@ -409,6 +413,9 @@ Return ONLY valid JSON, no markdown, no backticks:
               <div className="bg-slate-800/50 backdrop-blur-sm border border-slate-700/50 rounded-2xl p-8 text-center shadow-lg">
                 <div className="text-6xl mb-4">🎯</div>
                 <h3 className="text-xl font-bold mb-1 text-white">Ready for a 10-question session?</h3>
+                <p className="text-slate-300 text-sm mb-1">
+                  Mode: <span className="text-green-300">{isHomeworkMode ? 'Daily Homework' : 'Daily Practice'}</span>
+                </p>
                 <p className="text-slate-400 text-sm mb-1">
                   Unit: <span className="text-cyan-400">{activeUnit.name}</span>
                 </p>
@@ -420,7 +427,7 @@ Return ONLY valid JSON, no markdown, no backticks:
                   onClick={startPracticeSession}
                   className="bg-gradient-to-r from-blue-600 to-cyan-500 hover:from-blue-500 hover:to-cyan-400 text-white font-bold py-3 px-8 rounded-xl transition-all transform hover:scale-[1.02] shadow-lg shadow-cyan-500/20"
                 >
-                  ✨ Start 10-question practice
+                  ✨ {isHomeworkMode ? 'Start 10-question homework' : 'Start 10-question practice'}
                 </button>
               </div>
             )}

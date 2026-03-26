@@ -42,6 +42,7 @@ import { FoundationMotionSimulator } from './pages/FoundationMotionSimulator';
 import { FoundationGraphMastery } from './pages/FoundationGraphMastery';
 import { FoundationMockTest } from './pages/FoundationMockTest';
 import { FoundationAnalytics } from './pages/FoundationAnalytics';
+import { FoundationHomework } from './pages/FoundationHomework';
 import { Layout } from './components/Layout';
 import { ProtectedRoute } from './components/ProtectedRoute';
 import { Chatbot } from './components/Chatbot';
@@ -133,6 +134,14 @@ function App() {
           element={
             <ProtectedRoute>
               <FoundationMockTest />
+            </ProtectedRoute>
+          }
+        />
+        <Route
+          path="/foundation-dashboard/homework"
+          element={
+            <ProtectedRoute>
+              <FoundationHomework />
             </ProtectedRoute>
           }
         />
