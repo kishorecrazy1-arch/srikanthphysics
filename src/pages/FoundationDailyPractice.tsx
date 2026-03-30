@@ -2,26 +2,87 @@ import { useState, useEffect } from 'react';
 import { useNavigate, useLocation } from 'react-router-dom';
 import { ArrowLeft } from 'lucide-react';
 import { useAuthStore } from '../store/authStore';
+import { supabase } from '../lib/supabase';
 import { FOUNDATION_SYLLABUS, UNIT_ACCENTS } from '../lib/foundationSyllabus';
 import { getFoundationAnalytics, mergeFoundationAnalytics, bumpTopicProgress } from '../lib/foundationStorage';
 
 function getUserInfoFromStorage() {
   return {
-    name: localStorage.getItem('userName') || '',
     email: localStorage.getItem('userEmail') || '',
     batch: localStorage.getItem('userBatch') || 'Foundation Course',
     course: localStorage.getItem('userCourse') || 'Foundation',
   };
 }
 
+function foundationUsedQuestionsStorageKey(topic: string): string {
+  return `foundationUsedQuestions_${topic}`;
+}
+
+function hashQuestionStem(text: string): string {
+  const n = text.replace(/\s+/g, ' ').trim().toLowerCase();
+  let h = 5381;
+  const cap = Math.min(n.length, 600);
+  for (let i = 0; i < cap; i++) {
+    h = (h * 33) ^ n.charCodeAt(i);
+  }
+  return (h >>> 0).toString(36);
+}
+
+function readUsedQuestionHashes(topic: string): string[] {
+  try {
+    const raw = localStorage.getItem(foundationUsedQuestionsStorageKey(topic));
+    if (!raw) return [];
+    const parsed: unknown = JSON.parse(raw);
+    if (!Array.isArray(parsed)) return [];
+    return parsed.filter((x): x is string => typeof x === 'string').slice(-10);
+  } catch {
+    return [];
+  }
+}
+
+function appendUsedQuestionHash(topic: string, hash: string): void {
+  const prev = readUsedQuestionHashes(topic);
+  const next = [...prev.filter((h) => h !== hash), hash].slice(-10);
+  localStorage.setItem(foundationUsedQuestionsStorageKey(topic), JSON.stringify(next));
+}
+
+function clearUsedQuestionsForTopic(topic: string): void {
+  localStorage.removeItem(foundationUsedQuestionsStorageKey(topic));
+}
+
+function displayNameFromSessionMeta(metadata: Record<string, unknown> | undefined, email: string | undefined): string {
+  const pick = (k: string): string => {
+    const v = metadata?.[k];
+    return typeof v === 'string' && v.trim() ? v.trim() : '';
+  };
+  const fromMeta = pick('name') || pick('full_name');
+  if (fromMeta) return fromMeta;
+  const local = typeof email === 'string' && email.includes('@') ? email.split('@')[0] ?? '' : '';
+  return local || 'Student';
+}
+
 interface GeneratedQuestion {
   question: string;
+  subQuestions?: string[];
+  formulas?: string[];
   options: Record<string, string>;
   correct: string;
   explanation: string;
   formula?: string;
   difficulty?: string;
   tip?: string;
+  answer?: Record<string, string>;
+}
+
+function isValidMcqPayload(q: GeneratedQuestion): boolean {
+  const keys = ['A', 'B', 'C', 'D'] as const;
+  const letters = keys.filter((k) => typeof q.options?.[k] === 'string' && q.options[k].trim().length > 0);
+  if (letters.length !== 4) return false;
+  const c = String(q.correct ?? '')
+    .trim()
+    .toUpperCase()
+    .slice(0, 1);
+  return keys.includes(c as (typeof keys)[number]);
 }
 
 /** `kind: config` = key not in bundle; `kind: api` = Anthropic rejected the request */
@@ -51,15 +112,42 @@ export function FoundationDailyPractice() {
   const [currentQuestionNumber, setCurrentQuestionNumber] = useState(1);
   const [answeredCount, setAnsweredCount] = useState(0);
   const [correctCount, setCorrectCount] = useState(0);
+  const [sessionDisplayName, setSessionDisplayName] = useState<string | null>(null);
+  const [sessionEmail, setSessionEmail] = useState<string | null>(null);
 
   const stored = getUserInfoFromStorage();
   const userInfo = {
-    name: stored.name || authUser?.name || 'Student',
-    email: stored.email || authUser?.email || '',
+    name: (authUser?.name && authUser.name.trim()) || sessionDisplayName || 'Student',
+    email: (authUser?.email && authUser.email.trim()) || sessionEmail || stored.email || '',
     batch: stored.batch,
     course: stored.course,
   };
   const email = userInfo.email || 'student';
+
+  useEffect(() => {
+    let cancelled = false;
+    void (async () => {
+      const { data } = await supabase.auth.getUser();
+      if (cancelled) return;
+      const u = data.user;
+      if (!u) return;
+      const meta = u.user_metadata as Record<string, unknown> | undefined;
+      const name = displayNameFromSessionMeta(meta, u.email);
+      setSessionDisplayName(name);
+      if (u.email) {
+        setSessionEmail(u.email);
+        localStorage.setItem('userEmail', u.email);
+      }
+      const metaName = typeof meta?.name === 'string' ? meta.name.trim() : '';
+      const metaFull = typeof meta?.full_name === 'string' ? meta.full_name.trim() : '';
+      if (metaName) localStorage.setItem('userName', metaName);
+      else if (metaFull) localStorage.setItem('userName', metaFull);
+      else if (u.email?.includes('@')) localStorage.setItem('userName', u.email.split('@')[0] ?? '');
+    })();
+    return () => {
+      cancelled = true;
+    };
+  }, [authUser?.id]);
 
   useEffect(() => {
     const todayKey = `foundation_today_${email}_${new Date().toDateString()}`;
@@ -95,33 +183,13 @@ export function FoundationDailyPractice() {
     setQuestion(null);
   }
 
-  async function generateQuestion() {
+  async function generateQuestion(retryLeft = 2) {
     setLoading(true);
     setSelected(null);
     setRevealed(false);
     setQuestion(null);
 
-    const prompt = `You are a physics teacher for a Foundation Course (pre-university / Grade 11-12 level).
-Generate ONE multiple choice question on the topic: "${activeTopic}" from the unit "${activeUnit.name}".
-
-This is for students building core physics fundamentals. Keep it conceptual and clear.
-Difficulty: Mix of Easy and Medium.
-
-Return ONLY valid JSON, no markdown, no backticks:
-{
-  "question": "The question text here",
-  "options": {
-    "A": "Option A text",
-    "B": "Option B text",
-    "C": "Option C text",
-    "D": "Option D text"
-  },
-  "correct": "A",
-  "explanation": "Clear 2-3 sentence explanation of why the answer is correct and the key concept.",
-  "formula": "Any relevant formula if applicable, else empty string",
-  "difficulty": "Easy",
-  "tip": "One short memory tip or trick for this concept"
-}`;
+    const usedBefore = readUsedQuestionHashes(activeTopic);
 
     try {
       const res = await fetch('/api/foundation-question', {
@@ -130,12 +198,14 @@ Return ONLY valid JSON, no markdown, no backticks:
           'Content-Type': 'application/json',
         },
         body: JSON.stringify({
-          prompt,
+          unitName: activeUnit.name,
+          topic: activeTopic,
+          usedQuestionHashes: usedBefore,
         }),
       });
 
       if (!res.ok) {
-        const err = await res.json().catch(() => ({}));
+        const err = (await res.json().catch(() => ({}))) as { code?: string; error?: string; message?: string };
         if (err.code === 'missing_config') {
           setQuestion({ error: true, kind: 'config' });
           setLoading(false);
@@ -144,10 +214,26 @@ Return ONLY valid JSON, no markdown, no backticks:
         throw new Error(err.error || err.message || `HTTP ${res.status}`);
       }
 
-      const data = await res.json();
+      const data = (await res.json()) as { text?: string };
       const text = data?.text ?? '{}';
       const clean = text.replace(/```json\n?/g, '').replace(/```\n?/g, '').trim();
       const parsed = JSON.parse(clean) as GeneratedQuestion;
+      parsed.correct = String(parsed.correct ?? '')
+        .trim()
+        .toUpperCase()
+        .slice(0, 1);
+
+      if (!isValidMcqPayload(parsed)) {
+        throw new Error('Invalid question payload from model (missing options or correct letter).');
+      }
+
+      const stemHash = hashQuestionStem(parsed.question);
+      if (usedBefore.includes(stemHash) && retryLeft > 0) {
+        await generateQuestion(retryLeft - 1);
+        return;
+      }
+
+      appendUsedQuestionHash(activeTopic, stemHash);
       setQuestion(parsed);
     } catch (e) {
       console.error('Question generation error:', e);
@@ -198,6 +284,7 @@ Return ONLY valid JSON, no markdown, no backticks:
   }
 
   function startPracticeSession() {
+    clearUsedQuestionsForTopic(activeTopic);
     setSessionActive(true);
     setSessionComplete(false);
     setCurrentQuestionNumber(1);
@@ -485,12 +572,32 @@ Return ONLY valid JSON, no markdown, no backticks:
                       Question {currentQuestionNumber} of {TOTAL_SESSION_QUESTIONS}
                     </span>
                   </div>
-                  <p className="text-base font-medium leading-relaxed text-white">{question.question}</p>
-                  {question.formula && (
-                    <div className="mt-3 bg-slate-900/80 rounded-lg px-4 py-2 inline-block border border-slate-700/50">
-                      <p className="text-amber-300 text-sm font-mono">{question.formula}</p>
-                    </div>
+                  <p className="text-base font-medium leading-relaxed text-white whitespace-pre-wrap">{question.question}</p>
+                  {question.subQuestions && question.subQuestions.length > 0 && (
+                    <ul className="mt-3 space-y-1.5 text-slate-200 text-sm list-disc list-inside">
+                      {question.subQuestions.map((sq) => (
+                        <li key={sq} className="leading-relaxed">
+                          {sq}
+                        </li>
+                      ))}
+                    </ul>
                   )}
+                  {(question.formulas && question.formulas.length > 0) || question.formula ? (
+                    <div className="mt-4 bg-slate-900/80 rounded-lg px-4 py-3 border border-amber-700/30">
+                      <p className="text-amber-200/90 text-xs font-semibold uppercase tracking-wider mb-2">Relevant formulas</p>
+                      {question.formulas && question.formulas.length > 0 ? (
+                        <ul className="space-y-1">
+                          {question.formulas.map((f, i) => (
+                            <li key={`${i}-${f.slice(0, 40)}`} className="text-amber-100 text-sm font-mono leading-relaxed">
+                              {f}
+                            </li>
+                          ))}
+                        </ul>
+                      ) : (
+                        <p className="text-amber-100 text-sm font-mono">{question.formula}</p>
+                      )}
+                    </div>
+                  ) : null}
                 </div>
 
                 <div className="space-y-2">
@@ -550,6 +657,22 @@ Return ONLY valid JSON, no markdown, no backticks:
                       </span>
                     </div>
                     <p className="text-slate-300 text-sm leading-relaxed">{question.explanation}</p>
+                    {question.answer &&
+                      (['a', 'b', 'c'] as const).some((k) => typeof question.answer?.[k] === 'string') && (
+                        <div className="rounded-lg border border-slate-600/60 bg-slate-900/50 px-4 py-3 space-y-2">
+                          <p className="text-slate-400 text-xs font-semibold uppercase tracking-wider">Worked solutions</p>
+                          {(['a', 'b', 'c'] as const).map((part) => {
+                            const text = question.answer?.[part];
+                            if (!text?.trim()) return null;
+                            return (
+                              <div key={part}>
+                                <p className="text-cyan-400 text-xs font-bold mb-0.5">Part ({part})</p>
+                                <p className="text-slate-300 text-sm leading-relaxed whitespace-pre-wrap">{text}</p>
+                              </div>
+                            );
+                          })}
+                        </div>
+                      )}
                     {question.tip && (
                       <div className="bg-amber-950/30 border border-amber-700/40 rounded-lg px-4 py-2">
                         <p className="text-amber-200 text-sm">

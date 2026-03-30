@@ -5,6 +5,8 @@ import { EmailConfirmationRequired } from '../pages/EmailConfirmationRequired';
 export function ProtectedRoute({ children }: { children: React.ReactNode }) {
   const location = useLocation();
   const { user, loading, emailVerified, approved, approvalRedirectTo, approvalCourseType, approvalUser } = useAuthStore();
+  const storedApprovalStatus =
+    typeof window !== 'undefined' ? localStorage.getItem('approvalStatus') : null;
 
   // Dev only: bypass auth for UI preview (main.tsx sets this from ?testMode=1)
   const testMode =
@@ -33,6 +35,11 @@ export function ProtectedRoute({ children }: { children: React.ReactNode }) {
   // Check email confirmation first - if not verified, show email confirmation page
   if (emailVerified === false) {
     return <EmailConfirmationRequired />;
+  }
+
+  // Hard block pending users even before state hydration completes.
+  if (storedApprovalStatus === 'pending' && approved !== true) {
+    return <Navigate to="/approval-pending" replace />;
   }
 
   // Check approval status from Google Sheet (via n8n)

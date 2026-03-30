@@ -10,6 +10,7 @@ export const SIGNIN_WEBHOOK_STORAGE_KEYS = [
   'userCourse',
   'userBatch',
   'courseType',
+  'approvalStatus',
 ] as const;
 
 const SIGNIN_NOTIFICATION_DEDUPE_MS = 30 * 60 * 1000;
@@ -114,6 +115,8 @@ function buildApprovalResponseFromPayload(data: Record<string, unknown>): Approv
 export function persistSigninWebhookToLocalStorage(result: ApprovalCheckResponse): void {
   if (typeof window === 'undefined') return;
   try {
+    localStorage.setItem('approvalStatus', result.approved ? 'approved' : 'pending');
+
     if (result.user && Object.keys(result.user).length > 0) {
       localStorage.setItem('webhookUser', JSON.stringify(result.user));
     }

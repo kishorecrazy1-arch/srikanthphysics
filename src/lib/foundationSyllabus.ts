@@ -5,21 +5,160 @@ export type FoundationUnit = {
   topics: string[];
 };
 
-/** Foundation course — 13 units (matches dashboard / practice / mock test) */
+/** Foundation course — 13 units (aligned with official Foundation syllabus PDF) */
 export const FOUNDATION_SYLLABUS: FoundationUnit[] = [
-  { id: 1, name: 'Units & Measurements', icon: '📏', topics: ['Fundamental and Derived Quantities', 'SI Units and Their Symbols', 'Dimensional Analysis', 'Measurement Errors', 'Significant Figures'] },
-  { id: 2, name: 'Kinematics', icon: '🏃', topics: ['Average Speed and Average Velocity', 'Acceleration', 'Kinematic Equations of Motion', 'Position-Time Graphs', 'Velocity-Time Graphs', 'Acceleration-Time Graphs'] },
-  { id: 3, name: 'Laws of Motion', icon: '⚙️', topics: ["Newton's First Law", "Newton's Second Law (F=ma)", "Newton's Third Law", 'Free Body Diagrams', 'Impulse-Momentum Principle'] },
-  { id: 4, name: 'Work, Energy and Power', icon: '⚡', topics: ['Work Done by a Force', 'Area Under Force-Displacement Graph', 'Types of Energy (KE, PE)', 'Conservation of Energy', 'Power and Its Units'] },
-  { id: 5, name: 'Rotational Motion', icon: '🌀', topics: ['Centre of Mass', 'Torque', 'Moment of Inertia', 'Angular Momentum', 'Conservation of Angular Momentum'] },
-  { id: 6, name: 'Gravitation', icon: '🌍', topics: ["Newton's Law of Gravitation", 'Gravitational Field', 'Escape Velocity', 'Orbital Motion', "Kepler's Laws"] },
-  { id: 7, name: 'Properties of Matter', icon: '🔬', topics: ['Elasticity', 'Stress and Strain', "Young's Modulus", 'Fluid Pressure', 'Surface Tension', 'Viscosity'] },
-  { id: 8, name: 'Thermodynamics', icon: '🌡️', topics: ['Temperature and Heat', 'Zeroth and First Law', 'Second Law', 'Carnot Engine', 'Heat Transfer'] },
-  { id: 9, name: 'Waves & Oscillations', icon: '〰️', topics: ['Simple Harmonic Motion', 'Wave Properties', 'Speed of Sound', 'Doppler Effect', 'Standing Waves'] },
-  { id: 10, name: 'Electricity & Magnetism', icon: '⚡', topics: ["Coulomb's Law", 'Electric Field', "Ohm's Law", 'Series & Parallel Circuits', "Kirchhoff's Laws", 'Magnetic Force'] },
-  { id: 11, name: 'Electromagnetic Induction', icon: '🔄', topics: ["Faraday's Law", "Lenz's Law", 'AC and DC', 'Transformers', 'Eddy Currents'] },
-  { id: 12, name: 'Dual Nature, Atoms & Nuclei', icon: '⚛️', topics: ['Photoelectric Effect', 'de Broglie Relation', "Bohr's Model", 'Nuclear Structure', 'Radioactivity'] },
-  { id: 13, name: 'Optics', icon: '🔭', topics: ['Reflection', 'Spherical Mirrors', 'Refraction', 'Total Internal Reflection', 'Lenses and Lens Formula'] },
+  {
+    id: 1,
+    name: 'Units & Measurements',
+    icon: '📏',
+    topics: [
+      'Fundamental and Derived Quantities',
+      'SI Units and Measurement',
+      'Dimensional Analysis',
+      'Significant Figures',
+      'Measurement Errors',
+    ],
+  },
+  {
+    id: 2,
+    name: 'Kinematics',
+    icon: '🏃',
+    topics: [
+      'Average Speed and Average Velocity',
+      'Acceleration',
+      'Kinematic Equations of Motion',
+      'Position-Time Graphs',
+      'Velocity-Time Graphs',
+      'Acceleration-Time Graphs',
+    ],
+  },
+  {
+    id: 3,
+    name: 'Laws of Motion',
+    icon: '⚙️',
+    topics: [
+      "Newton's First Law of Motion",
+      "Newton's Second Law (F=ma)",
+      "Newton's Third Law of Motion",
+      'Free Body Diagrams',
+      'Impulse-Momentum Principle',
+    ],
+  },
+  {
+    id: 4,
+    name: 'Work, Energy and Power',
+    icon: '⚡',
+    topics: [
+      'Work Done by a Force',
+      'Area Under Force-Displacement Graph',
+      'Kinetic and Potential Energy',
+      'Conservation of Energy',
+      'Power and Its Units',
+    ],
+  },
+  {
+    id: 5,
+    name: 'Rotational Motion',
+    icon: '🌀',
+    topics: [
+      'Centre of Mass',
+      'Moment of Force and Torque',
+      'Angular Momentum',
+      'Equilibrium',
+      'Moment of Inertia',
+    ],
+  },
+  {
+    id: 6,
+    name: 'Gravitation',
+    icon: '🌍',
+    topics: [
+      "Newton's Law of Gravitation",
+      'Acceleration Due to Gravity',
+      'Variation with Altitude and Depth',
+      "Kepler's Laws",
+      'Escape Velocity and Orbital Velocity',
+    ],
+  },
+  {
+    id: 7,
+    name: 'Properties of Matter',
+    icon: '🔬',
+    topics: [
+      "Hooke's Law",
+      "Young's Modulus",
+      'Bulk and Rigidity Modulus',
+      'Pressure and Its Measurement',
+      "Bernoulli's Principle",
+    ],
+  },
+  {
+    id: 8,
+    name: 'Thermodynamics',
+    icon: '🌡️',
+    topics: [
+      'Gas Equation',
+      'Types of Thermodynamic Processes',
+      'Work Done in Thermodynamics',
+      'Specific Heats of Gases',
+    ],
+  },
+  {
+    id: 9,
+    name: 'Oscillations',
+    icon: '〰️',
+    topics: [
+      'Simple Harmonic Motion',
+      'Time Period and Frequency',
+      'Displacement, Velocity and Acceleration in SHM',
+      'Simple Pendulum',
+      'Potential and Kinetic Energy in SHM',
+    ],
+  },
+  {
+    id: 10,
+    name: 'Electrostatics',
+    icon: '⚡',
+    topics: [
+      'Electric Charges and Conservation',
+      "Coulomb's Law",
+      'Electric Field',
+      'Electric Flux',
+    ],
+  },
+  {
+    id: 11,
+    name: 'Current Electricity',
+    icon: '🔌',
+    topics: [
+      'Drift Velocity and Mobility',
+      "Ohm's Law",
+      'Resistance',
+      'Resistors in Series and Parallel',
+    ],
+  },
+  {
+    id: 12,
+    name: 'Dual Nature, Atoms & Nuclei',
+    icon: '⚛️',
+    topics: [
+      'Dual Nature of Radiation',
+      'Photoelectric Effect',
+      'de Broglie Relation',
+      "Bohr's Atomic Model",
+    ],
+  },
+  {
+    id: 13,
+    name: 'Optics',
+    icon: '🔭',
+    topics: [
+      'Reflection and Spherical Mirrors',
+      'Mirror Formula',
+      'Refraction at Plane and Spherical Surfaces',
+      'Total Internal Reflection',
+    ],
+  },
 ];
 
 export const UNIT_ACCENTS = [

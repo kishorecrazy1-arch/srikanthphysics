@@ -148,26 +148,33 @@ export const useAuthStore = create<AuthState>((set, get) => ({
       }
 
       clearSigninWebhookLocalStorage();
-      await get().fetchUserProfile();
-
-      const user = get().user;
-      if (!user && data.user) {
-        const approvalResult = await checkUserApproval({
-          email: email,
-          name: data.user.user_metadata?.name || email.split('@')[0],
-          userId: data.user.id,
-        });
-
-        set({
-          approved: approvalResult.approved,
-          approvalRedirectTo: approvalResult.redirectTo || null,
-          approvalCourseType: approvalResult.courseType || null,
-          approvalUser: approvalResult.user || null,
-        });
-        persistSigninWebhookToLocalStorage(approvalResult);
+      if (!data.user) {
+        set({ approved: false, approvalRedirectTo: '/approval-pending', loading: false });
+        return;
       }
-      // With profile: fetchUserProfile → checkApproval already POSTed signin-check once.
-      // Do not call sendSigninNotification (second POST) — same URL caused duplicate emails.
+
+      // Always enforce approval immediately after Supabase auth.
+      const approvalResult = await checkUserApproval({
+        email,
+        name: data.user.user_metadata?.name || email.split('@')[0],
+        userId: data.user.id,
+      });
+
+      set({
+        approved: approvalResult.approved,
+        approvalRedirectTo: approvalResult.redirectTo || null,
+        approvalCourseType: approvalResult.courseType || null,
+        approvalUser: approvalResult.user || null,
+      });
+      persistSigninWebhookToLocalStorage(approvalResult);
+
+      if (!approvalResult.approved) {
+        // Explicitly stop here so pending users never proceed to dashboard data loading.
+        set({ loading: false });
+        return;
+      }
+
+      await get().fetchUserProfile();
     } finally {
       suppressSignedInFetch = false;
     }
@@ -267,10 +274,13 @@ export const useAuthStore = create<AuthState>((set, get) => ({
               subscriptionExpiresAt: profile.subscription_expires_at,
               paymentDate: profile.payment_date,
             },
-            loading: false,
+            loading: true,
           });
 
+          // Reset approval to unknown while a fresh check runs.
+          set({ approved: null });
           await get().checkApproval();
+          set({ loading: false });
         } else {
           // No profile found - user not authenticated or profile doesn't exist
           set({ user: null, loading: false, approved: null });
