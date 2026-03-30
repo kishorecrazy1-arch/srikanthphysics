@@ -6,13 +6,18 @@ import type { DemoFormData } from '../lib/demoSchemas';
  */
 export interface DemoLeadPayload {
   name: string;
+  fullName?: string;
   email: string;
+  emailAddress?: string;
   phone?: string;
+  phoneNumber?: string;
   grade?: string;
   board?: string;
   city?: string;
   country?: string;
   course?: string;
+  courses?: string;
+  batch?: string;
   referrer?: string;
   timestamp?: string;
 }
@@ -38,14 +43,18 @@ export async function submitDemoLead(
 
   const payload: DemoLeadPayload = {
     name: (fd.fullName || fd.name || '').trim(),
+    fullName: (fd.fullName || fd.name || '').trim(),
     email: (fd.emailAddress || fd.email || '').trim(),
+    emailAddress: (fd.emailAddress || fd.email || '').trim(),
     phone: (fd.phoneNumber || fd.phone || fd.mobile || '').trim() || undefined,
+    phoneNumber: (fd.phoneNumber || fd.phone || fd.mobile || '').trim() || undefined,
     grade: fd.grade ? String(fd.grade) : undefined,
     board: fd.board ? String(fd.board) : undefined,
     city: fd.city ? String(fd.city).trim() : undefined,
     country: fd.country ? String(fd.country).trim() : undefined,
-    course:
-      (fd.courses || fd.course || fd.batch || fd.board || '').trim() || undefined,
+    course: (fd.courses || fd.course || fd.batch || fd.board || '').trim() || undefined,
+    courses: (fd.courses || fd.course || fd.batch || fd.board || '').trim() || undefined,
+    batch: (fd.courses || fd.course || fd.batch || fd.board || '').trim() || undefined,
     referrer: typeof window !== 'undefined' ? window.location.href : undefined,
     timestamp: new Date().toISOString(),
   };
