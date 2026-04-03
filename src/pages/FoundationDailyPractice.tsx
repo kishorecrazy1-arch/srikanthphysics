@@ -65,24 +65,125 @@ interface GeneratedQuestion {
   question: string;
   subQuestions?: string[];
   formulas?: string[];
-  options: Record<string, string>;
+  options: Record<'A' | 'B' | 'C' | 'D', string>;
   correct: string;
   explanation: string;
   formula?: string;
   difficulty?: string;
+  examStyle?: string;
   tip?: string;
   answer?: Record<string, string>;
 }
 
-function isValidMcqPayload(q: GeneratedQuestion): boolean {
-  const keys = ['A', 'B', 'C', 'D'] as const;
-  const letters = keys.filter((k) => typeof q.options?.[k] === 'string' && q.options[k].trim().length > 0);
-  if (letters.length !== 4) return false;
-  const c = String(q.correct ?? '')
-    .trim()
-    .toUpperCase()
-    .slice(0, 1);
-  return keys.includes(c as (typeof keys)[number]);
+const OPTION_KEYS = ['A', 'B', 'C', 'D'] as const;
+
+function stripNumericMcqPrefix(s: string): string {
+  return s.replace(/^\s*[1-4]\)\s*/i, '').trim();
+}
+
+/** API returns 1–4 options array + correct "1"|"2"|"3"|"4"; legacy uses A–D object. */
+function normalizeMcqFromUnknown(parsed: unknown): GeneratedQuestion | null {
+  if (!parsed || typeof parsed !== 'object' || Array.isArray(parsed)) return null;
+  const p = parsed as Record<string, unknown>;
+  const question = typeof p.question === 'string' ? p.question.trim() : '';
+  if (!question) return null;
+
+  const explanation = typeof p.explanation === 'string' ? p.explanation : '';
+
+  let options: Record<'A' | 'B' | 'C' | 'D', string>;
+  let correct: string;
+
+  if (Array.isArray(p.options) && p.options.length === 4) {
+    const texts = p.options.map((x, i) => {
+      const raw = typeof x === 'string' ? x.trim() : '';
+      const stripped = stripNumericMcqPrefix(raw);
+      return stripped.length > 0 ? stripped : (raw || `Option ${i + 1}`);
+    });
+    options = { A: texts[0]!, B: texts[1]!, C: texts[2]!, D: texts[3]! };
+    const c = String(p.correct ?? '').trim();
+    const digit = /^[1-4]$/.test(c) ? c : '';
+    const map: Record<string, string> = { '1': 'A', '2': 'B', '3': 'C', '4': 'D' };
+    correct = digit ? (map[digit] ?? '') : String(c).toUpperCase().replace(/[^ABCD]/g, '').slice(0, 1);
+    if (!OPTION_KEYS.includes(correct as (typeof OPTION_KEYS)[number])) return null;
+  } else if (p.options && typeof p.options === 'object' && !Array.isArray(p.options)) {
+    const o = p.options as Record<string, unknown>;
+    const get = (k: string): string => {
+      const v = o[k];
+      return typeof v === 'string' ? v.trim() : '';
+    };
+    const A = get('A') || get('a');
+    const B = get('B') || get('b');
+    const C = get('C') || get('c');
+    const D = get('D') || get('d');
+    if (!A || !B || !C || !D) return null;
+    options = { A, B, C, D };
+    correct = String(p.correct ?? '')
+      .trim()
+      .toUpperCase()
+      .slice(0, 1);
+    if (!OPTION_KEYS.includes(correct as (typeof OPTION_KEYS)[number])) return null;
+  } else {
+    return null;
+  }
+
+  const subQ = p.subQuestions;
+  const subQuestions = Array.isArray(subQ)
+    ? subQ.filter((x): x is string => typeof x === 'string' && x.trim().length > 0)
+    : undefined;
+
+  const formulasRaw = p.formulas;
+  const formulas = Array.isArray(formulasRaw)
+    ? formulasRaw.filter((x): x is string => typeof x === 'string' && x.trim().length > 0)
+    : undefined;
+
+  let answer: Record<string, string> | undefined;
+  if (p.answer && typeof p.answer === 'object' && !Array.isArray(p.answer)) {
+    const a = p.answer as Record<string, unknown>;
+    const out: Record<string, string> = {};
+    for (const k of ['a', 'b', 'c'] as const) {
+      const v = a[k];
+      if (typeof v === 'string' && v.trim()) out[k] = v;
+    }
+    if (Object.keys(out).length > 0) answer = out;
+  }
+
+  return {
+    question,
+    subQuestions: subQuestions && subQuestions.length > 0 ? subQuestions : undefined,
+    formulas: formulas && formulas.length > 0 ? formulas : undefined,
+    options,
+    correct,
+    explanation,
+    formula: typeof p.formula === 'string' ? p.formula.trim() : undefined,
+    difficulty: typeof p.difficulty === 'string' ? p.difficulty.trim() : undefined,
+    examStyle: typeof p.examStyle === 'string' ? p.examStyle.trim() : undefined,
+    tip: typeof p.tip === 'string' ? p.tip.trim() : undefined,
+    answer,
+  };
+}
+
+function formatExamBadgeLabel(examStyle: string | undefined): string | null {
+  if (!examStyle?.trim()) return null;
+  const u = examStyle.toUpperCase();
+  if (u.includes('JEE')) return 'JEE';
+  if (u.includes('NEET')) return 'NEET';
+  if (u.includes('AP')) return 'AP';
+  if (u.includes('IGCSE') || u.includes('IB')) return 'IGCSE';
+  const t = examStyle.trim();
+  return t.length > 12 ? `${t.slice(0, 12)}…` : t;
+}
+
+function ExamStyleBadge({ examStyle }: { examStyle: string | undefined }) {
+  const label = formatExamBadgeLabel(examStyle);
+  if (!label) return null;
+  return (
+    <span
+      className="bg-violet-500/25 text-violet-200 text-xs px-2.5 py-1 rounded-md border border-violet-400/40 font-bold tracking-wide"
+      title="Exam-style pattern for this question"
+    >
+      [{label}]
+    </span>
+  );
 }
 
 /** `kind: config` = key not in bundle; `kind: api` = Anthropic rejected the request */
@@ -217,14 +318,16 @@ export function FoundationDailyPractice() {
       const data = (await res.json()) as { text?: string };
       const text = data?.text ?? '{}';
       const clean = text.replace(/```json\n?/g, '').replace(/```\n?/g, '').trim();
-      const parsed = JSON.parse(clean) as GeneratedQuestion;
-      parsed.correct = String(parsed.correct ?? '')
-        .trim()
-        .toUpperCase()
-        .slice(0, 1);
+      let rawParsed: unknown;
+      try {
+        rawParsed = JSON.parse(clean) as unknown;
+      } catch {
+        throw new Error('Model returned invalid JSON.');
+      }
 
-      if (!isValidMcqPayload(parsed)) {
-        throw new Error('Invalid question payload from model (missing options or correct letter).');
+      const parsed = normalizeMcqFromUnknown(rawParsed);
+      if (!parsed) {
+        throw new Error('Invalid question payload from model (missing options or correct answer).');
       }
 
       const stemHash = hashQuestionStem(parsed.question);
@@ -546,7 +649,13 @@ export function FoundationDailyPractice() {
                     </p>
                   </>
                 )}
-                <button type="button" onClick={generateQuestion} className="bg-red-700 hover:bg-red-600 text-white px-6 py-2 rounded-xl">
+                <button
+                  type="button"
+                  onClick={() => {
+                    void generateQuestion();
+                  }}
+                  className="bg-red-700 hover:bg-red-600 text-white px-6 py-2 rounded-xl"
+                >
                   Try Again
                 </button>
               </div>
@@ -559,17 +668,18 @@ export function FoundationDailyPractice() {
                   style={{ boxShadow: `0 0 0 1px ${activeAccent}22, 0 0 32px -12px ${activeAccent}44` }}
                 >
                   <div className="flex flex-wrap items-center gap-2 mb-4">
+                    <ExamStyleBadge examStyle={question.examStyle} />
+                    <span className="text-slate-400 text-xs font-medium">
+                      Q{currentQuestionNumber} of {TOTAL_SESSION_QUESTIONS}
+                    </span>
                     <span className="bg-cyan-500/20 text-cyan-300 text-xs px-3 py-1 rounded-full border border-cyan-500/30 font-medium">
-                      {activeUnit.name}
+                      Unit: {activeUnit.name}
                     </span>
                     <span className="bg-blue-500/20 text-blue-300 text-xs px-3 py-1 rounded-full border border-blue-500/30">
                       {activeTopic}
                     </span>
                     <span className="bg-slate-800/80 text-slate-400 text-xs px-3 py-1 rounded-full border border-slate-600/50">
                       {question.difficulty || 'Medium'}
-                    </span>
-                    <span className="ml-auto text-slate-500 text-xs">
-                      Question {currentQuestionNumber} of {TOTAL_SESSION_QUESTIONS}
                     </span>
                   </div>
                   <p className="text-base font-medium leading-relaxed text-white whitespace-pre-wrap">{question.question}</p>
@@ -582,7 +692,7 @@ export function FoundationDailyPractice() {
                       ))}
                     </ul>
                   )}
-                  {(question.formulas && question.formulas.length > 0) || question.formula ? (
+                  {!revealed && ((question.formulas && question.formulas.length > 0) || question.formula) ? (
                     <div className="mt-4 bg-slate-900/80 rounded-lg px-4 py-3 border border-amber-700/30">
                       <p className="text-amber-200/90 text-xs font-semibold uppercase tracking-wider mb-2">Relevant formulas</p>
                       {question.formulas && question.formulas.length > 0 ? (
@@ -600,10 +710,10 @@ export function FoundationDailyPractice() {
                   ) : null}
                 </div>
 
-                <div className="space-y-2">
-                  {['A', 'B', 'C', 'D'].map((key) => {
-                    const opt = question.options?.[key];
-                    if (!opt) return null;
+                <div className="grid grid-cols-1 sm:grid-cols-2 gap-2">
+                  {OPTION_KEYS.map((key, idx) => {
+                    const opt = question.options[key];
+                    const num = idx + 1;
                     let style =
                       'bg-slate-800/40 border-slate-600/50 text-white hover:border-cyan-400/50 hover:bg-slate-800/80 cursor-pointer';
                     if (!revealed && selected === key)
@@ -620,10 +730,10 @@ export function FoundationDailyPractice() {
                         key={key}
                         type="button"
                         onClick={() => handleAnswer(key)}
-                        className={`w-full text-left p-4 rounded-xl border-2 transition-all text-sm font-medium flex items-center gap-3 ${style}`}
+                        className={`text-left p-3 sm:p-4 rounded-xl border-2 transition-all text-sm font-medium flex items-center gap-3 min-h-[3.25rem] ${style}`}
                       >
                         <span
-                          className={`w-7 h-7 rounded-full flex items-center justify-center text-xs font-bold flex-shrink-0 ${
+                          className={`w-8 h-8 rounded-full flex items-center justify-center text-xs font-bold flex-shrink-0 ${
                             revealed && key === question.correct
                               ? 'bg-green-500 text-white'
                               : revealed && key === selected
@@ -631,12 +741,12 @@ export function FoundationDailyPractice() {
                                 : 'bg-slate-700 text-slate-300'
                           }`}
                         >
-                          {key}
+                          {num})
                         </span>
-                        <span className="flex-1">{opt}</span>
-                        {revealed && key === question.correct && <span className="text-green-400 text-base">✅</span>}
+                        <span className="flex-1 leading-snug">{opt}</span>
+                        {revealed && key === question.correct && <span className="text-green-400 text-base shrink-0">✅</span>}
                         {revealed && key === selected && key !== question.correct && (
-                          <span className="text-red-400 text-base">❌</span>
+                          <span className="text-red-400 text-base shrink-0">❌</span>
                         )}
                       </button>
                     );
@@ -656,7 +766,13 @@ export function FoundationDailyPractice() {
                         {selected === question.correct ? '✓ Correct!' : '✗ Incorrect'}
                       </span>
                     </div>
-                    <p className="text-slate-300 text-sm leading-relaxed">{question.explanation}</p>
+                    {question.formula && (
+                      <div className="rounded-lg border border-amber-700/40 bg-slate-900/60 px-4 py-3">
+                        <p className="text-amber-200/90 text-xs font-semibold uppercase tracking-wider mb-1">Formula</p>
+                        <p className="text-amber-100 text-sm font-mono leading-relaxed">{question.formula}</p>
+                      </div>
+                    )}
+                    <p className="text-slate-300 text-sm leading-relaxed whitespace-pre-wrap">{question.explanation}</p>
                     {question.answer &&
                       (['a', 'b', 'c'] as const).some((k) => typeof question.answer?.[k] === 'string') && (
                         <div className="rounded-lg border border-slate-600/60 bg-slate-900/50 px-4 py-3 space-y-2">
