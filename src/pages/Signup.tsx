@@ -4,6 +4,7 @@ import { Phone, Mail, Lock, User, GraduationCap, BookText, ArrowLeft } from 'luc
 import { useAuthStore } from '../store/authStore';
 import { CourseType } from '../types';
 import { supabase } from '../lib/supabase';
+import { getAuthSiteOrigin } from '../lib/siteUrl';
 import { Logo } from '../components/Logo';
 
 const COUNTRY_CODES = [
@@ -151,7 +152,7 @@ export function Signup() {
       const { error } = await supabase.auth.signInWithOAuth({
         provider: 'apple',
         options: {
-          redirectTo: `${window.location.origin}/dashboard`,
+          redirectTo: `${getAuthSiteOrigin()}/dashboard`,
         },
       });
       if (error) throw error;

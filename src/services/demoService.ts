@@ -1,112 +1,112 @@
 import type { DemoFormData } from '../lib/demoSchemas';
 
-/**
- * Payload structure matching n8n webhook expectations.
- * course/batch: so Srikanth Academy can identify e.g. Foundation Batch 1,2,3 or AP Physics in emails.
- */
-export interface DemoLeadPayload {
+/** Extra keys some forms or n8n workflows may supply */
+type DemoFormExtras = Partial<{
+  fullName: string;
+  emailAddress: string;
+  phoneNumber: string;
+  mobile: string;
+  courses: string;
+  batch: string;
+  course: string;
+}>;
+
+/** Body sent to n8n and /api/save-registration (strict JSON shape) */
+export interface RegistrationSubmitPayload {
   name: string;
-  fullName?: string;
   email: string;
-  emailAddress?: string;
-  phone?: string;
-  phoneNumber?: string;
-  grade?: string;
-  board?: string;
-  city?: string;
-  country?: string;
-  /** Course or batch selected (e.g. "Foundation Batch 1", "AP Physics") — for email and sheet */
-  course?: string;
-  /** Alias for n8n workflows that read `courses` instead of `course` */
-  courses?: string;
-  /** Extra alias for workflows that read `batch` */
-  batch?: string;
+  phone: string;
+  course: string;
+  grade: string;
+  city: string;
+  country: string;
+  timestamp: string;
+  /** Same page URL when running in the browser; omitted on SSR */
   referrer?: string;
-  timestamp?: string;
+  /** Aliases so existing n8n flows keep working */
+  fullName: string;
+  emailAddress: string;
+  phoneNumber: string;
+  courses: string;
+  batch: string;
+  board: string;
+}
+
+function buildRegistrationPayload(formData: DemoFormData & DemoFormExtras): RegistrationSubmitPayload {
+  const fd = formData;
+
+  const name = (fd.fullName ?? fd.name ?? '').trim();
+  const email = (fd.emailAddress ?? fd.email ?? '').trim();
+  const phone = (fd.phoneNumber ?? fd.phone ?? fd.mobile ?? '').trim();
+  const course = (
+    fd.board ??
+    fd.courses ??
+    fd.batch ??
+    fd.course ??
+    ''
+  ).trim();
+  const grade = fd.grade != null && fd.grade !== '' ? String(fd.grade) : '';
+  const city = (fd.city ?? '').trim();
+  const country = (fd.country ?? '').trim();
+  const timestamp = new Date().toLocaleString('en-IN', { timeZone: 'Asia/Kolkata' });
+  const board = (fd.board ?? '').trim();
+
+  return {
+    name,
+    email,
+    phone,
+    course,
+    grade,
+    city,
+    country,
+    timestamp,
+    referrer: typeof window !== 'undefined' ? window.location.href : undefined,
+    fullName: name,
+    emailAddress: email,
+    phoneNumber: phone,
+    courses: course,
+    batch: course,
+    board,
+  };
 }
 
 /**
- * Send demo lead to n8n webhook
- * Note: Webhook is optional - form will still succeed if webhook is not configured
+ * Sends demo lead to n8n and to /api/save-registration in parallel.
+ * Both promises always run; failures do not block the other. Student always gets success.
  */
 export async function submitDemoLead(
-  formData: DemoFormData
+  formData: DemoFormData,
 ): Promise<{ success: boolean; error?: string }> {
-  const webhookUrl = import.meta.env.VITE_N8N_WEBHOOK_URL;
-
-  // Plain object with explicit strings so JSON.stringify always produces a non-empty POST body
-  const fd = formData as DemoFormData & {
-    fullName?: string;
-    emailAddress?: string;
-    phoneNumber?: string;
-    mobile?: string;
-    courses?: string;
-    course?: string;
-    batch?: string;
-  };
-
-  // Courses dropdown in DemoForm uses `board`; also accept `courses` / `course` / `batch`
-  const courseValue =
-    (fd.board || fd.courses || fd.course || fd.batch || '').trim() || undefined;
-
-  const payload: DemoLeadPayload = {
-    name: (fd.fullName || fd.name || '').trim(),
-    fullName: (fd.fullName || fd.name || '').trim(),
-    email: (fd.emailAddress || fd.email || '').trim(),
-    emailAddress: (fd.emailAddress || fd.email || '').trim(),
-    phone: (fd.phoneNumber || fd.phone || fd.mobile || '').trim() || undefined,
-    phoneNumber: (fd.phoneNumber || fd.phone || fd.mobile || '').trim() || undefined,
-    grade: fd.grade ? String(fd.grade) : undefined,
-    board: fd.board ? String(fd.board) : undefined,
-    city: fd.city ? String(fd.city).trim() : undefined,
-    country: fd.country ? String(fd.country).trim() : undefined,
-    course: courseValue,
-    courses: courseValue,
-    batch: courseValue,
-    referrer: typeof window !== 'undefined' ? window.location.href : undefined,
-    timestamp: new Date().toISOString(),
-  };
-
-  // If webhook is not configured, still return success (webhook is optional)
-  if (!webhookUrl) {
-    console.warn('VITE_N8N_WEBHOOK_URL is not configured. Form submitted successfully, but webhook was not called.');
-    console.log('Demo lead data:', payload);
-    return { success: true };
-  }
-
+  const payload = buildRegistrationPayload(formData as DemoFormData & DemoFormExtras);
   const bodyString = JSON.stringify(payload);
-  if (typeof bodyString !== 'string') {
-    console.error('Demo webhook: JSON.stringify failed', payload);
-    return { success: true };
-  }
 
-  console.log('📤 Sending to webhook URL:', webhookUrl);
-  console.log('📦 Payload:', payload);
+  const n8nUrl = String(import.meta.env.VITE_N8N_WEBHOOK_URL ?? '').trim();
 
-  try {
-    const response = await fetch(webhookUrl, {
-      method: 'POST',
-      headers: {
-        'Content-Type': 'application/json',
-      },
-      body: bodyString,
-    });
+  await Promise.allSettled([
+    (async (): Promise<void> => {
+      if (!n8nUrl) {
+        throw new Error('n8n_webhook_url_missing');
+      }
+      const response = await fetch(n8nUrl, {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: bodyString,
+      });
+      if (!response.ok) {
+        throw new Error(`n8n webhook HTTP ${String(response.status)}`);
+      }
+    })(),
+    (async (): Promise<void> => {
+      const response = await fetch('/api/save-registration', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: bodyString,
+      });
+      if (!response.ok) {
+        throw new Error(`save-registration HTTP ${String(response.status)}`);
+      }
+    })(),
+  ]);
 
-    const responseText = await response.text();
-
-    if (!response.ok) {
-      console.error('❌ n8n webhook error:', responseText);
-      console.error('🔗 Webhook URL used:', webhookUrl);
-      console.warn('⚠️ Form submitted successfully, but webhook call failed. Data:', payload);
-      return { success: true };
-    }
-
-    console.log('✅ Webhook call successful! Status:', response.status);
-    console.log('📥 Response:', responseText);
-    return { success: true };
-  } catch (error) {
-    console.error('Error calling webhook:', error);
-    console.warn('Form submitted successfully, but webhook call failed. Data:', payload);
-    return { success: true };
-  }
+  return { success: true };
 }

@@ -3,6 +3,7 @@ import { Link, useNavigate, useLocation } from 'react-router-dom';
 import { BookOpen, Mail, Lock, ArrowLeft } from 'lucide-react';
 import { useAuthStore } from '../store/authStore';
 import { supabase } from '../lib/supabase';
+import { getAuthSiteOrigin } from '../lib/siteUrl';
 
 export function Login() {
   const [email, setEmail] = useState('');
@@ -91,7 +92,7 @@ export function Login() {
       const { error } = await supabase.auth.signInWithOAuth({
         provider: 'apple',
         options: {
-          redirectTo: `${window.location.origin}/ap-physics`,
+          redirectTo: `${getAuthSiteOrigin()}/ap-physics`,
         },
       });
       if (error) throw error;
@@ -112,10 +113,18 @@ export function Login() {
 
     try {
       const { error } = await supabase.auth.resetPasswordForEmail(resetEmail, {
-        redirectTo: `${window.location.origin}/reset-password`,
+        redirectTo: `${getAuthSiteOrigin()}/reset-password`,
       });
       if (error) throw error;
-      setResetMessage('Password reset link sent! Check your email.');
+      const local =
+        window.location.hostname === 'localhost' || window.location.hostname === '127.0.0.1';
+      const usingEnvOrigin =
+        typeof import.meta.env.VITE_APP_URL === 'string' && import.meta.env.VITE_APP_URL.trim().length > 0;
+      setResetMessage(
+        local && !usingEnvOrigin
+          ? 'Password reset link sent! If the link starts with localhost, start your dev server on that port before opening it — or use “Forgot password” on your live website instead.'
+          : 'Password reset link sent! Check your email.',
+      );
       setTimeout(() => {
         setShowForgotPassword(false);
         setResetEmail('');
