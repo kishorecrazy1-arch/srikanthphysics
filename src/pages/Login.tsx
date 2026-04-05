@@ -2,8 +2,8 @@ import { useState, useEffect } from 'react';
 import { Link, useNavigate, useLocation } from 'react-router-dom';
 import { BookOpen, Mail, Lock, ArrowLeft } from 'lucide-react';
 import { useAuthStore } from '../store/authStore';
-import { supabase } from '../lib/supabase';
-import { getAuthSiteOrigin } from '../lib/siteUrl';
+import { supabase, isSupabaseConfigured } from '../lib/supabase';
+import { getAuthSiteOrigin, getAuthCallbackUrl } from '../lib/siteUrl';
 
 export function Login() {
   const [email, setEmail] = useState('');
@@ -64,10 +64,16 @@ export function Login() {
   const handleGoogleSignIn = async () => {
     try {
       setError('');
+      if (!isSupabaseConfigured) {
+        setError(
+          'Sign-in is not configured: set VITE_SUPABASE_URL and VITE_SUPABASE_ANON_KEY (see .env).',
+        );
+        return;
+      }
       const { error } = await supabase.auth.signInWithOAuth({
         provider: 'google',
         options: {
-          redirectTo: `${window.location.origin}/dashboard`,
+          redirectTo: getAuthCallbackUrl('/dashboard'),
           queryParams: {
             access_type: 'offline',
             prompt: 'consent',
@@ -89,10 +95,16 @@ export function Login() {
   const handleAppleSignIn = async () => {
     try {
       setError('');
+      if (!isSupabaseConfigured) {
+        setError(
+          'Sign-in is not configured: set VITE_SUPABASE_URL and VITE_SUPABASE_ANON_KEY (see .env).',
+        );
+        return;
+      }
       const { error } = await supabase.auth.signInWithOAuth({
         provider: 'apple',
         options: {
-          redirectTo: `${getAuthSiteOrigin()}/ap-physics`,
+          redirectTo: getAuthCallbackUrl('/ap-physics'),
         },
       });
       if (error) throw error;
@@ -113,7 +125,7 @@ export function Login() {
 
     try {
       const { error } = await supabase.auth.resetPasswordForEmail(resetEmail, {
-        redirectTo: `${getAuthSiteOrigin()}/reset-password`,
+        redirectTo: getAuthCallbackUrl('/reset-password'),
       });
       if (error) throw error;
       const local =
@@ -288,6 +300,7 @@ export function Login() {
 
           <div className="space-y-4 mb-6">
             <button
+              type="button"
               onClick={handleGoogleSignIn}
               className="w-full flex items-center justify-center gap-3 px-6 py-3 border-2 border-gray-300 rounded-xl font-semibold text-gray-700 hover:bg-gray-50 transition-colors"
             >
@@ -301,6 +314,7 @@ export function Login() {
             </button>
 
             <button
+              type="button"
               onClick={handleAppleSignIn}
               className="w-full flex items-center justify-center gap-3 px-6 py-3 bg-black text-white rounded-xl font-semibold hover:bg-gray-900 transition-colors"
             >

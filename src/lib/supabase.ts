@@ -12,10 +12,16 @@ const hasValidConfig = supabaseUrl && supabaseAnonKey && (() => {
   try { new URL(supabaseUrl); return true; } catch { return false; }
 })();
 
+/** False when using placeholder client — OAuth and DB calls will not work. */
+export const isSupabaseConfigured = Boolean(hasValidConfig);
+
 const options = {
   auth: {
     persistSession: true,
     autoRefreshToken: true,
+    detectSessionInUrl: true,
+    // Hosted Supabase OAuth returns a PKCE `code` in the URL; implicit flow fails to recover the session.
+    flowType: 'pkce' as const,
   },
   realtime: {
     params: {

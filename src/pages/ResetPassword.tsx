@@ -3,6 +3,46 @@ import { useNavigate } from 'react-router-dom';
 import { Lock, Eye, EyeOff, CheckCircle, ArrowLeft } from 'lucide-react';
 import { supabase } from '../lib/supabase';
 
+function parseAuthParamsFromWindow(): {
+  looksLikeAuthRedirect: boolean;
+  urlError: string | null;
+} {
+  try {
+    const url = new URL(window.location.href);
+    const q = url.searchParams;
+    const hashParams =
+      url.hash && url.hash.length > 1 ? new URLSearchParams(url.hash.slice(1)) : null;
+
+    const err =
+      q.get('error_description') ||
+      q.get('error') ||
+      hashParams?.get('error_description') ||
+      hashParams?.get('error') ||
+      null;
+
+    const looksLikeAuthRedirect =
+      Boolean(q.get('code')) ||
+      Boolean(q.get('access_token')) ||
+      Boolean(hashParams?.get('access_token')) ||
+      q.get('type') === 'recovery';
+
+    let decoded: string | null = null;
+    if (err) {
+      try {
+        decoded = decodeURIComponent(err.replace(/\+/g, ' '));
+      } catch {
+        decoded = err;
+      }
+    }
+    return {
+      looksLikeAuthRedirect,
+      urlError: decoded,
+    };
+  } catch {
+    return { looksLikeAuthRedirect: false, urlError: null };
+  }
+}
+
 export function ResetPassword() {
   const [password, setPassword] = useState('');
   const [confirmPassword, setConfirmPassword] = useState('');
@@ -11,38 +51,77 @@ export function ResetPassword() {
   const [error, setError] = useState('');
   const [success, setSuccess] = useState(false);
   const [loading, setLoading] = useState(false);
+  const [verifyingLink, setVerifyingLink] = useState(true);
+  const [hasRecoverySession, setHasRecoverySession] = useState(false);
   const navigate = useNavigate();
 
   useEffect(() => {
-    // Check if we have a session from the password reset link
-    // Supabase automatically parses the hash fragments from the URL
-    const checkSession = async () => {
-      const { data: { session } } = await supabase.auth.getSession();
-      
-      // Wait a bit for Supabase to process hash fragments if present
-      if (!session && window.location.hash) {
-        setTimeout(async () => {
-          const { data: { session: retrySession } } = await supabase.auth.getSession();
-          if (!retrySession) {
-            setError('Invalid or expired reset link. Please request a new password reset.');
-          }
-        }, 500);
-      } else if (!session && !window.location.hash) {
-        setError('Invalid or expired reset link. Please request a new password reset.');
+    let cancelled = false;
+    const { looksLikeAuthRedirect, urlError } = parseAuthParamsFromWindow();
+
+    if (urlError) {
+      setError(urlError);
+      setVerifyingLink(false);
+      return () => {};
+    }
+
+    const waitForRecoverySession = async () => {
+      // PKCE reset links use ?code=... (no hash). Exchange runs asynchronously on client init;
+      // an immediate getSession() often sees null and used to show a false "invalid link" error.
+      const maxAttempts = 30;
+      const delayMs = 150;
+
+      for (let i = 0; i < maxAttempts; i++) {
+        if (cancelled) return;
+        const {
+          data: { session },
+        } = await supabase.auth.getSession();
+        if (session) {
+          setHasRecoverySession(true);
+          setError('');
+          setVerifyingLink(false);
+          return;
+        }
+        if (!looksLikeAuthRedirect) {
+          setError(
+            'Invalid or expired reset link. Open the link from your latest reset email, or request a new password reset from the login page.',
+          );
+          setVerifyingLink(false);
+          return;
+        }
+        await new Promise((r) => setTimeout(r, delayMs));
       }
+
+      if (cancelled) return;
+      const {
+        data: { session: finalSession },
+      } = await supabase.auth.getSession();
+      if (!finalSession) {
+        setError(
+          'This reset link did not work. It may have expired, or you may have opened it in a different browser or device than the one where you clicked “Forgot password.” Try requesting a new reset using the same browser you will use to open the email link.',
+        );
+        setHasRecoverySession(false);
+      } else {
+        setHasRecoverySession(true);
+        setError('');
+      }
+      setVerifyingLink(false);
     };
 
-    checkSession();
+    void waitForRecoverySession();
 
-    // Listen for auth state changes (e.g., when hash is processed)
-    const { data: { subscription } } = supabase.auth.onAuthStateChange((event, session) => {
-      if (event === 'PASSWORD_RECOVERY' || event === 'SIGNED_IN') {
-        // Session is now available
+    const {
+      data: { subscription },
+    } = supabase.auth.onAuthStateChange((event, session) => {
+      if ((event === 'PASSWORD_RECOVERY' || event === 'SIGNED_IN') && session) {
+        setHasRecoverySession(true);
         setError('');
+        setVerifyingLink(false);
       }
     });
 
     return () => {
+      cancelled = true;
       subscription.unsubscribe();
     };
   }, []);
@@ -81,6 +160,18 @@ export function ResetPassword() {
       setLoading(false);
     }
   };
+
+  if (verifyingLink) {
+    return (
+      <div className="min-h-screen bg-gradient-to-br from-blue-900 via-blue-800 to-cyan-900 flex items-center justify-center p-4">
+        <div className="absolute inset-0 bg-[url('data:image/svg+xml;base64,PHN2ZyB3aWR0aD0iNjAiIGhlaWdodD0iNjAiIHZpZXdCb3g9IjAgMCA2MCA2MCIgeG1sbnM9Imh0dHA6Ly93d3cudzMub3JnLzIwMDAvc3ZnIj48ZyBmaWxsPSJub25lIiBmaWxsLXJ1bGU9ImV2ZW5vZGQiPjxnIGZpbGw9IiNmZmZmZmYiIGZpbGwtb3BhY2l0eT0iMC4wNSI+PHBhdGggZD0iTTM2IDE2YzAtNi42MjctNS4zNzMtMTItMTItMTJzLTEyIDUuMzczLTEyIDEyIDUuMzczIDEyIDEyIDEyIDEyLTUuMzczIDEyLTEyeiIvPjwvZz48L2c+PC9zdmc+')] opacity-20"></div>
+        <div className="max-w-md w-full relative z-10 text-center text-white">
+          <p className="text-lg font-medium">Verifying your reset link…</p>
+          <p className="mt-2 text-sm text-blue-200">This usually takes just a moment.</p>
+        </div>
+      </div>
+    );
+  }
 
   if (success) {
     return (
@@ -147,10 +238,11 @@ export function ResetPassword() {
                   type={showPassword ? 'text' : 'password'}
                   value={password}
                   onChange={(e) => setPassword(e.target.value)}
-                  className="w-full px-4 py-3 pr-12 border-2 border-gray-300 rounded-xl focus:ring-2 focus:ring-blue-500 focus:border-blue-500 transition-colors"
+                  className="w-full px-4 py-3 pr-12 border-2 border-gray-300 rounded-xl focus:ring-2 focus:ring-blue-500 focus:border-blue-500 transition-colors disabled:bg-gray-100 disabled:cursor-not-allowed"
                   placeholder="Enter your new password"
                   required
                   minLength={6}
+                  disabled={!hasRecoverySession}
                 />
                 <button
                   type="button"
@@ -172,10 +264,11 @@ export function ResetPassword() {
                   type={showConfirmPassword ? 'text' : 'password'}
                   value={confirmPassword}
                   onChange={(e) => setConfirmPassword(e.target.value)}
-                  className="w-full px-4 py-3 pr-12 border-2 border-gray-300 rounded-xl focus:ring-2 focus:ring-blue-500 focus:border-blue-500 transition-colors"
+                  className="w-full px-4 py-3 pr-12 border-2 border-gray-300 rounded-xl focus:ring-2 focus:ring-blue-500 focus:border-blue-500 transition-colors disabled:bg-gray-100 disabled:cursor-not-allowed"
                   placeholder="Confirm your new password"
                   required
                   minLength={6}
+                  disabled={!hasRecoverySession}
                 />
                 <button
                   type="button"
@@ -189,7 +282,7 @@ export function ResetPassword() {
 
             <button
               type="submit"
-              disabled={loading}
+              disabled={loading || !hasRecoverySession}
               className="w-full bg-gradient-to-r from-blue-600 to-cyan-500 text-white py-4 rounded-xl font-bold text-lg hover:shadow-lg hover:scale-[1.02] transition-all disabled:opacity-50 disabled:cursor-not-allowed disabled:hover:scale-100"
             >
               {loading ? 'Updating Password...' : 'Update Password'}

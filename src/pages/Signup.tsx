@@ -3,8 +3,8 @@ import { Link, useNavigate } from 'react-router-dom';
 import { Phone, Mail, Lock, User, GraduationCap, BookText, ArrowLeft } from 'lucide-react';
 import { useAuthStore } from '../store/authStore';
 import { CourseType } from '../types';
-import { supabase } from '../lib/supabase';
-import { getAuthSiteOrigin } from '../lib/siteUrl';
+import { supabase, isSupabaseConfigured } from '../lib/supabase';
+import { getAuthCallbackUrl } from '../lib/siteUrl';
 import { Logo } from '../components/Logo';
 
 const COUNTRY_CODES = [
@@ -130,10 +130,16 @@ export function Signup() {
   const handleGoogleSignIn = async () => {
     try {
       setError('');
+      if (!isSupabaseConfigured) {
+        setError(
+          'Sign-in is not configured: set VITE_SUPABASE_URL and VITE_SUPABASE_ANON_KEY (see .env).',
+        );
+        return;
+      }
       const { error } = await supabase.auth.signInWithOAuth({
         provider: 'google',
         options: {
-          redirectTo: `${window.location.origin}/dashboard`,
+          redirectTo: getAuthCallbackUrl('/dashboard'),
         },
       });
       if (error) throw error;
@@ -149,10 +155,16 @@ export function Signup() {
   const handleAppleSignIn = async () => {
     try {
       setError('');
+      if (!isSupabaseConfigured) {
+        setError(
+          'Sign-in is not configured: set VITE_SUPABASE_URL and VITE_SUPABASE_ANON_KEY (see .env).',
+        );
+        return;
+      }
       const { error } = await supabase.auth.signInWithOAuth({
         provider: 'apple',
         options: {
-          redirectTo: `${getAuthSiteOrigin()}/dashboard`,
+          redirectTo: getAuthCallbackUrl('/dashboard'),
         },
       });
       if (error) throw error;
@@ -241,6 +253,7 @@ export function Signup() {
 
           <div className="space-y-4 mb-6">
             <button
+              type="button"
               onClick={handleGoogleSignIn}
               className="w-full flex items-center justify-center gap-3 px-6 py-3 border-2 border-gray-300 rounded-xl font-semibold text-gray-700 hover:bg-gray-50 transition-colors"
             >
@@ -254,6 +267,7 @@ export function Signup() {
             </button>
 
             <button
+              type="button"
               onClick={handleAppleSignIn}
               className="w-full flex items-center justify-center gap-3 px-6 py-3 bg-black text-white rounded-xl font-semibold hover:bg-gray-900 transition-colors"
             >
