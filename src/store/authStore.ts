@@ -153,27 +153,8 @@ export const useAuthStore = create<AuthState>((set, get) => ({
         return;
       }
 
-      // Always enforce approval immediately after Supabase auth.
-      const approvalResult = await checkUserApproval({
-        email,
-        name: data.user.user_metadata?.name || email.split('@')[0],
-        userId: data.user.id,
-      });
-
-      set({
-        approved: approvalResult.approved,
-        approvalRedirectTo: approvalResult.redirectTo || null,
-        approvalCourseType: approvalResult.courseType || null,
-        approvalUser: approvalResult.user || null,
-      });
-      persistSigninWebhookToLocalStorage(approvalResult);
-
-      if (!approvalResult.approved) {
-        // Explicitly stop here so pending users never proceed to dashboard data loading.
-        set({ loading: false });
-        return;
-      }
-
+      // Load profile + run approval check once (checkApproval persists webhook fields).
+      // Pending users still reach /foundation-dashboard: ProtectedRoute allows that path without approval.
       await get().fetchUserProfile();
     } finally {
       suppressSignedInFetch = false;
