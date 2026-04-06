@@ -125,9 +125,7 @@ export default async function handler(req: HttpRequest, res: HttpResponse) {
 
     let prompt: string;
     if (unitName && topic) {
-      const examStyle = pickExamStyle(unitName);
-      const difficulty = inferDifficulty(examStyle);
-      prompt = buildFoundationPrompt(unitName, topic, usedQuestionHashes, examStyle, difficulty);
+      prompt = buildFoundationPrompt(unitName, topic, usedQuestionHashes);
     } else if (legacyPrompt) {
       prompt = legacyPrompt;
     } else {

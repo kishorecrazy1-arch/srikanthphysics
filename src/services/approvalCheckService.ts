@@ -253,7 +253,18 @@ export async function checkUserApproval(
       };
     }
 
-    const raw = await response.json();
+    const bodyText = await response.text();
+    let raw: unknown;
+    try {
+      raw = bodyText.trim() ? (JSON.parse(bodyText) as unknown) : null;
+    } catch {
+      console.error('n8n approval check: invalid or empty JSON body', bodyText.slice(0, 200));
+      return {
+        approved: false,
+        redirectTo: '/approval-pending',
+        message: 'Invalid approval response (not JSON)',
+      };
+    }
     const data = normalizeWebhookJson(raw);
     if (!data) {
       console.error('n8n approval check: unparseable JSON', raw);
