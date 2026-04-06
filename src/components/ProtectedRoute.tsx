@@ -37,6 +37,15 @@ export function ProtectedRoute({ children }: { children: React.ReactNode }) {
     return <EmailConfirmationRequired />;
   }
 
+  // Foundation dashboard: any signed-in user with a confirmed email (or OAuth) gets immediate access
+  // without Google Sheet / n8n approval. Other protected routes keep the approval gate below.
+  const isFoundationDashboardRoute =
+    location.pathname === '/foundation-dashboard' ||
+    location.pathname.startsWith('/foundation-dashboard/');
+  if (isFoundationDashboardRoute) {
+    return <>{children}</>;
+  }
+
   // Hard block pending users even before state hydration completes.
   if (storedApprovalStatus === 'pending' && approved !== true) {
     return <Navigate to="/approval-pending" replace />;

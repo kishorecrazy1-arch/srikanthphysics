@@ -101,16 +101,10 @@ export function Signup() {
     try {
       await signUp(formData.email, formData.password, formData);
 
-      const { user, emailVerified, approved, approvalRedirectTo } = useAuthStore.getState();
+      const { user } = useAuthStore.getState();
 
       if (user) {
-        if (emailVerified === false) {
-          navigate('/dashboard');
-          return;
-        }
-        const redirectTo =
-          approved === true ? approvalRedirectTo || '/dashboard' : '/approval-pending';
-        navigate(redirectTo);
+        navigate('/foundation-dashboard');
         return;
       }
 
@@ -139,7 +133,7 @@ export function Signup() {
       const { error } = await supabase.auth.signInWithOAuth({
         provider: 'google',
         options: {
-          redirectTo: getAuthCallbackUrl('/dashboard'),
+          redirectTo: getAuthCallbackUrl('/foundation-dashboard'),
         },
       });
       if (error) throw error;
@@ -164,7 +158,7 @@ export function Signup() {
       const { error } = await supabase.auth.signInWithOAuth({
         provider: 'apple',
         options: {
-          redirectTo: getAuthCallbackUrl('/dashboard'),
+          redirectTo: getAuthCallbackUrl('/foundation-dashboard'),
         },
       });
       if (error) throw error;

@@ -35,18 +35,7 @@ export function Login() {
 
     try {
       await signIn(email, password);
-
-      const { emailVerified, approved, approvalRedirectTo } = useAuthStore.getState();
-
-      if (emailVerified === false) {
-        navigate('/dashboard');
-        return;
-      }
-
-      // Use n8n signin-check response (Zustand), not stale localStorage
-      const redirectTo =
-        approved === true ? approvalRedirectTo || '/dashboard' : '/approval-pending';
-      navigate(redirectTo);
+      navigate('/foundation-dashboard');
     } catch (err: any) {
       // Check if error is due to email not confirmed
       if (err.message?.includes('email') && (err.message?.includes('confirm') || err.message?.includes('verified'))) {
@@ -73,7 +62,7 @@ export function Login() {
       const { error } = await supabase.auth.signInWithOAuth({
         provider: 'google',
         options: {
-          redirectTo: getAuthCallbackUrl('/dashboard'),
+          redirectTo: getAuthCallbackUrl('/foundation-dashboard'),
           queryParams: {
             access_type: 'offline',
             prompt: 'consent',
@@ -104,7 +93,7 @@ export function Login() {
       const { error } = await supabase.auth.signInWithOAuth({
         provider: 'apple',
         options: {
-          redirectTo: getAuthCallbackUrl('/ap-physics'),
+          redirectTo: getAuthCallbackUrl('/foundation-dashboard'),
         },
       });
       if (error) throw error;
