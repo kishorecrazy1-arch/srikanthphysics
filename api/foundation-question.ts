@@ -14,9 +14,15 @@ type FoundationQuestionPayload = {
   unitName?: unknown;
   topic?: unknown;
   usedQuestionHashes?: unknown;
+  /** Last few scenario labels already used this session (client may send from localStorage). */
+  usedScenarios?: unknown;
   /** Legacy: full prompt from client */
   prompt?: unknown;
 };
+
+type CorrectDigit = '1' | '2' | '3' | '4';
+
+type OptionsFourTuple = readonly [string, string, string, string];
 
 function readString(v: unknown): string | undefined {
   return typeof v === 'string' ? v.trim() : undefined;
@@ -27,6 +33,14 @@ function readHashList(v: unknown): string[] {
   return v.filter((x): x is string => typeof x === 'string' && x.length > 0).slice(0, 10);
 }
 
+function readUsedScenariosList(v: unknown): string[] {
+  if (!Array.isArray(v)) return [];
+  return v
+    .filter((x): x is string => typeof x === 'string' && x.trim().length > 0)
+    .map((s) => s.trim())
+    .slice(0, 5);
+}
+
 function parsePayload(body: unknown): FoundationQuestionPayload {
   if (body && typeof body === 'object' && !Array.isArray(body)) {
     return body as FoundationQuestionPayload;
@@ -34,7 +48,28 @@ function parsePayload(body: unknown): FoundationQuestionPayload {
   return {};
 }
 
-function buildFoundationPrompt(unitName: string, topic: string, usedHashes: string[]): string {
+function isUnitsMeasurementsContext(unitName: string, topic: string): boolean {
+  const u = unitName.toLowerCase();
+  const t = topic.toLowerCase();
+  return (
+    (u.includes('units') && u.includes('measurement')) ||
+    t.includes('si units') ||
+    t.includes('dimensional') ||
+    t.includes('significant figure') ||
+    t.includes('measurement error')
+  );
+}
+
+function escapeForPrompt(s: string): string {
+  return s.replace(/\\/g, '\\\\').replace(/"/g, '\\"');
+}
+
+function buildFoundationPrompt(
+  unitName: string,
+  topic: string,
+  usedHashes: string[],
+  usedScenarios: string[]
+): string {
   const avoidBlock =
     usedHashes.length > 0
       ? `
@@ -45,17 +80,55 @@ Fingerprints (opaque hashes; treat each as a distinct banned repeat):
 ${usedHashes.map((h, i) => `${i + 1}. ${h}`).join('\n')}`
       : '';
 
+  const scenarioAvoidBlock =
+    usedScenarios.length > 0
+      ? `
+
+SESSION SCENARIO MEMORY — do NOT reuse any of these physical setups or story frames in your new question (pick something clearly different):
+${usedScenarios.map((s, i) => `${i + 1}. ${s}`).join('\n')}`
+      : '';
+
+  const unitsMeasurementsBlock = isUnitsMeasurementsContext(unitName, topic)
+    ? `
+
+UNITS & MEASUREMENTS — REQUIRED FOCUS (this unit/topic):
+- Prefer: dimensional analysis of physical quantities; unit conversion between systems; significant figures in measurements; density and volume calculations; flow rate and time calculations.
+- NEVER use a racing car, sports car, or generic "fast car" scenario for this topic.`
+    : '';
+
+  const scenarioRotationBlock = `
+
+ROTATE SCENARIOS — never repeat the same physical story within this session when prior questions exist.
+Pick ONE fresh primary context (different from any listed "do not use" scenarios above), drawn from categories like:
+- MECHANICS: bullet, rocket, train, bicycle, swimmer, pendulum, spring, elevator, pulley, inclined plane
+- FLUIDS: water tank, pipe flow, submarine, balloon, oil drum, swimming pool, hydraulic press
+- ASTRONOMY: satellite, planet orbit, moon, comet, rocket launch, ISS, telescope
+- ELECTRICITY: wire, bulb, battery, motor, generator, fan, refrigerator, phone charging
+- DAILY LIFE: cricket ball, football, lift, escalator, ceiling fan, pressure cooker, thermometer
+Avoid leaning on "car" scenarios unless nothing else fits; never use racing/sports car clichés for measurement-heavy topics.`;
+
+  const mcqRandomBlock = `
+
+CRITICAL — multiple-choice fairness:
+- Randomize which option letter is correct. Do NOT always place the correct choice in B or C.
+- Generate the correct numeric or conceptual answer first, then assign it to a RANDOM letter A, B, C, or D.
+- Fill the other three letters with plausible distractors.
+- Across many questions, correct answers should appear at A, B, C, and D with balanced variety — never the same slot every time.
+(The server will reshuffle options again for extra safety, but you must still randomize.)`;
+
   return `You are a physics teacher for Foundation Course students (Class 9–11, Indian curriculum, preparing for JEE/NEET foundation).
 
-Generate ONE MEDIUM difficulty question on: "${topic}" from the unit "${unitName}".
+Generate ONE MEDIUM difficulty question on: "${escapeForPrompt(topic)}" from the unit "${escapeForPrompt(unitName)}".
 
 QUESTION STYLE (follow strictly):
 - Must be numerical or application-based (NOT definition-only).
 - Must have 3 sub-parts labelled (a), (b), (c) in the subQuestions array (wording may include (a), (b), (c)).
 - Must include a "formulas" array listing relevant formulas (Relevant Formulas).
 - In the "answer" object, give step-by-step working for EACH part (a), (b), (c) with final numeric or symbolic results.
-- Use real-world context where possible (e.g. car, ball, spring, incline, circuit element).
+- Use a single clear real-world context from the rotation lists above (not a duplicate scenario).
 - Medium level: requires formula application + calculation.
+${scenarioRotationBlock}${unitsMeasurementsBlock}
+${mcqRandomBlock}
 
 Also include ONE multiple-choice checkpoint (options A–D) that tests the key numerical result or main concept from the problem. Exactly one option is correct. Set "correct" to "A", "B", "C", or "D".
 
@@ -71,8 +144,8 @@ RESPONSE FORMAT:
   ],
   "formulas": ["v = u + at", "s = ut + \u00bdat\u00b2"],
   "difficulty": "Medium",
-  "topic": "${topic.replace(/\\/g, '\\\\').replace(/"/g, '\\"')}",
-  "unit": "${unitName.replace(/\\/g, '\\\\').replace(/"/g, '\\"')}",
+  "topic": "${escapeForPrompt(topic)}",
+  "unit": "${escapeForPrompt(unitName)}",
   "answer": {
     "a": "Step 1: ... Step 2: ... Answer: ...",
     "b": "Step 1: ... Answer: ...",
@@ -87,7 +160,126 @@ RESPONSE FORMAT:
   "correct": "B",
   "explanation": "Why the chosen MCQ letter is correct (2–4 sentences).",
   "tip": "Key concept: ..."
-}${avoidBlock}`;
+}${avoidBlock}${scenarioAvoidBlock}`;
+}
+
+/** Strip optional ```json fences and isolate outermost `{ ... }`. */
+function extractJsonObjectString(raw: string): string {
+  let s = raw.replace(/```json\s*/gi, '').replace(/```\s*/g, '').trim();
+  const start = s.indexOf('{');
+  const end = s.lastIndexOf('}');
+  if (start >= 0 && end > start) {
+    s = s.slice(start, end + 1);
+  }
+  return s;
+}
+
+function secureRandomBelow(maxExclusive: number): number {
+  if (maxExclusive <= 0) return 0;
+  const buf = new Uint32Array(1);
+  crypto.getRandomValues(buf);
+  return buf[0]! % maxExclusive;
+}
+
+function readOptionsFourTuple(options: unknown): OptionsFourTuple | null {
+  if (Array.isArray(options) && options.length === 4) {
+    const texts: string[] = [];
+    for (const x of options) {
+      if (typeof x !== 'string' || !x.trim()) return null;
+      texts.push(x.trim());
+    }
+    return [texts[0]!, texts[1]!, texts[2]!, texts[3]!];
+  }
+  if (options && typeof options === 'object' && !Array.isArray(options)) {
+    const o = options as Record<string, unknown>;
+    const pick = (a: string, b: string): string | undefined => {
+      const u = o[a];
+      const l = o[b];
+      if (typeof u === 'string' && u.trim()) return u.trim();
+      if (typeof l === 'string' && l.trim()) return l.trim();
+      return undefined;
+    };
+    const A = pick('A', 'a');
+    const B = pick('B', 'b');
+    const C = pick('C', 'c');
+    const D = pick('D', 'd');
+    if (!A || !B || !C || !D) return null;
+    return [A, B, C, D];
+  }
+  return null;
+}
+
+function resolveCorrectIndex0(correct: unknown): number | null {
+  if (typeof correct !== 'string') return null;
+  const c = correct.trim();
+  if (c.length === 0) return null;
+  if (/^[1-4]$/.test(c)) return parseInt(c, 10) - 1;
+  const letter = c.charAt(0).toUpperCase();
+  if (letter === 'A') return 0;
+  if (letter === 'B') return 1;
+  if (letter === 'C') return 2;
+  if (letter === 'D') return 3;
+  return null;
+}
+
+function shuffleMcqOptions(
+  ordered: OptionsFourTuple,
+  correctIndex0: number
+): { options: string[]; correct: CorrectDigit } {
+  if (correctIndex0 < 0 || correctIndex0 > 3) {
+    throw new Error('Invalid correct index');
+  }
+  type Tagged = { text: string; wasCorrect: boolean };
+  const entries: Tagged[] = ordered.map((text, i) => ({
+    text,
+    wasCorrect: i === correctIndex0,
+  }));
+  for (let i = entries.length - 1; i > 0; i--) {
+    const j = secureRandomBelow(i + 1);
+    const tmp = entries[i]!;
+    entries[i] = entries[j]!;
+    entries[j] = tmp;
+  }
+  const idx = entries.findIndex((e) => e.wasCorrect);
+  if (idx < 0) {
+    throw new Error('Correct option lost during shuffle');
+  }
+  const digit = String(idx + 1);
+  if (digit !== '1' && digit !== '2' && digit !== '3' && digit !== '4') {
+    throw new Error('Invalid shuffled index');
+  }
+  return {
+    options: entries.map((e) => e.text),
+    correct: digit as CorrectDigit,
+  };
+}
+
+function tryShuffleMcqInObject(obj: Record<string, unknown>): Record<string, unknown> {
+  const tuple = readOptionsFourTuple(obj.options);
+  if (!tuple) return obj;
+  const idx = resolveCorrectIndex0(obj.correct);
+  if (idx === null) return obj;
+  try {
+    const { options, correct } = shuffleMcqOptions(tuple, idx);
+    return { ...obj, options, correct };
+  } catch {
+    return obj;
+  }
+}
+
+function postProcessModelJsonText(raw: string): string {
+  const cleaned = extractJsonObjectString(raw);
+  let parsed: unknown;
+  try {
+    parsed = JSON.parse(cleaned);
+  } catch {
+    return raw;
+  }
+  if (!parsed || typeof parsed !== 'object' || Array.isArray(parsed)) {
+    return raw;
+  }
+  const out = tryShuffleMcqInObject(parsed as Record<string, unknown>);
+  return JSON.stringify(out);
 }
 
 export default async function handler(req: HttpRequest, res: HttpResponse) {
@@ -121,11 +313,12 @@ export default async function handler(req: HttpRequest, res: HttpResponse) {
     const unitName = readString(body.unitName);
     const topic = readString(body.topic);
     const usedQuestionHashes = readHashList(body.usedQuestionHashes);
+    const usedScenarios = readUsedScenariosList(body.usedScenarios);
     const legacyPrompt = readString(body.prompt);
 
     let prompt: string;
     if (unitName && topic) {
-      prompt = buildFoundationPrompt(unitName, topic, usedQuestionHashes);
+      prompt = buildFoundationPrompt(unitName, topic, usedQuestionHashes, usedScenarios);
     } else if (legacyPrompt) {
       prompt = legacyPrompt;
     } else {
@@ -159,7 +352,8 @@ export default async function handler(req: HttpRequest, res: HttpResponse) {
     }
 
     const text = data?.content?.[0]?.text ?? '{}';
-    return res.status(200).json({ text });
+    const processed = postProcessModelJsonText(text);
+    return res.status(200).json({ text: processed });
   } catch (error) {
     const message = error instanceof Error ? error.message : String(error);
     return res.status(500).json({ error: message || 'Unexpected server error' });
