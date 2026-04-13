@@ -2,17 +2,14 @@
  * AI Question Generation Service for AP Physics 1 - Kinematics
  * 
  * ARCHITECTURE:
- * - Uses OpenAI GPT-4o API for daily practice MCQ generation
- * - Uses Anthropic Claude 3.5 Sonnet API for complex multi-step FRQ questions
+ * - Uses OpenAI GPT-4o API for daily practice MCQ and FRQ generation
  * - Implements three difficulty levels: Foundation (Level 1), Intermediate (Level 2), Advanced (Level 3)
  * 
  * ENVIRONMENT VARIABLES REQUIRED:
- * - VITE_OPENAI_API_KEY: Your OpenAI API key for GPT-4o
- * - VITE_ANTHROPIC_API_KEY: Your Anthropic API key for Claude 3.5 Sonnet
+ * - VITE_OPENAI_API_KEY: Your OpenAI API key for GPT-4o (MCQ + FRQ)
  * 
  * Add these to your .env file:
  * VITE_OPENAI_API_KEY=sk-...
- * VITE_ANTHROPIC_API_KEY=sk-ant-...
  * 
  * FEATURES:
  * ✓ Retry logic with exponential backoff (3 retries)
@@ -340,7 +337,7 @@ Return ONLY valid JSON, no markdown, no additional text, no code blocks.`;
 }
 
 /**
- * Generate FRQ questions using Anthropic Claude 3.5 Sonnet
+ * Generate FRQ questions using OpenAI GPT-4o
  */
 async function generateFRQQuestions(config: GenerationConfig): Promise<Question[]> {
   const { topicName, subtopicName, difficultyLevel, questionCount = 5 } = config;
@@ -425,23 +422,27 @@ Return ONLY valid JSON, no markdown, no additional text, no code blocks.`;
 
   try {
     const response = await retryWithBackoff(async () => {
-      const res = await fetch('https://api.anthropic.com/v1/messages', {
+      const res = await fetch('https://api.openai.com/v1/chat/completions', {
         method: 'POST',
         headers: {
           'Content-Type': 'application/json',
-          'x-api-key': import.meta.env.VITE_ANTHROPIC_API_KEY || '',
-          'anthropic-version': '2023-06-01'
+          'Authorization': `Bearer ${import.meta.env.VITE_OPENAI_API_KEY}`
         },
         body: JSON.stringify({
-          model: 'claude-3-5-sonnet-20241022',
-          max_tokens: 4000,
+          model: 'gpt-4o',
           messages: [
+            {
+              role: 'system',
+              content: 'You are an expert AP Physics 1 teacher specializing in Kinematics. Generate accurate, educational free response questions with detailed solutions and rubrics. Always return valid JSON format.'
+            },
             {
               role: 'user',
               content: prompt
             }
           ],
-          system: 'You are an expert AP Physics 1 teacher specializing in Kinematics. Generate accurate, educational free response questions with detailed solutions and rubrics. Always return valid JSON format.'
+          temperature: 0.7,
+          max_tokens: 4000,
+          response_format: { type: 'json_object' }
         })
       });
 
@@ -454,7 +455,7 @@ Return ONLY valid JSON, no markdown, no additional text, no code blocks.`;
     });
 
     const data = await response.json();
-    const content = data.content[0]?.text;
+    const content = data.choices[0]?.message?.content;
     
     if (!content) {
       throw new Error('No content in API response');
@@ -463,19 +464,7 @@ Return ONLY valid JSON, no markdown, no additional text, no code blocks.`;
     // Parse and validate response
     let parsedQuestions;
     try {
-      // Extract JSON from response (Claude may wrap in markdown code blocks)
-      let jsonString = content.trim();
-      
-      // Remove markdown code blocks if present
-      jsonString = jsonString.replace(/```json\n?/g, '').replace(/```\n?/g, '').trim();
-      
-      // Try to find JSON object or array
-      const jsonMatch = jsonString.match(/\{[\s\S]*\}|\[[\s\S]*\]/);
-      if (jsonMatch) {
-        jsonString = jsonMatch[0];
-      }
-      
-      const parsed = JSON.parse(jsonString);
+      const parsed = JSON.parse(content);
       
       // Handle JSON object with "questions" property or direct array
       if (Array.isArray(parsed)) {
@@ -502,10 +491,10 @@ Return ONLY valid JSON, no markdown, no additional text, no code blocks.`;
       validatedQuestions.splice(0, validatedQuestions.length, ...validatedQuestions.filter(q => validatePhysicsAccuracy(q)));
     }
 
-    // Track costs (Claude 3.5 Sonnet: ~$3/1M input tokens, ~$15/1M output tokens)
-    const inputTokens = data.usage?.input_tokens || 0;
-    const outputTokens = data.usage?.output_tokens || 0;
-    const cost = (inputTokens / 1_000_000) * 3 + (outputTokens / 1_000_000) * 15;
+    // Track costs (GPT-4o pricing: ~$5/1M input tokens, ~$15/1M output tokens)
+    const inputTokens = data.usage?.prompt_tokens || 0;
+    const outputTokens = data.usage?.completion_tokens || 0;
+    const cost = (inputTokens / 1_000_000) * 5 + (outputTokens / 1_000_000) * 15;
     
     totalAPICost += cost;
     totalTokensUsed += (inputTokens + outputTokens);

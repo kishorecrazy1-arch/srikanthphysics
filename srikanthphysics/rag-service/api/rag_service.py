@@ -43,7 +43,7 @@ vectordb = Chroma(
 )
 
 # Initialize LLM (supports both OpenAI and Claude)
-def get_llm(provider: str = "anthropic"):
+def get_llm(provider: str = "openai"):
     if provider == "anthropic":
         api_key = os.getenv('VITE_ANTHROPIC_API_KEY') or os.getenv('ANTHROPIC_API_KEY')
         return ChatAnthropic(
@@ -86,7 +86,7 @@ ANSWER:"""
 # Request/Response models
 class QuestionRequest(BaseModel):
     question: str
-    llm_provider: Optional[str] = "anthropic"  # or "openai"
+    llm_provider: Optional[str] = "openai"  # or "anthropic"
     num_sources: Optional[int] = 5
 
 class AnswerResponse(BaseModel):
@@ -98,7 +98,7 @@ class GeneratePracticeRequest(BaseModel):
     topic: str
     difficulty: str  # "easy", "medium", "hard"
     num_problems: int = 5
-    llm_provider: Optional[str] = "anthropic"
+    llm_provider: Optional[str] = "openai"
 
 # Endpoints
 @app.get("/")

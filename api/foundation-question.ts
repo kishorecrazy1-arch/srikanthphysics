@@ -68,7 +68,7 @@ function escapeForPrompt(s: string): string {
   return s.replace(/\\/g, '\\\\').replace(/"/g, '\\"');
 }
 
-/** Anthropic `system` message: difficulty, scenario diversity, MCQ discipline (user-facing contract). */
+/** LLM system message: difficulty, scenario diversity, MCQ discipline (user-facing contract). */
 const FOUNDATION_SYSTEM_PROMPT = `You are an expert IIT JEE Foundation physics teacher.
 
 STRICT RULES — MUST FOLLOW:
@@ -409,6 +409,93 @@ async function tryPickFoundationBankQuestion(
   };
 }
 
+function readServerApiKey(...envNames: string[]): string {
+  for (const name of envNames) {
+    const v = process.env[name];
+    if (typeof v === 'string' && v.trim().length >= 20) return v.trim();
+  }
+  return '';
+}
+
+async function generateFoundationViaOpenAI(
+  apiKey: string,
+  userContent: string,
+  systemInstruction: string | undefined
+): Promise<{ ok: true; text: string } | { ok: false; status: number; error: string }> {
+  const messages: Array<{ role: string; content: string }> = [];
+  if (systemInstruction) {
+    messages.push({ role: 'system', content: systemInstruction });
+  }
+  messages.push({ role: 'user', content: userContent });
+
+  const r = await fetch('https://api.openai.com/v1/chat/completions', {
+    method: 'POST',
+    headers: {
+      'content-type': 'application/json',
+      authorization: `Bearer ${apiKey}`,
+    },
+    body: JSON.stringify({
+      model: 'gpt-4o',
+      messages,
+      max_tokens: 4096,
+      temperature: 0.35,
+    }),
+  });
+
+  const data = (await r.json().catch(() => ({}))) as {
+    choices?: Array<{ message?: { content?: string } }>;
+    error?: { message?: string };
+  };
+  if (!r.ok) {
+    return {
+      ok: false,
+      status: r.status,
+      error: data?.error?.message || `OpenAI request failed with HTTP ${r.status}`,
+    };
+  }
+  const text = data?.choices?.[0]?.message?.content ?? '{}';
+  return { ok: true, text };
+}
+
+async function generateFoundationViaAnthropic(
+  apiKey: string,
+  userContent: string,
+  systemInstruction: string | undefined
+): Promise<{ ok: true; text: string } | { ok: false; status: number; error: string }> {
+  const messageBody: Record<string, unknown> = {
+    model: 'claude-sonnet-4-20250514',
+    max_tokens: 4096,
+    messages: [{ role: 'user', content: userContent }],
+  };
+  if (systemInstruction) {
+    messageBody.system = systemInstruction;
+  }
+
+  const r = await fetch('https://api.anthropic.com/v1/messages', {
+    method: 'POST',
+    headers: {
+      'content-type': 'application/json',
+      'x-api-key': apiKey,
+      'anthropic-version': '2023-06-01',
+    },
+    body: JSON.stringify(messageBody),
+  });
+
+  const data = (await r.json().catch(() => ({}))) as {
+    content?: Array<{ text?: string }>;
+    error?: { message?: string };
+  };
+  if (!r.ok) {
+    return {
+      ok: false,
+      status: r.status,
+      error: data?.error?.message || `Anthropic request failed with HTTP ${r.status}`,
+    };
+  }
+  const text = data?.content?.[0]?.text ?? '{}';
+  return { ok: true, text };
+}
+
 export default async function handler(req: HttpRequest, res: HttpResponse) {
   res.setHeader('Access-Control-Allow-Origin', '*');
   res.setHeader('Access-Control-Allow-Methods', 'POST, OPTIONS');
@@ -422,7 +509,8 @@ export default async function handler(req: HttpRequest, res: HttpResponse) {
     return res.status(405).json({ error: 'Method not allowed' });
   }
 
-  const apiKey = String(process.env.ANTHROPIC_API_KEY || process.env.VITE_ANTHROPIC_API_KEY || '').trim();
+  const openaiKey = readServerApiKey('OPENAI_API_KEY', 'VITE_OPENAI_API_KEY');
+  const anthropicKey = readServerApiKey('ANTHROPIC_API_KEY', 'VITE_ANTHROPIC_API_KEY');
 
   try {
     const rawBody = req.body;
@@ -445,11 +533,11 @@ export default async function handler(req: HttpRequest, res: HttpResponse) {
       }
     }
 
-    if (!apiKey || apiKey.length < 20) {
+    if (!openaiKey && !anthropicKey) {
       return res.status(500).json({
         code: 'missing_config',
         error:
-          'No foundation bank match for this topic, and Anthropic API key is not configured on the server. Add ANTHROPIC_API_KEY or apply the foundation_questions migration + Supabase env vars.',
+          'No foundation bank match for this topic, and no LLM API key is configured on the server. Set OPENAI_API_KEY or VITE_OPENAI_API_KEY (preferred), or ANTHROPIC_API_KEY / VITE_ANTHROPIC_API_KEY, or apply the foundation_questions migration + Supabase env vars.',
       });
     }
 
@@ -464,40 +552,17 @@ export default async function handler(req: HttpRequest, res: HttpResponse) {
       return res.status(400).json({ error: 'Missing unitName/topic or prompt' });
     }
 
-    const messageBody: Record<string, unknown> = {
-      model: 'claude-sonnet-4-20250514',
-      max_tokens: 4096,
-      messages: [{ role: 'user', content: userContent }],
-    };
-    if (systemInstruction) {
-      messageBody.system = systemInstruction;
+    const preferOpenAI = Boolean(openaiKey);
+    const gen = preferOpenAI
+      ? await generateFoundationViaOpenAI(openaiKey, userContent, systemInstruction)
+      : await generateFoundationViaAnthropic(anthropicKey, userContent, systemInstruction);
+
+    if (!gen.ok) {
+      return res.status(gen.status).json({ error: gen.error });
     }
 
-    const r = await fetch('https://api.anthropic.com/v1/messages', {
-      method: 'POST',
-      headers: {
-        'content-type': 'application/json',
-        'x-api-key': apiKey,
-        'anthropic-version': '2023-06-01',
-      },
-      body: JSON.stringify(messageBody),
-    });
-
-    const data = (await r.json().catch(() => ({}))) as {
-      content?: Array<{ text?: string }>;
-      error?: {
-        message?: string;
-      };
-    };
-    if (!r.ok) {
-      return res.status(r.status).json({
-        error: data?.error?.message || `Anthropic request failed with HTTP ${r.status}`,
-      });
-    }
-
-    const text = data?.content?.[0]?.text ?? '{}';
-    const processed = postProcessModelJsonText(text);
-    return res.status(200).json({ text: processed, source: 'ai' });
+    const processed = postProcessModelJsonText(gen.text);
+    return res.status(200).json({ text: processed, source: 'ai', provider: preferOpenAI ? 'openai' : 'anthropic' });
   } catch (error) {
     const message = error instanceof Error ? error.message : String(error);
     return res.status(500).json({ error: message || 'Unexpected server error' });

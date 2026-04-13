@@ -635,17 +635,19 @@ export function FoundationDailyPractice() {
                   <>
                     <p className="text-red-300 font-medium">⚠️ API key not loaded in the app</p>
                     <p className="text-slate-400 text-sm text-left max-w-lg mx-auto">
-                      The server could not find <code className="text-cyan-400">ANTHROPIC_API_KEY</code> (or{' '}
-                      <code className="text-cyan-400">VITE_ANTHROPIC_API_KEY</code>). Add it in your host environment
+                      The server needs <code className="text-cyan-400">OPENAI_API_KEY</code> or{' '}
+                      <code className="text-cyan-400">VITE_OPENAI_API_KEY</code> (recommended), or{' '}
+                      <code className="text-cyan-400">ANTHROPIC_API_KEY</code> /{' '}
+                      <code className="text-cyan-400">VITE_ANTHROPIC_API_KEY</code>. Add one in your host environment
                       variables, then redeploy.
                     </p>
                   </>
                 ) : (
                   <>
-                    <p className="text-red-300 font-medium">⚠️ Anthropic request failed</p>
+                    <p className="text-red-300 font-medium">⚠️ AI request failed</p>
                     <p className="text-slate-400 text-sm break-words max-w-lg mx-auto">
                       {('apiMessage' in question && question.apiMessage) || 'Unknown error'}. If the key is valid, check
-                      Anthropic billing/model access.
+                      OpenAI billing and model access (or Anthropic if you only use a Claude key).
                     </p>
                   </>
                 )}

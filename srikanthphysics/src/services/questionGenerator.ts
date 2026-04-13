@@ -11,9 +11,8 @@
 import { z } from "zod";
 import type { Question, QuestionContent, Solution, QuestionMetadata } from '../types/enhanced';
 
-// Lazy load clients to avoid issues in browser
+// Lazy load client to avoid issues in browser
 let openai: any = null;
-let anthropic: any = null;
 
 async function getOpenAIClient() {
   if (!openai && import.meta.env.VITE_OPENAI_API_KEY) {
@@ -24,16 +23,6 @@ async function getOpenAIClient() {
     });
   }
   return openai;
-}
-
-async function getAnthropicClient() {
-  if (!anthropic && import.meta.env.VITE_ANTHROPIC_API_KEY) {
-    const Anthropic = (await import("@anthropic-ai/sdk")).default;
-    anthropic = new Anthropic({ 
-      apiKey: import.meta.env.VITE_ANTHROPIC_API_KEY 
-    });
-  }
-  return anthropic;
 }
 
 // Retry configuration
@@ -395,15 +384,15 @@ Important: Return valid JSON only. Each question must be pedagogically sound and
 }
 
 /**
- * Generate FRQ questions using Anthropic Claude 3.5 Sonnet
+ * Generate FRQ questions using OpenAI GPT-4o
  */
 export async function generateFRQQuestions(
   subtopic: string,
   difficulty: string
 ): Promise<Question[]> {
-  const anthropicClient = await getAnthropicClient();
-  if (!anthropicClient) {
-    throw new Error('Anthropic API key not configured');
+  const openaiClient = await getOpenAIClient();
+  if (!openaiClient) {
+    throw new Error('OpenAI API key not configured');
   }
 
   const prompt = `Generate a complex free-response physics question for the subtopic: "${subtopic}".
@@ -418,7 +407,7 @@ Requirements:
 - Provide complete solution with step-by-step explanation
 - Use realistic physics scenarios
 
-Return as JSON with this structure:
+Return as a single JSON object with this structure:
 {
   "question_text": "Main question with parts (a), (b), (c)...",
   "parts": [
@@ -435,26 +424,29 @@ Return as JSON with this structure:
 }`;
 
   return withRetry(async () => {
-    const response = await anthropicClient.messages.create({
-      model: "claude-3-5-sonnet-20241022",
-      max_tokens: 4000,
+    const response = await openaiClient.chat.completions.create({
+      model: 'gpt-4o',
       messages: [
         {
-          role: "user",
-          content: prompt
-        }
-      ]
+          role: 'system',
+          content:
+            'You are an expert physics educator. Return one JSON object only (no markdown fences) matching the user schema.',
+        },
+        { role: 'user', content: prompt },
+      ],
+      temperature: 0.6,
+      max_tokens: 4000,
+      response_format: { type: 'json_object' },
     });
 
-    const content = response.content[0];
-    if (content.type !== 'text') throw new Error('Invalid response format');
+    const raw = response.choices[0]?.message?.content;
+    if (!raw) throw new Error('Empty response from OpenAI');
 
-    const parsed = JSON.parse(content.text);
-    
-    // Track API usage
-    await trackAPICall('anthropic', 'claude-3-5-sonnet', {
-      input_tokens: response.usage.input_tokens,
-      output_tokens: response.usage.output_tokens
+    const parsed = JSON.parse(raw);
+
+    await trackAPICall('openai', 'gpt-4o', {
+      input_tokens: response.usage?.prompt_tokens || 0,
+      output_tokens: response.usage?.completion_tokens || 0,
     });
 
     return [{
@@ -481,7 +473,7 @@ Return as JSON with this structure:
         student_success_rate: 0
       },
       created_at: new Date().toISOString(),
-      source_api: 'Claude-3.5'
+      source_api: 'GPT-4o'
     }];
   }, {
     onRetry: (attempt, error) => {

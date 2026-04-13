@@ -40,20 +40,18 @@ export const RAGChatbot: React.FC = () => {
     setIsLoading(true);
 
     try {
-      // Try Anthropic first
       let response;
       try {
         response = await ragService.askQuestion({
           question: questionText,
-          llm_provider: 'anthropic',
+          llm_provider: 'openai',
           num_sources: 5,
         });
-      } catch (anthropicError: any) {
-        // If Anthropic fails due to credits/quota, fallback to OpenAI
-        console.warn('Anthropic failed, trying OpenAI:', anthropicError);
+      } catch (openaiError: unknown) {
+        console.warn('OpenAI failed, trying Anthropic:', openaiError);
         response = await ragService.askQuestion({
           question: questionText,
-          llm_provider: 'openai',
+          llm_provider: 'anthropic',
           num_sources: 5,
         });
       }
