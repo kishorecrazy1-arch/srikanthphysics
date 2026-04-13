@@ -68,7 +68,26 @@ function escapeForPrompt(s: string): string {
   return s.replace(/\\/g, '\\\\').replace(/"/g, '\\"');
 }
 
-function buildFoundationPrompt(
+/** Anthropic `system` message: difficulty, scenario diversity, MCQ discipline (user-facing contract). */
+const FOUNDATION_SYSTEM_PROMPT = `You are an expert IIT JEE Foundation physics teacher.
+
+STRICT RULES — MUST FOLLOW:
+1. MEDIUM difficulty only — NOT basic definitions or one-line recall.
+2. The main problem MUST require 2–3 steps of reasoning or calculation (not a single formula plug with trivial numbers).
+3. Use a DIFFERENT physical scenario each time. Rotate among: bullet, rocket, satellite, spring, pendulum, water tank, inclined plane, pulley, electric circuit, train, swimmer, elevator, pipe flow, balloon, battery/bulb network — and similar varied setups.
+4. NEVER use "racing car", "sports car", or "fast car" tropes. Avoid generic "car accelerates from rest" unless unavoidable; prefer non-automotive contexts.
+5. Multiple choice: provide options as A, B, C, D. Put the correct answer at a RANDOM letter (not always B). Wrong options must be plausible and each include a numeric value WITH UNITS where the question is numeric.
+6. All four MCQ options must include numbers with SI or stated units whenever the stem is quantitative.
+
+MEDIUM means (style examples — do not copy numbers verbatim):
+✓ "A bullet of 10 g hits a wall at 400 m/s and rebounds at 100 m/s in 0.01 s. Find the average force on the bullet."
+✓ "Two resistors 3 Ω and 6 Ω in parallel across 12 V. Find the current through the 3 Ω resistor."
+✗ "What is Newton's First Law?" (too basic)
+✗ Reusing the same scenario family you used in a prior turn when the user lists banned fingerprints or scenarios.
+
+The API response must be ONLY the JSON object described in the user message — no markdown, no code fences, no commentary before or after.`;
+
+function buildFoundationUserPrompt(
   unitName: string,
   topic: string,
   usedHashes: string[],
@@ -96,45 +115,23 @@ ${usedScenarios.map((s, i) => `${i + 1}. ${s}`).join('\n')}`
     ? `
 
 UNITS & MEASUREMENTS — REQUIRED FOCUS (this unit/topic):
-- Prefer: dimensional analysis of physical quantities; unit conversion between systems; significant figures in measurements; density and volume calculations; flow rate and time calculations.
-- NEVER use a racing car, sports car, or generic "fast car" scenario for this topic.`
+- Prefer: dimensional analysis; unit conversion; significant figures; density/volume; measurement error; flow rate.
+- NEVER use racing car, sports car, or generic "fast car" scenarios for this topic.`
     : '';
 
-  const scenarioRotationBlock = `
+  return `Generate exactly ONE MEDIUM-difficulty foundation question.
 
-ROTATE SCENARIOS — never repeat the same physical story within this session when prior questions exist.
-Pick ONE fresh primary context (different from any listed "do not use" scenarios above), drawn from categories like:
-- MECHANICS: bullet, rocket, train, bicycle, swimmer, pendulum, spring, elevator, pulley, inclined plane
-- FLUIDS: water tank, pipe flow, submarine, balloon, oil drum, swimming pool, hydraulic press
-- ASTRONOMY: satellite, planet orbit, moon, comet, rocket launch, ISS, telescope
-- ELECTRICITY: wire, bulb, battery, motor, generator, fan, refrigerator, phone charging
-- DAILY LIFE: cricket ball, football, lift, escalator, ceiling fan, pressure cooker, thermometer
-Avoid leaning on "car" scenarios unless nothing else fits; never use racing/sports car clichés for measurement-heavy topics.`;
+Topic: "${escapeForPrompt(topic)}"
+Unit: "${escapeForPrompt(unitName)}"
 
-  const mcqRandomBlock = `
-
-CRITICAL — multiple-choice fairness:
-- Randomize which option letter is correct. Do NOT always place the correct choice in B or C.
-- Generate the correct numeric or conceptual answer first, then assign it to a RANDOM letter A, B, C, or D.
-- Fill the other three letters with plausible distractors.
-- Across many questions, correct answers should appear at A, B, C, and D with balanced variety — never the same slot every time.
-(The server will reshuffle options again for extra safety, but you must still randomize.)`;
-
-  return `You are a physics teacher for Foundation Course students (Class 9–11, Indian curriculum, preparing for JEE/NEET foundation).
-
-Generate ONE MEDIUM difficulty question on: "${escapeForPrompt(topic)}" from the unit "${escapeForPrompt(unitName)}".
-
-QUESTION STYLE (follow strictly):
-- Must be numerical or application-based (NOT definition-only).
-- Must have 3 sub-parts labelled (a), (b), (c) in the subQuestions array (wording may include (a), (b), (c)).
-- Must include a "formulas" array listing relevant formulas (Relevant Formulas).
-- In the "answer" object, give step-by-step working for EACH part (a), (b), (c) with final numeric or symbolic results.
-- Use a single clear real-world context from the rotation lists above (not a duplicate scenario).
-- Medium level: requires formula application + calculation.
-${scenarioRotationBlock}${unitsMeasurementsBlock}
-${mcqRandomBlock}
-
-Also include ONE multiple-choice checkpoint (options A–D) that tests the key numerical result or main concept from the problem. Exactly one option is correct. Set "correct" to "A", "B", "C", or "D".
+QUESTION SHAPE (follow strictly):
+- Numerical or multi-step application (NOT definition-only).
+- Three sub-parts labelled (a), (b), (c) in the "subQuestions" array.
+- Include a "formulas" array (relevant formulas).
+- In "answer", give step-by-step working for parts a, b, c with final numeric or symbolic results.
+- Include one MCQ (options A–D) testing the key result or concept; exactly one correct letter; each option with plausible numbers+units when the stem is numeric.
+- difficulty must be the string "Medium".
+${unitsMeasurementsBlock}
 
 Return ONLY valid JSON. No markdown, no code fences, no commentary.
 
@@ -456,13 +453,24 @@ export default async function handler(req: HttpRequest, res: HttpResponse) {
       });
     }
 
-    let prompt: string;
+    let userContent: string;
+    let systemInstruction: string | undefined;
     if (unitName && topic) {
-      prompt = buildFoundationPrompt(unitName, topic, usedQuestionHashes, usedScenarios);
+      systemInstruction = FOUNDATION_SYSTEM_PROMPT;
+      userContent = buildFoundationUserPrompt(unitName, topic, usedQuestionHashes, usedScenarios);
     } else if (legacyPrompt) {
-      prompt = legacyPrompt;
+      userContent = legacyPrompt;
     } else {
       return res.status(400).json({ error: 'Missing unitName/topic or prompt' });
+    }
+
+    const messageBody: Record<string, unknown> = {
+      model: 'claude-sonnet-4-20250514',
+      max_tokens: 4096,
+      messages: [{ role: 'user', content: userContent }],
+    };
+    if (systemInstruction) {
+      messageBody.system = systemInstruction;
     }
 
     const r = await fetch('https://api.anthropic.com/v1/messages', {
@@ -472,11 +480,7 @@ export default async function handler(req: HttpRequest, res: HttpResponse) {
         'x-api-key': apiKey,
         'anthropic-version': '2023-06-01',
       },
-      body: JSON.stringify({
-        model: 'claude-sonnet-4-20250514',
-        max_tokens: 4096,
-        messages: [{ role: 'user', content: prompt }],
-      }),
+      body: JSON.stringify(messageBody),
     });
 
     const data = (await r.json().catch(() => ({}))) as {
