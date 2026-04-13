@@ -1,3 +1,7 @@
+import { readFileSync } from 'node:fs';
+import { join } from 'node:path';
+import { createClient } from '@supabase/supabase-js';
+
 type HttpResponse = {
   status: (code: number) => HttpResponse;
   json: (body: unknown) => void;
@@ -282,6 +286,132 @@ function postProcessModelJsonText(raw: string): string {
   return JSON.stringify(out);
 }
 
+type FoundationBankRow = {
+  unit: string;
+  topic: string;
+  exam_style?: string | null;
+  difficulty?: string | null;
+  level?: number | null;
+  section?: string | null;
+  question: string;
+  options: unknown;
+  correct: string;
+  explanation?: string | null;
+  formula?: string | null;
+};
+
+function hashQuestionStem(text: string): string {
+  const n = text.replace(/\s+/g, ' ').trim().toLowerCase();
+  let h = 5381;
+  const cap = Math.min(n.length, 600);
+  for (let i = 0; i < cap; i++) {
+    h = (h * 33) ^ n.charCodeAt(i);
+  }
+  return (h >>> 0).toString(36);
+}
+
+const NAME_ALIASES: Record<string, string> = {
+  'Units & Measurements': 'Units and Measurements',
+  'Units and Measurements': 'Units & Measurements',
+  'Dual Nature, Atoms & Nuclei': 'Dual Nature, Atoms and Nuclei',
+  'Dual Nature, Atoms and Nuclei': 'Dual Nature, Atoms & Nuclei',
+};
+
+function expandNameVariants(s: string): string[] {
+  const t = s.trim();
+  const out = new Set<string>([t]);
+  const mapped = NAME_ALIASES[t];
+  if (mapped) out.add(mapped);
+  if (t.includes('&')) out.add(t.replace(/\s*&\s*/g, ' and '));
+  return [...out];
+}
+
+function loadLocalFoundationBank(): FoundationBankRow[] {
+  const paths = [
+    join(process.cwd(), 'api', 'foundationQuestionsBank.json'),
+    join(process.cwd(), 'foundationQuestionsBank.json'),
+  ];
+  for (const p of paths) {
+    try {
+      const raw = readFileSync(p, 'utf8');
+      const parsed = JSON.parse(raw) as FoundationBankRow[];
+      if (Array.isArray(parsed) && parsed.length > 0) return parsed;
+    } catch {
+      // try next path
+    }
+  }
+  return [];
+}
+
+async function tryPickFoundationBankQuestion(
+  unitName: string,
+  topic: string,
+  usedHashes: string[]
+): Promise<Record<string, unknown> | null> {
+  const unitSet = expandNameVariants(unitName);
+  const topicSet = expandNameVariants(topic);
+
+  let rows: FoundationBankRow[] = [];
+
+  const supabaseUrl = String(process.env.SUPABASE_URL || process.env.VITE_SUPABASE_URL || '').trim();
+  const supabaseKey = String(
+    process.env.SUPABASE_SERVICE_ROLE_KEY ||
+      process.env.SUPABASE_ANON_KEY ||
+      process.env.VITE_SUPABASE_ANON_KEY ||
+      ''
+  ).trim();
+
+  if (supabaseUrl && supabaseKey && /^https?:\/\//i.test(supabaseUrl)) {
+    try {
+      const supabase = createClient(supabaseUrl, supabaseKey);
+      const { data, error } = await supabase
+        .from('foundation_questions')
+        .select('*')
+        .eq('level', 1)
+        .eq('section', 'Ordinary Thinking')
+        .in('unit', unitSet)
+        .in('topic', topicSet);
+      if (!error && Array.isArray(data) && data.length > 0) {
+        rows = data as FoundationBankRow[];
+      }
+    } catch {
+      rows = [];
+    }
+  }
+
+  if (rows.length === 0) {
+    rows = loadLocalFoundationBank().filter(
+      (r) =>
+        Number(r.level) === 1 &&
+        String(r.section || '').trim() === 'Ordinary Thinking' &&
+        unitSet.includes(r.unit) &&
+        topicSet.includes(r.topic)
+    );
+  }
+
+  if (rows.length === 0) return null;
+
+  let candidates = rows.filter((r) => !usedHashes.includes(hashQuestionStem(r.question)));
+  if (candidates.length === 0) candidates = rows;
+
+  const row = candidates[secureRandomBelow(candidates.length)]!;
+  if (!Array.isArray(row.options) || row.options.length !== 4) return null;
+  const texts = row.options.map((x) => (typeof x === 'string' ? x.trim() : ''));
+  if (texts.some((t) => !t)) return null;
+
+  return {
+    unit: row.unit,
+    topic: row.topic,
+    question: row.question,
+    options: texts,
+    correct: String(row.correct ?? '').trim(),
+    explanation: row.explanation ?? '',
+    formula: row.formula ?? undefined,
+    difficulty: row.difficulty ?? 'Easy',
+    examStyle: row.exam_style ?? undefined,
+  };
+}
+
 export default async function handler(req: HttpRequest, res: HttpResponse) {
   res.setHeader('Access-Control-Allow-Origin', '*');
   res.setHeader('Access-Control-Allow-Methods', 'POST, OPTIONS');
@@ -296,12 +426,6 @@ export default async function handler(req: HttpRequest, res: HttpResponse) {
   }
 
   const apiKey = String(process.env.ANTHROPIC_API_KEY || process.env.VITE_ANTHROPIC_API_KEY || '').trim();
-  if (!apiKey || apiKey.length < 20) {
-    return res.status(500).json({
-      code: 'missing_config',
-      error: 'Anthropic API key is not configured on the server.',
-    });
-  }
 
   try {
     const rawBody = req.body;
@@ -315,6 +439,22 @@ export default async function handler(req: HttpRequest, res: HttpResponse) {
     const usedQuestionHashes = readHashList(body.usedQuestionHashes);
     const usedScenarios = readUsedScenariosList(body.usedScenarios);
     const legacyPrompt = readString(body.prompt);
+
+    if (unitName && topic) {
+      const fromBank = await tryPickFoundationBankQuestion(unitName, topic, usedQuestionHashes);
+      if (fromBank) {
+        const processed = postProcessModelJsonText(JSON.stringify(fromBank));
+        return res.status(200).json({ text: processed, source: 'bank' });
+      }
+    }
+
+    if (!apiKey || apiKey.length < 20) {
+      return res.status(500).json({
+        code: 'missing_config',
+        error:
+          'No foundation bank match for this topic, and Anthropic API key is not configured on the server. Add ANTHROPIC_API_KEY or apply the foundation_questions migration + Supabase env vars.',
+      });
+    }
 
     let prompt: string;
     if (unitName && topic) {
@@ -353,7 +493,7 @@ export default async function handler(req: HttpRequest, res: HttpResponse) {
 
     const text = data?.content?.[0]?.text ?? '{}';
     const processed = postProcessModelJsonText(text);
-    return res.status(200).json({ text: processed });
+    return res.status(200).json({ text: processed, source: 'ai' });
   } catch (error) {
     const message = error instanceof Error ? error.message : String(error);
     return res.status(500).json({ error: message || 'Unexpected server error' });

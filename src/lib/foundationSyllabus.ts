@@ -24,9 +24,11 @@ export const FOUNDATION_SYLLABUS: FoundationUnit[] = [
     name: 'Kinematics',
     icon: '🏃',
     topics: [
+      'Distance and Displacement',
       'Average Speed and Average Velocity',
       'Acceleration',
       'Kinematic Equations of Motion',
+      'Free Fall',
       'Position-Time Graphs',
       'Velocity-Time Graphs',
       'Acceleration-Time Graphs',
