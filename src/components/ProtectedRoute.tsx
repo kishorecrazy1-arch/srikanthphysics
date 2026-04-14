@@ -37,12 +37,17 @@ export function ProtectedRoute({ children }: { children: React.ReactNode }) {
     return <EmailConfirmationRequired />;
   }
 
-  // Foundation dashboard: any signed-in user with a confirmed email (or OAuth) gets immediate access
-  // without Google Sheet / n8n approval. Other protected routes keep the approval gate below.
+  // Foundation dashboard & AP Physics learning hub: any signed-in user with a confirmed email (or OAuth)
+  // gets immediate access without Google Sheet / n8n approval. Other protected routes keep the approval gate below.
   const isFoundationDashboardRoute =
     location.pathname === '/foundation-dashboard' ||
     location.pathname.startsWith('/foundation-dashboard/');
-  if (isFoundationDashboardRoute) {
+  const isAPPhysicsOpenAccessRoute =
+    location.pathname === '/ap-physics' ||
+    location.pathname.startsWith('/ap-physics/') ||
+    location.pathname === '/ap-physics-courses' ||
+    location.pathname.startsWith('/ap-physics-courses/');
+  if (isFoundationDashboardRoute || isAPPhysicsOpenAccessRoute) {
     return <>{children}</>;
   }
 
