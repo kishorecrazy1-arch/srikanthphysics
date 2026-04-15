@@ -1,6 +1,7 @@
 import { Navigate, useLocation } from 'react-router-dom';
 import { useAuthStore } from '../store/authStore';
 import { EmailConfirmationRequired } from '../pages/EmailConfirmationRequired';
+import { isFoundationCourseType, sheetRedirectIsFoundation } from '../lib/postAuthRedirect';
 
 export function ProtectedRoute({ children }: { children: React.ReactNode }) {
   const location = useLocation();
@@ -81,7 +82,11 @@ export function ProtectedRoute({ children }: { children: React.ReactNode }) {
     !approvalRedirectTo ||
     location.pathname === approvalRedirectTo ||
     (approvalRedirectTo !== '/' && location.pathname.startsWith(`${approvalRedirectTo.replace(/\/$/, '')}/`));
-  if (approvalRedirectTo && !onApprovalDestination) {
+  const profileMismatchFoundationRedirect =
+    sheetRedirectIsFoundation(approvalRedirectTo) &&
+    !!user?.courseType &&
+    !isFoundationCourseType(user.courseType);
+  if (approvalRedirectTo && !onApprovalDestination && !profileMismatchFoundationRedirect) {
     try {
       localStorage.setItem('courseType', approvalCourseType || 'ap_physics');
       if (approvalUser?.course) localStorage.setItem('userCourse', approvalUser.course);

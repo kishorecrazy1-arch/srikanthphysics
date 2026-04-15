@@ -35,7 +35,12 @@ export function Login() {
 
     try {
       await signIn(email, password);
-      navigate('/foundation-dashboard');
+      const { emailVerified: ev } = useAuthStore.getState();
+      if (ev === false) {
+        navigate('/dashboard');
+        return;
+      }
+      navigate('/post-signin');
     } catch (err: any) {
       // Check if error is due to email not confirmed
       if (err.message?.includes('email') && (err.message?.includes('confirm') || err.message?.includes('verified'))) {
@@ -62,7 +67,7 @@ export function Login() {
       const { error } = await supabase.auth.signInWithOAuth({
         provider: 'google',
         options: {
-          redirectTo: getAuthCallbackUrl('/foundation-dashboard'),
+          redirectTo: getAuthCallbackUrl('/post-signin'),
           queryParams: {
             access_type: 'offline',
             prompt: 'consent',
@@ -93,7 +98,7 @@ export function Login() {
       const { error } = await supabase.auth.signInWithOAuth({
         provider: 'apple',
         options: {
-          redirectTo: getAuthCallbackUrl('/foundation-dashboard'),
+          redirectTo: getAuthCallbackUrl('/post-signin'),
         },
       });
       if (error) throw error;

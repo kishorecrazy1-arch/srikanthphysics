@@ -2,6 +2,7 @@ import { BrowserRouter, Routes, Route, Navigate } from 'react-router-dom';
 import { SrikanthLanding } from './pages/SrikanthLanding';
 import { Landing } from './pages/Landing';
 import { Login } from './pages/Login';
+import { PostSignIn } from './pages/PostSignIn';
 import { Signup } from './pages/Signup';
 import { ResetPassword } from './pages/ResetPassword';
 import { Dashboard } from './pages/Dashboard';
@@ -66,6 +67,7 @@ function App() {
         <Route path="/course/iit-jee" element={<IITJEEPhysics />} />
         <Route path="/course/neet" element={<NEETPhysics />} />
         <Route path="/login" element={<Login />} />
+        <Route path="/post-signin" element={<PostSignIn />} />
         <Route path="/signup" element={<Signup />} />
         <Route path="/approval-pending" element={<ApprovalPending />} />
         <Route path="/reset-password" element={<ResetPassword />} />

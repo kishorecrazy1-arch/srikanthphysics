@@ -104,7 +104,7 @@ export function Signup() {
       const { user } = useAuthStore.getState();
 
       if (user) {
-        navigate('/foundation-dashboard');
+        navigate('/post-signin');
         return;
       }
 
@@ -133,7 +133,7 @@ export function Signup() {
       const { error } = await supabase.auth.signInWithOAuth({
         provider: 'google',
         options: {
-          redirectTo: getAuthCallbackUrl('/foundation-dashboard'),
+          redirectTo: getAuthCallbackUrl('/post-signin'),
         },
       });
       if (error) throw error;
@@ -158,7 +158,7 @@ export function Signup() {
       const { error } = await supabase.auth.signInWithOAuth({
         provider: 'apple',
         options: {
-          redirectTo: getAuthCallbackUrl('/foundation-dashboard'),
+          redirectTo: getAuthCallbackUrl('/post-signin'),
         },
       });
       if (error) throw error;
