@@ -5,6 +5,10 @@ import { useAuthStore } from '../store/authStore';
 import { supabase } from '../lib/supabase';
 import { FOUNDATION_SYLLABUS, UNIT_ACCENTS } from '../lib/foundationSyllabus';
 import { getFoundationAnalytics, mergeFoundationAnalytics, bumpTopicProgress } from '../lib/foundationStorage';
+import {
+  tryPickFoundationBankQuestionClient,
+  foundationBankRowToMcqJson,
+} from '../lib/foundationQuestionBankClient';
 
 function getUserInfoFromStorage() {
   return {
@@ -293,6 +297,30 @@ export function FoundationDailyPractice() {
     const usedBefore = readUsedQuestionHashes(activeTopic);
 
     try {
+      // Same pattern as AP daily practice: read pre-seeded bank from Supabase first (no server key required).
+      const bankRow = await tryPickFoundationBankQuestionClient(activeUnit.name, activeTopic, usedBefore);
+      if (bankRow) {
+        const clean = foundationBankRowToMcqJson(bankRow);
+        let rawBank: unknown;
+        try {
+          rawBank = JSON.parse(clean) as unknown;
+        } catch {
+          rawBank = null;
+        }
+        const fromBank = rawBank ? normalizeMcqFromUnknown(rawBank) : null;
+        if (fromBank) {
+          const stemHash = hashQuestionStem(fromBank.question);
+          if (usedBefore.includes(stemHash) && retryLeft > 0) {
+            await generateQuestion(retryLeft - 1);
+            return;
+          }
+          appendUsedQuestionHash(activeTopic, stemHash);
+          setQuestion(fromBank);
+          setLoading(false);
+          return;
+        }
+      }
+
       const res = await fetch('/api/foundation-question', {
         method: 'POST',
         headers: {
