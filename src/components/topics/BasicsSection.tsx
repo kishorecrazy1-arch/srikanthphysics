@@ -8,6 +8,8 @@ import { QAQuestionCard } from './QAQuestionCard';
 import { QuizMode } from './QuizMode';
 import { LevelDropdown } from '../LevelDropdown';
 import type { Topic, TopicProgress, Question, UserAnswer } from '../../types/topics';
+import type { Question as EnhancedQuestion } from '../../types/enhanced';
+import { buildBasicsMcqSupabaseRow, buildBasicsMcqRowFromEnhanced } from '../../lib/questionRowForSupabase';
 
 interface Subtopic {
   id: string;
@@ -105,6 +107,12 @@ export function BasicsSection({ topic, progress, onProgressUpdate, selectedLevel
         'level_3': 'Advanced'
       };
       const difficultyLevel = difficultyMap[currentLevel] || 'Intermediate';
+      const difficultyLevelVariants =
+        difficultyLevel === 'Foundation'
+          ? [difficultyLevel, 'level_1']
+          : difficultyLevel === 'Intermediate'
+            ? [difficultyLevel, 'level_2']
+            : [difficultyLevel, 'level_3'];
 
         console.log('🔍 Filtering questions by difficulty:', {
         currentLevel,
@@ -119,19 +127,19 @@ export function BasicsSection({ topic, progress, onProgressUpdate, selectedLevel
         .select('*')
         .eq('topic_id', topic.id)
         .eq('segment_type', 'basics')
-        .eq('difficulty_level', difficultyLevel) // CRITICAL: Must match exactly
+        .in('difficulty_level', difficultyLevelVariants)
         .eq('generated_date', today);
       
       console.log('📊 Query filter:', {
         topic_id: topic.id,
         segment_type: 'basics',
-        difficulty_level: difficultyLevel,
+        difficulty_level: difficultyLevelVariants,
         generated_date: today
       });
 
-      // Filter by subtopic if available
-      if (selectedSubtopic) {
-        query = query.eq('subtopic_id', selectedSubtopic.id);
+      // Filter by subtopic name (DB column is `subtopic` text, not `subtopic_id`)
+      if (selectedSubtopic?.name) {
+        query = query.eq('subtopic', selectedSubtopic.name);
       }
 
       const { data: questionsDataQuery, error: questionsError } = await query.order('created_at');
@@ -156,12 +164,14 @@ export function BasicsSection({ topic, progress, onProgressUpdate, selectedLevel
           firstQuestionDifficulty: questionsData[0]?.difficulty_level
         });
         
-        // CRITICAL: Verify questions match the selected difficulty
-        const matchingDifficulty = questionsData.filter(q => q.difficulty_level === difficultyLevel);
+        // CRITICAL: Verify questions match the selected difficulty (UI labels or level_* DB values)
+        const matchingDifficulty = questionsData.filter((q) =>
+          difficultyLevelVariants.includes(q.difficulty_level)
+        );
         if (matchingDifficulty.length === 0 && questionsData.length > 0) {
           console.warn('⚠️ Found questions but none match difficulty level. Regenerating...', {
             found: questionsData[0]?.difficulty_level,
-            expected: difficultyLevel
+            expected: difficultyLevelVariants,
           });
           questionsData = await generateDailyQuestions(topic, selectedSubtopic, currentLevel);
         }
@@ -306,20 +316,28 @@ export function BasicsSection({ topic, progress, onProgressUpdate, selectedLevel
         'level_3': 'Advanced'
       };
       const difficultyLevel = difficultyMap[selectedLevel] || 'Intermediate';
+      const difficultyLevelVariants =
+        difficultyLevel === 'Foundation'
+          ? [difficultyLevel, 'level_1']
+          : difficultyLevel === 'Intermediate'
+            ? [difficultyLevel, 'level_2']
+            : [difficultyLevel, 'level_3'];
       const subtopicName = selectedSubtopic?.name || topic.name;
+      const qaRowDifficultyLevel =
+        selectedLevel === 'level_3' ? 'level_3' : selectedLevel === 'level_2' ? 'level_2' : 'level_1';
 
       // Check for existing Q&A questions
       let query = supabase
         .from('questions')
         .select('*')
         .eq('topic_id', topic.id)
-        .eq('segment_type', 'daily_qa')
-        .eq('question_type', 'FRQ')
-        .eq('difficulty_level', difficultyLevel)
+        .eq('segment_type', 'homework')
+        .eq('question_type', 'application')
+        .in('difficulty_level', difficultyLevelVariants)
         .eq('generated_date', today);
 
-      if (selectedSubtopic) {
-        query = query.eq('subtopic_id', selectedSubtopic.id);
+      if (selectedSubtopic?.name) {
+        query = query.eq('subtopic', selectedSubtopic.name);
       }
 
       const { data: existingQuestions, error: queryError } = await query.order('created_at');
@@ -403,20 +421,31 @@ export function BasicsSection({ topic, progress, onProgressUpdate, selectedLevel
 
         // Store generated questions
         if (generatedQuestions.length > 0) {
-          const questionsToInsert = generatedQuestions.map(q => ({
+          const subName = selectedSubtopic?.name || topic.name;
+          const questionsToInsert = generatedQuestions.map((q) => ({
             topic_id: topic.id,
-            subtopic_id: selectedSubtopic?.id || null,
-            question_type: 'FRQ',
-            difficulty_level: difficultyLevel,
+            segment_type: 'homework' as const,
+            question_type: 'application' as const,
+            difficulty: 'medium' as const,
             question_text: q.content?.text || q.question_text || q.text || '',
-            solution_steps: q.solution?.steps || q.solution_steps || [],
-            final_answer: q.solution?.final_answer || q.final_answer || '',
-            formulas_used: q.content?.formulas || q.formulas_used || [],
-            misconceptions: q.solution?.misconceptions || {},
-            bloom_taxonomy: q.metadata?.bloom_taxonomy || 'Analyze',
-            source_api: q.source_api || 'Sample',
-            segment_type: 'daily_qa',
-            generated_date: today
+            options: [
+              { id: 'A', text: 'See solution / written response', isCorrect: true },
+              { id: 'B', text: 'N/A', isCorrect: false },
+              { id: 'C', text: 'N/A', isCorrect: false },
+              { id: 'D', text: 'N/A', isCorrect: false },
+            ],
+            subtopic: subName,
+            explanation: {
+              steps: (q.solution?.steps || q.solution_steps || []).map((content: string, i: number) => ({
+                title: `Step ${i + 1}`,
+                content,
+              })),
+              keyConcept: subName,
+              relatedFormulas: (q.content?.formulas || q.formulas_used || []) as string[],
+            },
+            difficulty_level: qaRowDifficultyLevel,
+            generated_date: today,
+            ai_generated: true,
           }));
 
           const { data: insertedData, error: insertError } = await supabase
@@ -513,7 +542,8 @@ export function BasicsSection({ topic, progress, onProgressUpdate, selectedLevel
           
           // Generate questions using enhanced service (PRODUCTION)
           const generatedQuestions = await questionService.batchGenerateQuestions(
-            subtopicId || topic.id,
+            topic.id,
+            subtopicId || '',
             subtopicName,
             difficulty,
             questionCount,
@@ -522,53 +552,13 @@ export function BasicsSection({ topic, progress, onProgressUpdate, selectedLevel
           
           console.log('✅ AI-generated questions received:', generatedQuestions.length);
 
-          // Transform to database format (reuse difficulty already calculated above)
-          const mappedDifficulty = difficulty;
-          
-          const questionsToInsert = generatedQuestions.map((q: any) => {
-            // Convert options to JSONB format if needed
-            let optionsObj: Record<string, string> = {};
-            if (q.content?.options) {
-              // Create a copy to avoid modifying the original const object
-              optionsObj = { ...q.content.options };
-            } else if (q.options) {
-              // Create a copy to avoid modifying the original const object
-              optionsObj = typeof q.options === 'object' && !Array.isArray(q.options) 
-                ? { ...q.options } 
-                : q.options;
-            } else if (Array.isArray(q.options)) {
-              // Convert array to object format
-              q.options.forEach((opt: any, idx: number) => {
-                const key = ['A', 'B', 'C', 'D'][idx];
-                optionsObj[key] = typeof opt === 'string' ? opt : opt.text || opt;
-              });
-            }
-            
-            return {
-              id: q.id || crypto.randomUUID(),
-              topic_id: topic.id,
-              subtopic_id: subtopicId || null,
-              segment_type: 'basics',
-              question_text: q.content?.text || q.question_text || '',
-              options: optionsObj,
-              correct_answer: q.content?.correct_answer || q.correct_answer || 'A',
-              difficulty_level: mappedDifficulty,
-              question_type: q.question_type || 'MCQ',
-              solution_steps: q.solution?.steps || [],
-              misconceptions: q.solution?.misconceptions || {},
-              formulas_used: q.content?.formulas || q.formulas_used || [],
-              bloom_taxonomy: q.metadata?.bloom_taxonomy || 'Apply',
-              source_api: q.source_api || 'GPT-4o',
-              ai_generated: true,
-              generated_date: today,
-              created_at: new Date().toISOString(),
-              last_updated: new Date().toISOString()
-            };
-          });
+          const questionsToInsert = (generatedQuestions as EnhancedQuestion[]).map((q) =>
+            buildBasicsMcqRowFromEnhanced(q, topic.id, subtopicName, today)
+          );
 
           const { data: insertedQuestions, error: insertError } = await supabase
             .from('questions')
-            .upsert(questionsToInsert, { onConflict: 'id' })
+            .insert(questionsToInsert)
             .select();
 
           if (insertError) throw insertError;
@@ -670,38 +660,25 @@ export function BasicsSection({ topic, progress, onProgressUpdate, selectedLevel
         answerSet.forEach((ans, i) => {
           optionsObj[['A', 'B', 'C', 'D'][i]] = ans;
         });
-        
-        return {
+
+        return buildBasicsMcqSupabaseRow({
           id: crypto.randomUUID(),
-          topic_id: topic.id,
-          subtopic_id: subtopicId || null,
-          question_type: 'MCQ',
-          difficulty_level: level === 'level_1' ? 'Foundation' : level === 'level_2' ? 'Intermediate' : 'Advanced',
-          question_text: questionText,
-          options: optionsObj,
-          correct_answer: correctAnswer,
-          solution_steps: [
+          topicId: topic.id,
+          subtopicName,
+          questionText,
+          optionsObj,
+          correctLetter: correctAnswer,
+          level,
+          generatedDate: today,
+          aiGenerated: false,
+          solutionSteps: [
             `Step 1: Identify the given information and what needs to be found.`,
             `Step 2: Select the appropriate physics formula for ${subtopicName}.`,
             `Step 3: Substitute the given values into the formula.`,
             `Step 4: Solve for the unknown quantity.`,
-            `Step 5: Verify the answer has correct units and is reasonable.`
+            `Step 5: Verify the answer has correct units and is reasonable.`,
           ],
-          misconceptions: {
-            'A': 'Common mistake: Forgot to account for gravity/direction',
-            'B': 'Common mistake: Used wrong formula',
-            'C': 'Common mistake: Calculation error',
-            'D': 'Common mistake: Unit conversion error'
-          },
-          formulas_used: [`Formula for ${subtopicName}`],
-          bloom_taxonomy: 'Apply',
-          source_api: 'Sample',
-          segment_type: 'basics',
-          ai_generated: false,
-          generated_date: today,
-          created_at: new Date().toISOString(),
-          last_updated: new Date().toISOString()
-        };
+        });
       });
 
       console.log('Inserting sample questions:', sampleQuestions.length);

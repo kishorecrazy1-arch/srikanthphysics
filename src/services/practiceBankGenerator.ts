@@ -32,7 +32,7 @@ export class PracticeBankGenerator {
     });
 
     // Check if questions already exist
-    const existing = await this.getExistingPracticeQuestions(topicId, subtopicId, difficulty);
+    const existing = await this.getExistingPracticeQuestions(topicId, subtopicName, difficulty);
     if (existing.length >= count) {
       console.log(`✅ Already have ${existing.length} practice questions for this combination`);
       return existing;
@@ -64,7 +64,7 @@ export class PracticeBankGenerator {
           return {
             id: q.id || crypto.randomUUID(),
             topic_id: topicId,
-            subtopic_id: subtopicId,
+            subtopic: subtopicName,
             segment_type: 'practice_bank', // Mark as practice bank question
             question_text: q.content?.text || q.question_text || '',
             options: optionsObj,
@@ -107,14 +107,14 @@ export class PracticeBankGenerator {
    */
   async getExistingPracticeQuestions(
     topicId: string,
-    subtopicId: string,
+    subtopicName: string,
     difficulty: 'Foundation' | 'Intermediate' | 'Advanced'
   ): Promise<Question[]> {
     const { data, error } = await supabase
       .from('questions')
       .select('*')
       .eq('topic_id', topicId)
-      .eq('subtopic_id', subtopicId)
+      .eq('subtopic', subtopicName)
       .eq('segment_type', 'practice_bank')
       .eq('difficulty_level', difficulty);
 
@@ -130,7 +130,7 @@ export class PracticeBankGenerator {
    * Generate sample practice questions (fallback)
    */
   private async generateSamplePracticeQuestions(config: PracticeBankConfig): Promise<Question[]> {
-    const { topicId, subtopicId, subtopicName, difficulty, count = 5 } = config;
+    const { topicId, subtopicName, difficulty, count = 5 } = config;
 
     // Level-specific question templates
     const level1Templates = [
@@ -174,7 +174,7 @@ export class PracticeBankGenerator {
       return {
         id: crypto.randomUUID(),
         topic_id: topicId,
-        subtopic_id: subtopicId,
+        subtopic: subtopicName,
         segment_type: 'practice_bank',
         question_type: 'MCQ',
         difficulty_level: difficulty,

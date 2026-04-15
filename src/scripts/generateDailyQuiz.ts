@@ -7,6 +7,8 @@
 
 import { QuestionService } from '../services/questionService';
 import { supabase } from '../lib/supabase';
+import { buildBasicsMcqRowFromEnhanced } from '../lib/questionRowForSupabase';
+import type { Question as EnhancedQuestion } from '../types/enhanced';
 
 interface GenerationConfig {
   topicId: string;
@@ -47,7 +49,7 @@ export async function generateDailyQuizQuestions(config: GenerationConfig) {
       .from('questions')
       .select('id')
       .eq('topic_id', topicId)
-      .eq('subtopic_id', subtopicId)
+      .eq('subtopic', subtopicName)
       .eq('difficulty_level', difficulty)
       .eq('generated_date', today)
       .eq('segment_type', 'basics');
@@ -59,6 +61,7 @@ export async function generateDailyQuizQuestions(config: GenerationConfig) {
 
     // Generate questions using QuestionService
     const questions = await questionService.batchGenerateQuestions(
+      topicId,
       subtopicId,
       subtopicName,
       difficulty,
@@ -73,25 +76,9 @@ export async function generateDailyQuizQuestions(config: GenerationConfig) {
     console.log(`✅ Generated ${questions.length} questions`);
 
     // Transform to database format
-    const questionsToInsert = questions.map((q, index) => ({
-      id: q.id || crypto.randomUUID(),
-      topic_id: topicId,
-      subtopic_id: subtopicId,
-      question_type: q.question_type,
-      difficulty_level: q.difficulty_level,
-      question_text: q.content.text,
-      options: q.content.options || {},
-      correct_answer: q.solution.final_answer,
-      solution_steps: q.solution.steps,
-      misconceptions: q.solution.misconceptions || {},
-      formulas_used: q.content.formulas || [],
-      bloom_taxonomy: q.metadata.bloom_taxonomy,
-      source_api: q.source_api,
-      segment_type: 'basics',
-      generated_date: today,
-      created_at: q.created_at || new Date().toISOString(),
-      last_updated: new Date().toISOString()
-    }));
+    const questionsToInsert = (questions as EnhancedQuestion[]).map((q) =>
+      buildBasicsMcqRowFromEnhanced(q, topicId, subtopicName, today)
+    );
 
     // Insert into database
     const { data: insertedQuestions, error } = await supabase

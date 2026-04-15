@@ -12,6 +12,7 @@ import { generateMCQQuestions, generateFRQQuestions } from './questionGenerator'
 import { supabase } from '../lib/supabase';
 import type { Question } from '../types/enhanced';
 import { CostTracker } from './costTracker';
+import { buildBasicsMcqRowFromEnhanced } from '../lib/questionRowForSupabase';
 
 export class QuestionService {
   private costTracker: CostTracker;
@@ -24,14 +25,15 @@ export class QuestionService {
    * Batch generate questions with caching
    */
   async batchGenerateQuestions(
-    subtopicId: string,
-    subtopic: string,
+    topicId: string,
+    subtopicIdForCache: string,
+    subtopicName: string,
     difficulty: 'Foundation' | 'Intermediate' | 'Advanced',
     count: number,
     questionType: 'MCQ' | 'FRQ' = 'MCQ'
   ): Promise<Question[]> {
     // Check cache first
-    const cacheKey = `${subtopicId}_${difficulty}_${questionType}_${count}`;
+    const cacheKey = `${subtopicIdForCache}_${difficulty}_${questionType}_${count}`;
     const cached = await this.checkCache(cacheKey);
     
     if (cached && cached.length > 0) {
@@ -43,9 +45,9 @@ export class QuestionService {
     let questions: Question[];
     try {
       if (questionType === 'MCQ') {
-        questions = await generateMCQQuestions(subtopic, difficulty, count);
+        questions = await generateMCQQuestions(subtopicName, difficulty, count);
       } else {
-        questions = await generateFRQQuestions(subtopic, difficulty);
+        questions = await generateFRQQuestions(subtopicName, difficulty);
       }
 
       // Validate physics accuracy
@@ -55,7 +57,7 @@ export class QuestionService {
       });
 
       // Store in Supabase
-      await this.storeQuestions(validatedQuestions, subtopicId);
+      await this.storeQuestions(validatedQuestions, topicId, subtopicName);
 
       // Store in cache
       await this.storeCache(cacheKey, validatedQuestions);
@@ -65,7 +67,7 @@ export class QuestionService {
       console.error('Question generation failed:', error);
       
       // Fallback: get existing questions from database
-      const existing = await this.getExistingQuestions(subtopicId, difficulty, count);
+      const existing = await this.getExistingQuestions(subtopicName, difficulty, count);
       if (existing.length > 0) {
         return existing;
       }
@@ -79,8 +81,9 @@ export class QuestionService {
    */
   async getDailyPracticeQuestions(
     userId: string,
-    subtopicId: string,
-    subtopic: string,
+    topicId: string,
+    subtopicIdForCache: string,
+    subtopicName: string,
     difficulty: 'Foundation' | 'Intermediate' | 'Advanced'
   ): Promise<Question[]> {
     // Get questions student hasn't attempted
@@ -95,7 +98,7 @@ export class QuestionService {
     const { data: availableQuestions } = await supabase
       .from('questions')
       .select('*')
-      .eq('subtopic_id', subtopicId)
+      .eq('subtopic', subtopicName)
       .eq('difficulty_level', difficulty)
       .not('id', 'in', `(${Array.from(attemptedIds).join(',')})`)
       .limit(10);
@@ -108,8 +111,9 @@ export class QuestionService {
     // Not enough questions - generate new ones
     const needed = 10 - (availableQuestions?.length || 0);
     const newQuestions = await this.batchGenerateQuestions(
-      subtopicId,
-      subtopic,
+      topicId,
+      subtopicIdForCache,
+      subtopicName,
       difficulty,
       needed
     );
@@ -204,43 +208,35 @@ export class QuestionService {
   }
 
   /**
-   * Store questions in database
+   * Store questions in database (uses `subtopic` text column — matches Supabase schema)
    */
-  private async storeQuestions(questions: Question[], subtopicId: string): Promise<void> {
-    const questionsToInsert = questions.map(q => ({
-      id: q.id,
-      subtopic_id: subtopicId,
-      question_type: q.question_type,
-      difficulty_level: q.difficulty_level,
-      question_text: q.content.text,
-      options: q.content.options || {},
-      correct_answer: q.solution.final_answer,
-      solution_steps: q.solution.steps,
-      misconceptions: q.solution.misconceptions,
-      formulas_used: q.content.formulas,
-      bloom_taxonomy: q.metadata.bloom_taxonomy,
-      source_api: q.source_api,
-      used_count: 0,
-      avg_student_score: 0,
-      created_at: q.created_at,
-      last_updated: q.created_at
-    }));
-
-    await supabase.from('questions').insert(questionsToInsert);
+  private async storeQuestions(
+    questions: Question[],
+    topicId: string,
+    subtopicName: string
+  ): Promise<void> {
+    if (!topicId) {
+      console.warn('QuestionService.storeQuestions: topicId missing, skipping persist');
+      return;
+    }
+    const today = new Date().toISOString().split('T')[0];
+    const rows = questions.map((q) => buildBasicsMcqRowFromEnhanced(q, topicId, subtopicName, today));
+    const { error } = await supabase.from('questions').insert(rows);
+    if (error) console.error('QuestionService.storeQuestions:', error);
   }
 
   /**
    * Get existing questions from database
    */
   private async getExistingQuestions(
-    subtopicId: string,
+    subtopicName: string,
     difficulty: string,
     count: number
   ): Promise<Question[]> {
     const { data } = await supabase
       .from('questions')
       .select('*')
-      .eq('subtopic_id', subtopicId)
+      .eq('subtopic', subtopicName)
       .eq('difficulty_level', difficulty)
       .limit(count);
 

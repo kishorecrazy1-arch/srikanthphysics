@@ -95,12 +95,30 @@ export async function getTodaysDailyQuiz(
 ) {
   const today = new Date().toISOString().split('T')[0];
 
+  const { data: subtopicMeta } = await supabase
+    .from('subtopics')
+    .select('name')
+    .eq('id', subtopicId)
+    .maybeSingle();
+
+  const subtopicName = subtopicMeta?.name;
+  if (!subtopicName) {
+    throw new Error('Subtopic not found');
+  }
+
+  const difficultyVariants =
+    difficulty === 'Foundation'
+      ? [difficulty, 'level_1']
+      : difficulty === 'Intermediate'
+        ? [difficulty, 'level_2']
+        : [difficulty, 'level_3'];
+
   const { data: questions, error } = await supabase
     .from('questions')
     .select('*')
     .eq('topic_id', topicId)
-    .eq('subtopic_id', subtopicId)
-    .eq('difficulty_level', difficulty)
+    .eq('subtopic', subtopicName)
+    .in('difficulty_level', difficultyVariants)
     .eq('segment_type', 'basics')
     .eq('generated_date', today)
     .order('created_at');
