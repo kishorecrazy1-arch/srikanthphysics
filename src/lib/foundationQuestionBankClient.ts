@@ -27,6 +27,17 @@ function normalizeKey(s: string): string {
     .replace(/[()]/g, '');
 }
 
+export type PickFoundationBankOptions = {
+  /**
+   * When every row in the topic pool was already used (stem hash in `usedQuestionHashes`),
+   * still pick randomly from the full pool. Default false so callers can try the AI API first
+   * (AP-style fresh questions) and only use this for offline / no-key fallback.
+   */
+  allowRepeatWhenExhausted?: boolean;
+  /** Row IDs already shown this session — prevents the same bank row from appearing twice when stems match or hashes lag. */
+  excludeRowIds?: number[];
+};
+
 export type FoundationBankRow = {
   id: number;
   unit: string;
@@ -74,8 +85,11 @@ export async function tryPickFoundationBankQuestionClient(
   unitName: string,
   topicName: string,
   usedQuestionHashes: string[],
-  client: SupabaseClient = supabase
+  client: SupabaseClient = supabase,
+  options?: PickFoundationBankOptions
 ): Promise<FoundationBankRow | null> {
+  const allowRepeatWhenExhausted = options?.allowRepeatWhenExhausted === true;
+  const excludeRowIds = (options?.excludeRowIds ?? []).filter((n): n is number => Number.isFinite(n) && n > 0);
   const unitSet = expandNameVariants(unitName);
   const topicSet = expandNameVariants(topicName);
 
@@ -106,8 +120,22 @@ export async function tryPickFoundationBankQuestionClient(
     pool = rows;
   }
 
-  let candidates = pool.filter((r) => !usedQuestionHashes.includes(hashQuestionStem(r.question)));
-  if (candidates.length === 0) candidates = pool;
+  let workingPool = pool;
+  if (excludeRowIds.length > 0) {
+    const ex = new Set(excludeRowIds);
+    const idFiltered = pool.filter((r) => !ex.has(r.id));
+    if (idFiltered.length > 0) {
+      workingPool = idFiltered;
+    } else if (!allowRepeatWhenExhausted) {
+      return null;
+    }
+  }
+
+  let candidates = workingPool.filter((r) => !usedQuestionHashes.includes(hashQuestionStem(r.question)));
+  if (candidates.length === 0) {
+    if (!allowRepeatWhenExhausted) return null;
+    candidates = workingPool;
+  }
 
   const row = candidates[securePickIndex(candidates.length)]!;
   if (!parseOptionsArray(row.options)) return null;

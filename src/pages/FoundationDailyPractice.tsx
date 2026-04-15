@@ -1,4 +1,4 @@
-import { useState, useEffect } from 'react';
+import { useState, useEffect, useRef } from 'react';
 import { useNavigate, useLocation } from 'react-router-dom';
 import { ArrowLeft } from 'lucide-react';
 import { useAuthStore } from '../store/authStore';
@@ -8,6 +8,7 @@ import { getFoundationAnalytics, mergeFoundationAnalytics, bumpTopicProgress } f
 import {
   tryPickFoundationBankQuestionClient,
   foundationBankRowToMcqJson,
+  type FoundationBankRow,
 } from '../lib/foundationQuestionBankClient';
 
 function getUserInfoFromStorage() {
@@ -38,7 +39,7 @@ function readUsedQuestionHashes(topic: string): string[] {
     if (!raw) return [];
     const parsed: unknown = JSON.parse(raw);
     if (!Array.isArray(parsed)) return [];
-    return parsed.filter((x): x is string => typeof x === 'string').slice(-10);
+    return parsed.filter((x): x is string => typeof x === 'string').slice(-60);
   } catch {
     return [];
   }
@@ -46,7 +47,7 @@ function readUsedQuestionHashes(topic: string): string[] {
 
 function appendUsedQuestionHash(topic: string, hash: string): void {
   const prev = readUsedQuestionHashes(topic);
-  const next = [...prev.filter((h) => h !== hash), hash].slice(-10);
+  const next = [...prev.filter((h) => h !== hash), hash].slice(-60);
   localStorage.setItem(foundationUsedQuestionsStorageKey(topic), JSON.stringify(next));
 }
 
@@ -219,6 +220,10 @@ export function FoundationDailyPractice() {
   const [correctCount, setCorrectCount] = useState(0);
   const [sessionDisplayName, setSessionDisplayName] = useState<string | null>(null);
   const [sessionEmail, setSessionEmail] = useState<string | null>(null);
+  /** Same session: never reuse these bank row IDs until API or new session (fixes repeated JEE stems from one DB row). */
+  const sessionBankRowIdsRef = useRef<number[]>([]);
+  /** In-session stem hashes merged with localStorage for picks (covers race before disk write). */
+  const sessionStemHashesRef = useRef<string[]>([]);
 
   const stored = getUserInfoFromStorage();
   const userInfo = {
@@ -278,6 +283,8 @@ export function FoundationDailyPractice() {
   }, [email]);
 
   function resetSessionState() {
+    sessionBankRowIdsRef.current = [];
+    sessionStemHashesRef.current = [];
     setSessionActive(false);
     setSessionComplete(false);
     setCurrentQuestionNumber(1);
@@ -294,32 +301,40 @@ export function FoundationDailyPractice() {
     setRevealed(false);
     setQuestion(null);
 
-    const usedBefore = readUsedQuestionHashes(activeTopic);
+    const usedStemHashes = [
+      ...new Set([...readUsedQuestionHashes(activeTopic), ...sessionStemHashesRef.current]),
+    ];
+
+    async function tryApplyBankRow(bankRow: FoundationBankRow): Promise<boolean> {
+      const clean = foundationBankRowToMcqJson(bankRow);
+      let rawBank: unknown;
+      try {
+        rawBank = JSON.parse(clean) as unknown;
+      } catch {
+        rawBank = null;
+      }
+      const fromBank = rawBank ? normalizeMcqFromUnknown(rawBank) : null;
+      if (!fromBank) return false;
+      const stemHash = hashQuestionStem(fromBank.question);
+      if (usedStemHashes.includes(stemHash) && retryLeft > 0) {
+        await generateQuestion(retryLeft - 1);
+        return true;
+      }
+      sessionStemHashesRef.current = [...new Set([...sessionStemHashesRef.current, stemHash])].slice(-80);
+      sessionBankRowIdsRef.current = [...sessionBankRowIdsRef.current, bankRow.id];
+      appendUsedQuestionHash(activeTopic, stemHash);
+      setQuestion(fromBank);
+      setLoading(false);
+      return true;
+    }
 
     try {
-      // Same pattern as AP daily practice: read pre-seeded bank from Supabase first (no server key required).
-      const bankRow = await tryPickFoundationBankQuestionClient(activeUnit.name, activeTopic, usedBefore);
-      if (bankRow) {
-        const clean = foundationBankRowToMcqJson(bankRow);
-        let rawBank: unknown;
-        try {
-          rawBank = JSON.parse(clean) as unknown;
-        } catch {
-          rawBank = null;
-        }
-        const fromBank = rawBank ? normalizeMcqFromUnknown(rawBank) : null;
-        if (fromBank) {
-          const stemHash = hashQuestionStem(fromBank.question);
-          if (usedBefore.includes(stemHash) && retryLeft > 0) {
-            await generateQuestion(retryLeft - 1);
-            return;
-          }
-          appendUsedQuestionHash(activeTopic, stemHash);
-          setQuestion(fromBank);
-          setLoading(false);
-          return;
-        }
-      }
+      // Bank first: unused rows only. When the pool is exhausted, fall through to AI (like AP generating fresh items).
+      const bankFresh = await tryPickFoundationBankQuestionClient(activeUnit.name, activeTopic, usedStemHashes, supabase, {
+        allowRepeatWhenExhausted: false,
+        excludeRowIds: sessionBankRowIdsRef.current,
+      });
+      if (bankFresh && (await tryApplyBankRow(bankFresh))) return;
 
       const res = await fetch('/api/foundation-question', {
         method: 'POST',
@@ -329,12 +344,18 @@ export function FoundationDailyPractice() {
         body: JSON.stringify({
           unitName: activeUnit.name,
           topic: activeTopic,
-          usedQuestionHashes: usedBefore,
+          usedQuestionHashes: usedStemHashes,
         }),
       });
 
       if (!res.ok) {
         const err = (await res.json().catch(() => ({}))) as { code?: string; error?: string; message?: string };
+        const bankRepeat = await tryPickFoundationBankQuestionClient(activeUnit.name, activeTopic, usedStemHashes, supabase, {
+          allowRepeatWhenExhausted: true,
+          excludeRowIds: sessionBankRowIdsRef.current,
+        });
+        if (bankRepeat && (await tryApplyBankRow(bankRepeat))) return;
+
         if (err.code === 'missing_config') {
           setQuestion({ error: true, kind: 'config' });
           setLoading(false);
@@ -359,15 +380,22 @@ export function FoundationDailyPractice() {
       }
 
       const stemHash = hashQuestionStem(parsed.question);
-      if (usedBefore.includes(stemHash) && retryLeft > 0) {
+      if (usedStemHashes.includes(stemHash) && retryLeft > 0) {
         await generateQuestion(retryLeft - 1);
         return;
       }
 
+      sessionStemHashesRef.current = [...new Set([...sessionStemHashesRef.current, stemHash])].slice(-80);
       appendUsedQuestionHash(activeTopic, stemHash);
       setQuestion(parsed);
     } catch (e) {
       console.error('Question generation error:', e);
+      const bankRepeat = await tryPickFoundationBankQuestionClient(activeUnit.name, activeTopic, usedStemHashes, supabase, {
+        allowRepeatWhenExhausted: true,
+        excludeRowIds: sessionBankRowIdsRef.current,
+      });
+      if (bankRepeat && (await tryApplyBankRow(bankRepeat))) return;
+
       const msg = e instanceof Error ? e.message : String(e);
       setQuestion({ error: true, kind: 'api', apiMessage: msg });
     }
@@ -416,6 +444,8 @@ export function FoundationDailyPractice() {
 
   function startPracticeSession() {
     clearUsedQuestionsForTopic(activeTopic);
+    sessionBankRowIdsRef.current = [];
+    sessionStemHashesRef.current = [];
     setSessionActive(true);
     setSessionComplete(false);
     setCurrentQuestionNumber(1);
