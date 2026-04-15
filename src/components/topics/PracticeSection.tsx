@@ -48,6 +48,12 @@ export function PracticeSection({ topic, progress, onProgressUpdate, selectedLev
         'level_3': 'Advanced'
       };
       const difficultyLevel = difficultyMap[selectedLevel] || 'Foundation';
+      const difficultyLevelVariants =
+        difficultyLevel === 'Foundation'
+          ? [difficultyLevel, 'level_1']
+          : difficultyLevel === 'Intermediate'
+            ? [difficultyLevel, 'level_2']
+            : [difficultyLevel, 'level_3'];
 
       console.log('📚 Loading practice bank questions:', {
         topic: topic.name,
@@ -61,7 +67,7 @@ export function PracticeSection({ topic, progress, onProgressUpdate, selectedLev
         .select('*')
         .eq('segment_type', 'practice_bank')
         .eq('topic_id', topic.id)
-        .eq('difficulty_level', difficultyLevel);
+        .in('difficulty_level', difficultyLevelVariants);
 
       if (subTab === 'normal') {
         // Already filtered by topic_id
@@ -71,7 +77,7 @@ export function PracticeSection({ topic, progress, onProgressUpdate, selectedLev
           .from('questions')
           .select('*')
           .eq('segment_type', 'practice_bank')
-          .eq('difficulty_level', difficultyLevel);
+          .in('difficulty_level', difficultyLevelVariants);
       } else if (subTab === 'random') {
         // Same as normal, but will shuffle later
         query = query.eq('topic_id', topic.id);
@@ -112,9 +118,12 @@ export function PracticeSection({ topic, progress, onProgressUpdate, selectedLev
         // Map difficulty_level to difficulty
         const qDifficultyLevel = q.difficulty_level || q.difficulty || 'intermediate';
         const difficultyMapLocal: Record<string, string> = {
-          'Foundation': 'easy',
-          'Intermediate': 'medium',
-          'Advanced': 'hard'
+          Foundation: 'easy',
+          Intermediate: 'medium',
+          Advanced: 'hard',
+          level_1: 'easy',
+          level_2: 'medium',
+          level_3: 'hard',
         };
         const mappedDifficulty = difficultyMapLocal[qDifficultyLevel] || qDifficultyLevel.toLowerCase() || 'medium';
 

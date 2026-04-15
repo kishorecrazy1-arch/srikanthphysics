@@ -43,11 +43,18 @@ export function ProtectedRoute({ children }: { children: React.ReactNode }) {
   const isFoundationDashboardRoute =
     location.pathname === '/foundation-dashboard' ||
     location.pathname.startsWith('/foundation-dashboard/');
+  // Same open access as AP topic hub: tools linked from Practice Bank (FRQ, graphs, mock test, simulators).
   const isAPPhysicsOpenAccessRoute =
     location.pathname === '/ap-physics' ||
     location.pathname.startsWith('/ap-physics/') ||
     location.pathname === '/ap-physics-courses' ||
-    location.pathname.startsWith('/ap-physics-courses/');
+    location.pathname.startsWith('/ap-physics-courses/') ||
+    location.pathname === '/frq-practice' ||
+    location.pathname.startsWith('/frq-practice/') ||
+    location.pathname === '/graph-generator' ||
+    location.pathname === '/mock-test' ||
+    location.pathname === '/motion-simulator' ||
+    location.pathname === '/simulators';
   if (isFoundationDashboardRoute || isAPPhysicsOpenAccessRoute) {
     return <>{children}</>;
   }

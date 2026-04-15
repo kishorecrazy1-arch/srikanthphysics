@@ -553,9 +553,12 @@ export default async function handler(req: HttpRequest, res: HttpResponse) {
     }
 
     const preferOpenAI = Boolean(openaiKey);
-    const gen = preferOpenAI
-      ? await generateFoundationViaOpenAI(openaiKey, userContent, systemInstruction)
-      : await generateFoundationViaAnthropic(anthropicKey, userContent, systemInstruction);
+    let gen: { ok: true; text: string } | { ok: false; status: number; error: string };
+    if (preferOpenAI) {
+      gen = await generateFoundationViaOpenAI(openaiKey, userContent, systemInstruction);
+    } else {
+      gen = await generateFoundationViaAnthropic(anthropicKey, userContent, systemInstruction);
+    }
 
     if (!gen.ok) {
       return res.status(gen.status).json({ error: gen.error });
