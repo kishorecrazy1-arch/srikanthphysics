@@ -6,10 +6,16 @@ import { supabase } from '../lib/supabase';
 import { FOUNDATION_SYLLABUS, UNIT_ACCENTS } from '../lib/foundationSyllabus';
 import { getFoundationAnalytics, mergeFoundationAnalytics, bumpTopicProgress } from '../lib/foundationStorage';
 import {
-  tryPickFoundationBankQuestionClient,
-  foundationBankRowToMcqJson,
-  type FoundationBankRow,
-} from '../lib/foundationQuestionBankClient';
+  fetchApSubtopicCatalog,
+  resolveFoundationToApSubtopic,
+  fetchApBasicsQuestionPool,
+  apBasicsRowToGeneratedMcq,
+  foundationDailySeenStorageKey,
+  readFoundationDailySeenSet,
+  rememberFoundationDailySeenId,
+  questionRowId,
+  type ApSubtopicRef,
+} from '../lib/foundationApDailyQuestions';
 
 function getUserInfoFromStorage() {
   return {
@@ -17,42 +23,6 @@ function getUserInfoFromStorage() {
     batch: localStorage.getItem('userBatch') || 'Foundation Course',
     course: localStorage.getItem('userCourse') || 'Foundation',
   };
-}
-
-function foundationUsedQuestionsStorageKey(topic: string): string {
-  return `foundationUsedQuestions_${topic}`;
-}
-
-function hashQuestionStem(text: string): string {
-  const n = text.replace(/\s+/g, ' ').trim().toLowerCase();
-  let h = 5381;
-  const cap = Math.min(n.length, 600);
-  for (let i = 0; i < cap; i++) {
-    h = (h * 33) ^ n.charCodeAt(i);
-  }
-  return (h >>> 0).toString(36);
-}
-
-function readUsedQuestionHashes(topic: string): string[] {
-  try {
-    const raw = localStorage.getItem(foundationUsedQuestionsStorageKey(topic));
-    if (!raw) return [];
-    const parsed: unknown = JSON.parse(raw);
-    if (!Array.isArray(parsed)) return [];
-    return parsed.filter((x): x is string => typeof x === 'string').slice(-60);
-  } catch {
-    return [];
-  }
-}
-
-function appendUsedQuestionHash(topic: string, hash: string): void {
-  const prev = readUsedQuestionHashes(topic);
-  const next = [...prev.filter((h) => h !== hash), hash].slice(-60);
-  localStorage.setItem(foundationUsedQuestionsStorageKey(topic), JSON.stringify(next));
-}
-
-function clearUsedQuestionsForTopic(topic: string): void {
-  localStorage.removeItem(foundationUsedQuestionsStorageKey(topic));
 }
 
 function displayNameFromSessionMeta(metadata: Record<string, unknown> | undefined, email: string | undefined): string {
@@ -78,94 +48,11 @@ interface GeneratedQuestion {
   examStyle?: string;
   tip?: string;
   answer?: Record<string, string>;
+  /** AP `questions.id` when sourced from Supabase basics */
+  sourceQuestionId?: string;
 }
 
 const OPTION_KEYS = ['A', 'B', 'C', 'D'] as const;
-
-function stripNumericMcqPrefix(s: string): string {
-  return s.replace(/^\s*[1-4]\)\s*/i, '').trim();
-}
-
-/** API returns 1–4 options array + correct "1"|"2"|"3"|"4"; legacy uses A–D object. */
-function normalizeMcqFromUnknown(parsed: unknown): GeneratedQuestion | null {
-  if (!parsed || typeof parsed !== 'object' || Array.isArray(parsed)) return null;
-  const p = parsed as Record<string, unknown>;
-  const question = typeof p.question === 'string' ? p.question.trim() : '';
-  if (!question) return null;
-
-  const explanation = typeof p.explanation === 'string' ? p.explanation : '';
-
-  let options: Record<'A' | 'B' | 'C' | 'D', string>;
-  let correct: string;
-
-  if (Array.isArray(p.options) && p.options.length === 4) {
-    const texts = p.options.map((x, i) => {
-      const raw = typeof x === 'string' ? x.trim() : '';
-      const stripped = stripNumericMcqPrefix(raw);
-      return stripped.length > 0 ? stripped : (raw || `Option ${i + 1}`);
-    });
-    options = { A: texts[0]!, B: texts[1]!, C: texts[2]!, D: texts[3]! };
-    const c = String(p.correct ?? '').trim();
-    const digit = /^[1-4]$/.test(c) ? c : '';
-    const map: Record<string, string> = { '1': 'A', '2': 'B', '3': 'C', '4': 'D' };
-    correct = digit ? (map[digit] ?? '') : String(c).toUpperCase().replace(/[^ABCD]/g, '').slice(0, 1);
-    if (!OPTION_KEYS.includes(correct as (typeof OPTION_KEYS)[number])) return null;
-  } else if (p.options && typeof p.options === 'object' && !Array.isArray(p.options)) {
-    const o = p.options as Record<string, unknown>;
-    const get = (k: string): string => {
-      const v = o[k];
-      return typeof v === 'string' ? v.trim() : '';
-    };
-    const A = get('A') || get('a');
-    const B = get('B') || get('b');
-    const C = get('C') || get('c');
-    const D = get('D') || get('d');
-    if (!A || !B || !C || !D) return null;
-    options = { A, B, C, D };
-    correct = String(p.correct ?? '')
-      .trim()
-      .toUpperCase()
-      .slice(0, 1);
-    if (!OPTION_KEYS.includes(correct as (typeof OPTION_KEYS)[number])) return null;
-  } else {
-    return null;
-  }
-
-  const subQ = p.subQuestions;
-  const subQuestions = Array.isArray(subQ)
-    ? subQ.filter((x): x is string => typeof x === 'string' && x.trim().length > 0)
-    : undefined;
-
-  const formulasRaw = p.formulas;
-  const formulas = Array.isArray(formulasRaw)
-    ? formulasRaw.filter((x): x is string => typeof x === 'string' && x.trim().length > 0)
-    : undefined;
-
-  let answer: Record<string, string> | undefined;
-  if (p.answer && typeof p.answer === 'object' && !Array.isArray(p.answer)) {
-    const a = p.answer as Record<string, unknown>;
-    const out: Record<string, string> = {};
-    for (const k of ['a', 'b', 'c'] as const) {
-      const v = a[k];
-      if (typeof v === 'string' && v.trim()) out[k] = v;
-    }
-    if (Object.keys(out).length > 0) answer = out;
-  }
-
-  return {
-    question,
-    subQuestions: subQuestions && subQuestions.length > 0 ? subQuestions : undefined,
-    formulas: formulas && formulas.length > 0 ? formulas : undefined,
-    options,
-    correct,
-    explanation,
-    formula: typeof p.formula === 'string' ? p.formula.trim() : undefined,
-    difficulty: typeof p.difficulty === 'string' ? p.difficulty.trim() : undefined,
-    examStyle: typeof p.examStyle === 'string' ? p.examStyle.trim() : undefined,
-    tip: typeof p.tip === 'string' ? p.tip.trim() : undefined,
-    answer,
-  };
-}
 
 function formatExamBadgeLabel(examStyle: string | undefined): string | null {
   if (!examStyle?.trim()) return null;
@@ -191,8 +78,8 @@ function ExamStyleBadge({ examStyle }: { examStyle: string | undefined }) {
   );
 }
 
-/** `kind: config` = key not in bundle; `kind: api` = Anthropic rejected the request */
-type QuestionGenError = { error: true; kind: 'config' | 'api'; apiMessage?: string };
+/** `kind: no_ap` = no mapped AP subtopic or no basics rows in Supabase */
+type QuestionGenError = { error: true; kind: 'config' | 'api' | 'no_ap'; apiMessage?: string };
 
 const TOTAL_SESSION_QUESTIONS = 10;
 
@@ -220,10 +107,12 @@ export function FoundationDailyPractice() {
   const [correctCount, setCorrectCount] = useState(0);
   const [sessionDisplayName, setSessionDisplayName] = useState<string | null>(null);
   const [sessionEmail, setSessionEmail] = useState<string | null>(null);
-  /** Same session: never reuse these bank row IDs until API or new session (fixes repeated JEE stems from one DB row). */
-  const sessionBankRowIdsRef = useRef<number[]>([]);
-  /** In-session stem hashes merged with localStorage for picks (covers race before disk write). */
-  const sessionStemHashesRef = useRef<string[]>([]);
+  /** Same session: never reuse these AP `questions.id` values. */
+  const sessionUsedApQuestionIdsRef = useRef<string[]>([]);
+  const apSubtopicCatalogRef = useRef<ApSubtopicRef[] | null>(null);
+  /** Ordered MCQs — same pool and order as AP Physics Basics “Strengthen Your Basics”. */
+  const apDailyOrderedPoolRef = useRef<GeneratedQuestion[]>([]);
+  const apDailyPoolCacheKeyRef = useRef('');
 
   const stored = getUserInfoFromStorage();
   const userInfo = {
@@ -283,8 +172,9 @@ export function FoundationDailyPractice() {
   }, [email]);
 
   function resetSessionState() {
-    sessionBankRowIdsRef.current = [];
-    sessionStemHashesRef.current = [];
+    sessionUsedApQuestionIdsRef.current = [];
+    apDailyOrderedPoolRef.current = [];
+    apDailyPoolCacheKeyRef.current = '';
     setSessionActive(false);
     setSessionComplete(false);
     setCurrentQuestionNumber(1);
@@ -295,107 +185,71 @@ export function FoundationDailyPractice() {
     setQuestion(null);
   }
 
-  async function generateQuestion(retryLeft = 2) {
+  async function generateQuestion() {
     setLoading(true);
     setSelected(null);
     setRevealed(false);
     setQuestion(null);
 
-    const usedStemHashes = [
-      ...new Set([...readUsedQuestionHashes(activeTopic), ...sessionStemHashesRef.current]),
-    ];
-
-    async function tryApplyBankRow(bankRow: FoundationBankRow): Promise<boolean> {
-      const clean = foundationBankRowToMcqJson(bankRow);
-      let rawBank: unknown;
-      try {
-        rawBank = JSON.parse(clean) as unknown;
-      } catch {
-        rawBank = null;
-      }
-      const fromBank = rawBank ? normalizeMcqFromUnknown(rawBank) : null;
-      if (!fromBank) return false;
-      const stemHash = hashQuestionStem(fromBank.question);
-      if (usedStemHashes.includes(stemHash) && retryLeft > 0) {
-        await generateQuestion(retryLeft - 1);
-        return true;
-      }
-      sessionStemHashesRef.current = [...new Set([...sessionStemHashesRef.current, stemHash])].slice(-80);
-      sessionBankRowIdsRef.current = [...sessionBankRowIdsRef.current, bankRow.id];
-      appendUsedQuestionHash(activeTopic, stemHash);
-      setQuestion(fromBank);
-      setLoading(false);
-      return true;
-    }
-
     try {
-      // Bank first: unused rows only. When the pool is exhausted, fall through to AI (like AP generating fresh items).
-      const bankFresh = await tryPickFoundationBankQuestionClient(activeUnit.name, activeTopic, usedStemHashes, supabase, {
-        allowRepeatWhenExhausted: false,
-        excludeRowIds: sessionBankRowIdsRef.current,
-      });
-      if (bankFresh && (await tryApplyBankRow(bankFresh))) return;
-
-      const res = await fetch('/api/foundation-question', {
-        method: 'POST',
-        headers: {
-          'Content-Type': 'application/json',
-        },
-        body: JSON.stringify({
-          unitName: activeUnit.name,
-          topic: activeTopic,
-          usedQuestionHashes: usedStemHashes,
-        }),
-      });
-
-      if (!res.ok) {
-        const err = (await res.json().catch(() => ({}))) as { code?: string; error?: string; message?: string };
-        const bankRepeat = await tryPickFoundationBankQuestionClient(activeUnit.name, activeTopic, usedStemHashes, supabase, {
-          allowRepeatWhenExhausted: true,
-          excludeRowIds: sessionBankRowIdsRef.current,
+      if (!apSubtopicCatalogRef.current) {
+        apSubtopicCatalogRef.current = await fetchApSubtopicCatalog(supabase);
+      }
+      const catalog = apSubtopicCatalogRef.current;
+      const resolved = resolveFoundationToApSubtopic(activeUnit.name, activeTopic, catalog);
+      if (!resolved) {
+        setQuestion({
+          error: true,
+          kind: 'no_ap',
+          apiMessage: 'Could not match this Foundation topic to an AP Physics 1 subtopic.',
         });
-        if (bankRepeat && (await tryApplyBankRow(bankRepeat))) return;
-
-        if (err.code === 'missing_config') {
-          setQuestion({ error: true, kind: 'config' });
-          setLoading(false);
-          return;
-        }
-        throw new Error(err.error || err.message || `HTTP ${res.status}`);
-      }
-
-      const data = (await res.json()) as { text?: string };
-      const text = data?.text ?? '{}';
-      const clean = text.replace(/```json\n?/g, '').replace(/```\n?/g, '').trim();
-      let rawParsed: unknown;
-      try {
-        rawParsed = JSON.parse(clean) as unknown;
-      } catch {
-        throw new Error('Model returned invalid JSON.');
-      }
-
-      const parsed = normalizeMcqFromUnknown(rawParsed);
-      if (!parsed) {
-        throw new Error('Invalid question payload from model (missing options or correct answer).');
-      }
-
-      const stemHash = hashQuestionStem(parsed.question);
-      if (usedStemHashes.includes(stemHash) && retryLeft > 0) {
-        await generateQuestion(retryLeft - 1);
+        setLoading(false);
         return;
       }
 
-      sessionStemHashesRef.current = [...new Set([...sessionStemHashesRef.current, stemHash])].slice(-80);
-      appendUsedQuestionHash(activeTopic, stemHash);
-      setQuestion(parsed);
-    } catch (e) {
-      console.error('Question generation error:', e);
-      const bankRepeat = await tryPickFoundationBankQuestionClient(activeUnit.name, activeTopic, usedStemHashes, supabase, {
-        allowRepeatWhenExhausted: true,
-        excludeRowIds: sessionBankRowIdsRef.current,
-      });
-      if (bankRepeat && (await tryApplyBankRow(bankRepeat))) return;
+      const today = new Date().toISOString().split('T')[0];
+      const poolKey = `${resolved.topicId}|${resolved.subtopicName}|${today}`;
 
+      if (apDailyPoolCacheKeyRef.current !== poolKey || apDailyOrderedPoolRef.current.length === 0) {
+        const rows = await fetchApBasicsQuestionPool(supabase, resolved.topicId, resolved.subtopicName, today);
+        const seenIds = new Set<string>();
+        const ordered: GeneratedQuestion[] = [];
+        for (const r of rows) {
+          const id = questionRowId(r);
+          const g = apBasicsRowToGeneratedMcq(r);
+          if (!g || !id || seenIds.has(id)) continue;
+          seenIds.add(id);
+          ordered.push(g as GeneratedQuestion);
+        }
+        apDailyOrderedPoolRef.current = ordered;
+        apDailyPoolCacheKeyRef.current = poolKey;
+      }
+
+      const seenStorageKey = foundationDailySeenStorageKey(email, resolved.topicId, resolved.subtopicName, today);
+      const alreadyShownToday = readFoundationDailySeenSet(seenStorageKey);
+      const usedIds = new Set([...sessionUsedApQuestionIdsRef.current, ...alreadyShownToday]);
+      const next = apDailyOrderedPoolRef.current.find((g) => g.sourceQuestionId && !usedIds.has(g.sourceQuestionId));
+
+      if (!next) {
+        setQuestion({
+          error: true,
+          kind: 'no_ap',
+          apiMessage:
+            alreadyShownToday.size > 0 && apDailyOrderedPoolRef.current.length > 0
+              ? 'You have already worked through every AP Physics daily basics question we have for this topic today (same pool as AP Physics “Strengthen Your Basics”). Pick another Foundation topic, try again tomorrow, or open AP Physics to generate more for this subtopic.'
+              : 'No AP Physics daily basics questions found for the matched topic yet, or you have finished every question in today’s set. Open AP Physics → the same unit → Daily Practice to generate today’s set, or pick another Foundation topic.',
+        });
+        setLoading(false);
+        return;
+      }
+
+      if (next.sourceQuestionId) {
+        sessionUsedApQuestionIdsRef.current = [...sessionUsedApQuestionIdsRef.current, next.sourceQuestionId];
+        rememberFoundationDailySeenId(seenStorageKey, next.sourceQuestionId);
+      }
+      setQuestion(next);
+    } catch (e) {
+      console.error('Foundation daily (AP pool) error:', e);
       const msg = e instanceof Error ? e.message : String(e);
       setQuestion({ error: true, kind: 'api', apiMessage: msg });
     }
@@ -443,9 +297,9 @@ export function FoundationDailyPractice() {
   }
 
   function startPracticeSession() {
-    clearUsedQuestionsForTopic(activeTopic);
-    sessionBankRowIdsRef.current = [];
-    sessionStemHashesRef.current = [];
+    sessionUsedApQuestionIdsRef.current = [];
+    apDailyOrderedPoolRef.current = [];
+    apDailyPoolCacheKeyRef.current = '';
     setSessionActive(true);
     setSessionComplete(false);
     setCurrentQuestionNumber(1);
@@ -683,29 +537,40 @@ export function FoundationDailyPractice() {
             {loading && (
               <div className="bg-slate-800/50 backdrop-blur-sm border border-slate-700/50 rounded-2xl p-10 text-center">
                 <div className="text-5xl mb-4 animate-pulse">⚙️</div>
-                <p className="text-slate-400 text-sm">Generating your question...</p>
+                <p className="text-slate-400 text-sm">Loading an AP Physics daily question…</p>
               </div>
             )}
 
             {question && 'error' in question && question.error && (
               <div className="bg-red-950/40 border border-red-800 rounded-2xl p-6 text-center space-y-3">
-                {'kind' in question && question.kind === 'config' ? (
+                {'kind' in question && question.kind === 'no_ap' ? (
                   <>
-                    <p className="text-red-300 font-medium">⚠️ API key not loaded in the app</p>
+                    <p className="text-red-300 font-medium">⚠️ No AP Physics question available</p>
+                    <p className="text-slate-400 text-sm break-words max-w-lg mx-auto text-left">
+                      {('apiMessage' in question && question.apiMessage) ||
+                        'Foundation daily practice now uses the same Supabase “basics” pool as AP Physics. Generate or open daily practice under AP Physics for the matching unit so questions exist for today.'}
+                    </p>
+                    <button
+                      type="button"
+                      onClick={() => navigate('/ap-physics')}
+                      className="bg-cyan-700 hover:bg-cyan-600 text-white px-6 py-2 rounded-xl text-sm font-semibold"
+                    >
+                      Open AP Physics topics
+                    </button>
+                  </>
+                ) : 'kind' in question && question.kind === 'config' ? (
+                  <>
+                    <p className="text-red-300 font-medium">⚠️ Configuration</p>
                     <p className="text-slate-400 text-sm text-left max-w-lg mx-auto">
-                      The server needs <code className="text-cyan-400">OPENAI_API_KEY</code> or{' '}
-                      <code className="text-cyan-400">VITE_OPENAI_API_KEY</code> (recommended), or{' '}
-                      <code className="text-cyan-400">ANTHROPIC_API_KEY</code> /{' '}
-                      <code className="text-cyan-400">VITE_ANTHROPIC_API_KEY</code>. Add one in your host environment
-                      variables, then redeploy.
+                      Daily practice is served from the AP Physics question bank. Check Supabase connection and topic
+                      data.
                     </p>
                   </>
                 ) : (
                   <>
-                    <p className="text-red-300 font-medium">⚠️ AI request failed</p>
+                    <p className="text-red-300 font-medium">⚠️ Request failed</p>
                     <p className="text-slate-400 text-sm break-words max-w-lg mx-auto">
-                      {('apiMessage' in question && question.apiMessage) || 'Unknown error'}. If the key is valid, check
-                      OpenAI billing and model access (or Anthropic if you only use a Claude key).
+                      {('apiMessage' in question && question.apiMessage) || 'Unknown error'}
                     </p>
                   </>
                 )}

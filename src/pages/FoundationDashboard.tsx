@@ -11,6 +11,7 @@ import {
   CheckCircle,
   Target,
   TrendingUp,
+  ScrollText,
 } from 'lucide-react';
 import { useAuthStore } from '../store/authStore';
 import { FOUNDATION_SYLLABUS } from '../lib/foundationSyllabus';
@@ -28,9 +29,16 @@ const SECTIONS = [
   {
     to: '/foundation-dashboard/practice',
     title: 'Daily Practice',
-    desc: 'AI-generated MCQs for every unit and topic',
+    desc: 'Same AP Physics 1 daily basics MCQs (Supabase), matched to your Foundation unit',
     icon: Sparkles,
     gradient: 'from-cyan-600 to-blue-600',
+  },
+  {
+    to: '/foundation-dashboard/daily-questions',
+    title: 'Daily Questions (Q&A)',
+    desc: 'Same AP Physics “Daily Questions” written prompts and solutions, matched by unit',
+    icon: ScrollText,
+    gradient: 'from-emerald-600 to-teal-600',
   },
   {
     to: '/foundation-dashboard/simulator',

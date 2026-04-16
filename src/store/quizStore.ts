@@ -144,6 +144,18 @@ export const useQuizStore = create<QuizState>((set, get) => ({
         .eq('id', userId);
     }
 
+    const todayLabel = new Date().toDateString();
+    const attemptedKey = `apDashboardTodayAttempted_${userId}_${todayLabel}`;
+    const correctKey = `apDashboardTodayCorrect_${userId}_${todayLabel}`;
+    try {
+      const prevA = parseInt(localStorage.getItem(attemptedKey) || '0', 10);
+      const prevC = parseInt(localStorage.getItem(correctKey) || '0', 10);
+      localStorage.setItem(attemptedKey, String(prevA + state.questions.length));
+      localStorage.setItem(correctKey, String(prevC + correctCount));
+    } catch {
+      /* ignore quota / private mode */
+    }
+
     const topicStats: { [key: string]: { attempted: number; correct: number } } = {};
     state.questions.forEach((q, idx) => {
       if (!topicStats[q.topic]) {

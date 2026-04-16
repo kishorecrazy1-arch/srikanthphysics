@@ -1,4 +1,5 @@
 import { useState, useEffect } from 'react';
+import { normalizeMcqCorrectLetter } from '../../lib/mcqAnswerNormalize';
 import { Target, RefreshCw, Play, BookOpen } from 'lucide-react';
 import { useNavigate } from 'react-router-dom';
 import { supabase } from '../../lib/supabase';
@@ -10,6 +11,7 @@ import { LevelDropdown } from '../LevelDropdown';
 import type { Topic, TopicProgress, Question, UserAnswer } from '../../types/topics';
 import type { Question as EnhancedQuestion } from '../../types/enhanced';
 import { buildBasicsMcqSupabaseRow, buildBasicsMcqRowFromEnhanced } from '../../lib/questionRowForSupabase';
+import { normalizeDbRowToQAFields } from '../../lib/qaQuestionFromSupabase';
 
 interface Subtopic {
   id: string;
@@ -179,18 +181,36 @@ export function BasicsSection({ topic, progress, onProgressUpdate, selectedLevel
 
       // Transform questions to match expected format
       const transformedQuestions = (questionsData || []).map((q: any) => {
+        const correctLetter = normalizeMcqCorrectLetter(q.correct_answer ?? q.correctAnswer);
+
         // Convert options from JSONB to array format if needed
         let optionsArray: any[] = [];
         if (q.options) {
           if (Array.isArray(q.options)) {
-            optionsArray = q.options;
+            optionsArray = q.options.map((o: any) => {
+              const id = String(o?.id ?? '')
+                .trim()
+                .toUpperCase();
+              const letter = /^[ABCD]$/.test(id) ? id : String(o?.id ?? '').trim();
+              return {
+                ...o,
+                id: letter,
+                text: String(o?.text ?? '').trim(),
+                isCorrect:
+                  Boolean(o?.isCorrect) ||
+                  (correctLetter !== '' && letter === correctLetter),
+              };
+            });
           } else if (typeof q.options === 'object') {
-            // Convert from {A: "text", B: "text"} to [{id: "A", text: "text", isCorrect: false}]
-            optionsArray = Object.entries(q.options).map(([key, value]) => ({
-              id: key,
-              text: value as string,
-              isCorrect: key === q.correct_answer
-            }));
+            optionsArray = Object.entries(q.options).map(([key, value]) => {
+              const kid = String(key).trim().toUpperCase();
+              const id = /^[ABCD]$/.test(kid) ? kid : String(key).trim();
+              return {
+                id,
+                text: String(value).trim(),
+                isCorrect: correctLetter !== '' && kid === correctLetter,
+              };
+            });
           }
         }
 
@@ -207,20 +227,31 @@ export function BasicsSection({ topic, progress, onProgressUpdate, selectedLevel
         };
         const mappedDifficulty = difficultyMapLocal[qDifficultyLevel] || qDifficultyLevel.toLowerCase() || 'medium';
 
+        let explanationVal: any = q.explanation;
+        if (typeof explanationVal === 'string' && explanationVal.trim()) {
+          explanationVal = {
+            steps: [{ title: 'Solution', content: explanationVal.trim() }],
+            keyConcept: q.bloom_taxonomy || 'Physics concept',
+            relatedFormulas: Array.isArray(q.formulas_used) ? q.formulas_used : [],
+          };
+        } else if (!explanationVal && Array.isArray(q.solution_steps) && q.solution_steps.length > 0) {
+          explanationVal = {
+            steps: q.solution_steps.map((step: string, idx: number) => ({
+              title: `Step ${idx + 1}`,
+              content: step,
+            })),
+            keyConcept: q.bloom_taxonomy || 'Physics concept',
+            relatedFormulas: q.formulas_used || [],
+          };
+        }
+
         return {
           ...q,
           options: optionsArray,
           difficulty: mappedDifficulty, // Add difficulty field for QuestionCard
-          correctAnswer: q.correct_answer || q.correctAnswer,
+          correctAnswer: correctLetter || q.correct_answer || q.correctAnswer,
           question_text: q.question_text || q.text || 'Question text not available',
-          explanation: q.explanation || (q.solution_steps ? {
-            steps: q.solution_steps.map((step: string, idx: number) => ({
-              title: `Step ${idx + 1}`,
-              content: step
-            })),
-            keyConcept: q.bloom_taxonomy || 'Physics concept',
-            relatedFormulas: q.formulas_used || []
-          } : null)
+          explanation: explanationVal,
         };
       });
 
@@ -462,16 +493,10 @@ export function BasicsSection({ topic, progress, onProgressUpdate, selectedLevel
         }
       }
 
-      // Transform for display
-      const transformedQA = (qaQuestionsData || []).map((q: any) => ({
-        id: q.id || crypto.randomUUID(),
-        question_text: q.question_text || q.text || '',
-        solution_steps: Array.isArray(q.solution_steps) ? q.solution_steps : (q.solution_steps ? [q.solution_steps] : []),
-        final_answer: q.final_answer || '',
-        explanation: q.explanation || (Array.isArray(q.solution_steps) ? q.solution_steps.join('\n\n') : (q.solution_steps || '')),
-        formulas_used: Array.isArray(q.formulas_used) ? q.formulas_used : [],
-        difficulty_level: q.difficulty_level || difficultyLevel
-      }));
+      // Transform for display (unwrap `explanation` JSON from Supabase into card fields)
+      const transformedQA = (qaQuestionsData || []).map((q: any) =>
+        normalizeDbRowToQAFields(q as Record<string, unknown>, difficultyLevel)
+      );
 
       // If still no questions, create sample ones directly
       if (transformedQA.length === 0) {

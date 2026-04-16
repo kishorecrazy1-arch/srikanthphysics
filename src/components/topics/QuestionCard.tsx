@@ -178,7 +178,20 @@ export function QuestionCard({
         })}
       </div>
 
-      {showExplanation && question.explanation && (
+      {showExplanation && question.explanation && typeof question.explanation === 'string' && (
+        <div className="mt-8 p-6 bg-gradient-to-br from-blue-50 to-cyan-50 rounded-xl border-2 border-blue-200">
+          <div className="flex items-center gap-2 mb-4">
+            <Lightbulb className="w-6 h-6 text-blue-600" />
+            <h3 className="text-xl font-bold text-gray-900">Explanation</h3>
+          </div>
+          <p className="text-gray-800 leading-relaxed whitespace-pre-line">{question.explanation}</p>
+        </div>
+      )}
+
+      {showExplanation &&
+        question.explanation &&
+        typeof question.explanation === 'object' &&
+        question.explanation !== null && (
         <div className="mt-8 p-6 bg-gradient-to-br from-blue-50 to-cyan-50 rounded-xl border-2 border-blue-200">
           <div className="flex items-center gap-2 mb-4">
             <Lightbulb className="w-6 h-6 text-blue-600" />

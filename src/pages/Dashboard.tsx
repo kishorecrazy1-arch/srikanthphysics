@@ -1,4 +1,5 @@
-import { useNavigate } from 'react-router-dom';
+import { useMemo } from 'react';
+import { useNavigate, useLocation } from 'react-router-dom';
 import { Flame, Target, Clock, CheckCircle, TrendingUp, BookOpen, ArrowRight } from 'lucide-react';
 import { useAuthStore } from '../store/authStore';
 import { useQuizStore } from '../store/quizStore';
@@ -6,8 +7,23 @@ import { RAGChatbot } from '../components/AITutor/RAGChatbot';
 
 export function Dashboard() {
   const navigate = useNavigate();
+  const location = useLocation();
   const user = useAuthStore(state => state.user);
   const startQuiz = useQuizStore(state => state.startQuiz);
+
+  const todayQuizStats = useMemo(() => {
+    if (!user?.id) return { attempted: 0, correct: 0 };
+    const todayLabel = new Date().toDateString();
+    const attempted = parseInt(
+      localStorage.getItem(`apDashboardTodayAttempted_${user.id}_${todayLabel}`) || '0',
+      10
+    );
+    const correct = parseInt(
+      localStorage.getItem(`apDashboardTodayCorrect_${user.id}_${todayLabel}`) || '0',
+      10
+    );
+    return { attempted, correct };
+  }, [user?.id, location.pathname, location.key]);
 
   if (!user) {
     return (
@@ -123,7 +139,10 @@ export function Dashboard() {
               </div>
               <h3 className="text-lg font-bold text-gray-800">Daily Homework</h3>
             </div>
-            <p className="text-gray-600 mb-4">10 practice questions</p>
+            <p className="text-gray-600 mb-2">10 practice questions</p>
+            <p className="text-sm text-emerald-800 mb-4">
+              Today (dashboard quizzes): {todayQuizStats.attempted} attempted, {todayQuizStats.correct} correct
+            </p>
             <button
               onClick={() => handleStartQuiz('homework', 10)}
               className="w-full bg-gradient-to-r from-green-600 to-emerald-500 text-white py-2 rounded-lg font-semibold hover:opacity-90 transition-opacity"

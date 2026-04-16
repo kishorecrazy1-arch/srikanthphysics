@@ -11,9 +11,25 @@ interface QAQuestion {
   question_text: string;
   solution_steps?: string[];
   final_answer?: string;
-  explanation?: string;
+  /** Plain string, or legacy Supabase JSON shape `{ steps: [...] }` before normalization */
+  explanation?: string | Record<string, unknown>;
   formulas_used?: string[];
   difficulty_level?: string;
+}
+
+function stepsFromExplanationObject(explanation: unknown): string[] {
+  if (!explanation || typeof explanation !== 'object' || Array.isArray(explanation)) return [];
+  const steps = (explanation as { steps?: unknown }).steps;
+  if (!Array.isArray(steps)) return [];
+  const out: string[] = [];
+  for (const s of steps) {
+    if (typeof s === 'string' && s.trim()) out.push(s.trim());
+    else if (s && typeof s === 'object' && 'content' in s) {
+      const c = (s as { content?: unknown }).content;
+      if (typeof c === 'string' && c.trim()) out.push(c.trim());
+    }
+  }
+  return out;
 }
 
 interface QAQuestionCardProps {
@@ -24,6 +40,14 @@ interface QAQuestionCardProps {
 
 export function QAQuestionCard({ question, questionNumber, totalQuestions }: QAQuestionCardProps) {
   const [showAnswer, setShowAnswer] = useState(false);
+
+  const stepsFromRow = question.solution_steps?.filter((s) => s && s.trim()) ?? [];
+  const stepsFromLegacy =
+    stepsFromRow.length > 0 ? stepsFromRow : stepsFromExplanationObject(question.explanation);
+  const explanationString =
+    typeof question.explanation === 'string' && question.explanation.trim()
+      ? question.explanation.trim()
+      : '';
 
   const difficulty = question.difficulty_level || 'Intermediate';
   const difficultyColors = {
@@ -104,11 +128,11 @@ export function QAQuestionCard({ question, questionNumber, totalQuestions }: QAQ
           )}
 
           {/* Step-by-Step Solution */}
-          {question.solution_steps && question.solution_steps.length > 0 ? (
+          {stepsFromLegacy.length > 0 ? (
             <div className="mb-4">
               <p className="text-sm font-semibold text-green-700 mb-2">Step-by-Step Solution:</p>
               <ol className="space-y-2">
-                {question.solution_steps.map((step, index) => (
+                {stepsFromLegacy.map((step, index) => (
                   <li key={index} className="flex gap-3">
                     <span className="flex-shrink-0 w-6 h-6 bg-green-500 text-white rounded-full flex items-center justify-center text-xs font-bold">
                       {index + 1}
@@ -118,14 +142,21 @@ export function QAQuestionCard({ question, questionNumber, totalQuestions }: QAQ
                 ))}
               </ol>
             </div>
-          ) : question.explanation ? (
+          ) : explanationString ? (
             <div className="mb-4">
               <p className="text-sm font-semibold text-green-700 mb-2">Explanation:</p>
               <p className="text-gray-700 text-sm leading-relaxed whitespace-pre-line">
-                {question.explanation}
+                {explanationString}
               </p>
             </div>
-          ) : null}
+          ) : (
+            <div className="mb-4 p-3 bg-amber-50 border border-amber-200 rounded-lg">
+              <p className="text-sm text-amber-900">
+                No written solution is stored for this question yet. If this persists, regenerate daily questions for
+                this subtopic or contact your instructor.
+              </p>
+            </div>
+          )}
 
           {/* Additional Notes */}
           <div className="pt-3 border-t border-green-300">

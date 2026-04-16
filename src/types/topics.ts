@@ -31,7 +31,8 @@ export interface Question {
   difficulty: 'easy' | 'medium' | 'hard';
   question_type: 'conceptual' | 'calculation' | 'application';
   subtopic: string | null;
-  explanation: QuestionExplanation | null;
+  /** Structured steps, plain text from DB, or null */
+  explanation: QuestionExplanation | string | null;
   image_url: string | null;
   time_limit: number;
   ai_generated: boolean;

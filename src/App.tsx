@@ -44,6 +44,7 @@ import { FoundationGraphMastery } from './pages/FoundationGraphMastery';
 import { FoundationMockTest } from './pages/FoundationMockTest';
 import { FoundationAnalytics } from './pages/FoundationAnalytics';
 import { FoundationHomework } from './pages/FoundationHomework';
+import { FoundationDailyQuestions } from './pages/FoundationDailyQuestions';
 import { Layout } from './components/Layout';
 import { ProtectedRoute } from './components/ProtectedRoute';
 import { Chatbot } from './components/Chatbot';
@@ -112,6 +113,14 @@ function App() {
           element={
             <ProtectedRoute>
               <FoundationDailyPractice />
+            </ProtectedRoute>
+          }
+        />
+        <Route
+          path="/foundation-dashboard/daily-questions"
+          element={
+            <ProtectedRoute>
+              <FoundationDailyQuestions />
             </ProtectedRoute>
           }
         />
