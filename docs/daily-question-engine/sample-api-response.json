@@ -1,0 +1,14 @@
+{
+  "ok": true,
+  "subtopic_id": "00000000-0000-0000-0000-000000000000",
+  "for_date": "2026-04-20",
+  "requested": 7,
+  "parsed": 7,
+  "questions": [
+    {
+      "question_text": "A block of mass 2 kg is pulled by a horizontal force of 10 N on a frictionless surface. What is its acceleration?",
+      "correct_answer": "B",
+      "concept_tag": "Newton's second law"
+    }
+  ]
+}

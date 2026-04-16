@@ -25,6 +25,14 @@ export default defineConfig(({ mode }) => ({
   server: {
     host: '0.0.0.0',
     port: 5175,
+    proxy: {
+      // Daily Question Engine (FastAPI): `cd python/daily_question_engine && uvicorn app.main:app --port 8000`
+      '/daily-engine-api': {
+        target: 'http://127.0.0.1:8000',
+        changeOrigin: true,
+        rewrite: (p) => p.replace(/^\/daily-engine-api/, ''),
+      },
+    },
   },
   optimizeDeps: {
     exclude: ['lucide-react'],

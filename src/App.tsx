@@ -31,6 +31,7 @@ import { APPhysics2 } from './pages/APPhysics2';
 import { FoundationCourse } from './pages/FoundationCourse';
 import { FoundationSelection } from './pages/FoundationSelection';
 import { AdminGeneratePracticeBank } from './pages/AdminGeneratePracticeBank';
+import { MultiSyllabusDailyEngine } from './pages/admin/MultiSyllabusDailyEngine';
 import { Demo } from './pages/Demo';
 import { DemoSuccess } from './pages/DemoSuccess';
 import { Courses } from './pages/Courses';
@@ -289,6 +290,14 @@ function App() {
           element={
             <ProtectedRoute>
               <AdminGeneratePracticeBank />
+            </ProtectedRoute>
+          }
+        />
+        <Route
+          path="/admin/daily-question-engine"
+          element={
+            <ProtectedRoute>
+              <MultiSyllabusDailyEngine />
             </ProtectedRoute>
           }
         />

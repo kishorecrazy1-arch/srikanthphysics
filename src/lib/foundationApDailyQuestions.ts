@@ -207,6 +207,34 @@ function explanationFromRow(row: Record<string, unknown>): string {
   return '';
 }
 
+/** Legacy sample rows used the same five-step boilerplate for every MCQ. */
+function isGenericTemplateExplanation(text: string): boolean {
+  const t = text.trim();
+  return (
+    t.length > 0 &&
+    t.includes('Step 1: Identify the given information') &&
+    t.includes('Select the appropriate physics formula')
+  );
+}
+
+function mcqExplanationWhenTemplateOrEmpty(
+  question: string,
+  options: Record<'A' | 'B' | 'C' | 'D', string>,
+  correct: string,
+  rawExplanation: string
+): string {
+  const letter = /^[ABCD]$/i.test(correct) ? correct.toUpperCase().slice(0, 1) : '';
+  const optText = letter && (options as Record<string, string>)[letter] ? (options as Record<string, string>)[letter] : '';
+  const hint =
+    letter && optText
+      ? `Correct answer: ${letter}) ${optText}`
+      : 'Use kinematics and energy ideas for this prompt; the stored row did not include a specific write-up.';
+  if (!rawExplanation.trim() || isGenericTemplateExplanation(rawExplanation)) {
+    return `${hint}\n\nThis question was saved with a generic placeholder explanation. Regenerate today’s “Strengthen Your Basics” set in AP Physics (with AI) to replace it with full worked solutions, or ask your instructor to refresh the bank.`;
+  }
+  return rawExplanation;
+}
+
 /** Map `public.questions` basics row → UI shape used by Foundation daily practice */
 export function apBasicsRowToGeneratedMcq(row: Record<string, unknown>): GeneratedMcq | null {
   const question =
@@ -252,11 +280,14 @@ export function apBasicsRowToGeneratedMcq(row: Record<string, unknown>): Generat
     typeof dl === 'string' ? dl : typeof row.difficulty === 'string' ? String(row.difficulty) : undefined;
 
   const rid = questionRowId(row);
+  const rawExpl = explanationFromRow(row);
+  const explanation = mcqExplanationWhenTemplateOrEmpty(question, options, correct, rawExpl);
+
   return {
     question,
     options,
     correct,
-    explanation: explanationFromRow(row) || 'See AP Physics solution steps in topic practice.',
+    explanation: explanation.trim() ? explanation : 'See AP Physics solution steps in topic practice.',
     difficulty: difficulty || 'Foundation',
     examStyle: 'AP Physics 1',
     sourceQuestionId: rid || undefined,

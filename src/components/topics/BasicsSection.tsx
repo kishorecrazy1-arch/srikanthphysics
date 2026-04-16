@@ -12,6 +12,7 @@ import type { Topic, TopicProgress, Question, UserAnswer } from '../../types/top
 import type { Question as EnhancedQuestion } from '../../types/enhanced';
 import { buildBasicsMcqSupabaseRow, buildBasicsMcqRowFromEnhanced } from '../../lib/questionRowForSupabase';
 import { normalizeDbRowToQAFields } from '../../lib/qaQuestionFromSupabase';
+import { getSampleMcqDefsForLevel } from '../../lib/basicsSampleMcqFallback';
 
 interface Subtopic {
   id: string;
@@ -597,112 +598,23 @@ export function BasicsSection({ topic, progress, onProgressUpdate, selectedLevel
         }
       }
       
-      // Fallback to sample questions
+      // Fallback to sample questions (each item: matched stem, options, correct letter, worked steps)
       console.log('Generating sample questions...');
-      
-      // Fallback to original sample questions if AI generation fails
-      const difficultyMap: Record<string, { difficulty: 'easy' | 'medium' | 'hard', complexity: string }> = {
-        'level_1': { difficulty: 'easy', complexity: 'basic concepts and simple problems' },
-        'level_2': { difficulty: 'medium', complexity: 'multi-step application problems' },
-        'level_3': { difficulty: 'hard', complexity: 'complex problem-solving and synthesis' }
-      };
-      
-      const levelInfo = difficultyMap[level] || difficultyMap['level_1'];
-      
-      // Generate level-specific sample questions
-      // Level 1: Simple, single-step questions
-      // Level 2: Two-step questions  
-      // Level 3: Multi-step, complex questions
-      const level1Questions = [
-        `A ball is thrown vertically upward with an initial velocity of 20 m/s. What is its velocity after 2 seconds? (g = 10 m/s²)`,
-        `An object moves with constant acceleration of 5 m/s². If it starts from rest, what distance does it cover in 4 seconds?`,
-        `A car accelerates from 10 m/s to 30 m/s in 5 seconds. What is its acceleration?`,
-        `An object moves from position x₁ = 5 m to x₂ = 15 m. What is its displacement?`,
-        `A car travels 60 km in 1 hour. What is its average speed in m/s?`,
-        `A ball is thrown upward with velocity 15 m/s. What is the maximum height it reaches? (g = 10 m/s²)`,
-        `An object accelerates uniformly from rest. If it covers 50 m in 5 seconds, what is its acceleration?`,
-        `A stone is dropped from a height of 45 m. How long does it take to reach the ground? (g = 10 m/s²)`,
-        `What is the velocity of an object moving at 5 m/s after 3 seconds if acceleration is 2 m/s²?`,
-        `An object moves 100 m in 10 seconds. What is its average velocity?`
-      ];
 
-      const level2Questions = [
-        `A particle moves along a straight line. Its position is given by x = 2t² + 3t, where x is in meters and t is in seconds. What is its velocity at t = 2s?`,
-        `Two objects are moving towards each other. Object A has velocity 10 m/s and Object B has velocity -5 m/s. What is their relative velocity?`,
-        `A ball is thrown upward with initial velocity 20 m/s. At what time does it reach its maximum height? (g = 10 m/s²)`,
-        `An object starts from rest and accelerates at 4 m/s² for 5 seconds, then moves at constant velocity for 3 seconds. What is the total distance traveled?`,
-        `A car accelerates from 0 to 60 km/h in 10 seconds, then decelerates to 30 km/h in 5 seconds. What is the average acceleration during the entire motion?`,
-        `An object is thrown vertically upward with velocity 25 m/s. What is its velocity when it returns to the starting point? (g = 10 m/s²)`,
-        `A particle moves with velocity v = 3t + 2 m/s. What is its displacement from t = 0 to t = 4 seconds?`,
-        `Two cars start from the same point. Car A moves east at 15 m/s, Car B moves north at 20 m/s. What is their relative velocity?`,
-        `An object moves with acceleration a = 2t m/s². If it starts from rest, what is its velocity at t = 3 seconds?`,
-        `A ball is thrown upward with 30 m/s. How high above the starting point is it after 2 seconds? (g = 10 m/s²)`
-      ];
-
-      const level3Questions = [
-        `A projectile is launched from ground level at 40 m/s at an angle of 30° to the horizontal. After rebounding elastically from a wall at the same height, what is its velocity when it hits the ground? (g = 10 m/s²)`,
-        `A particle moves in one dimension with acceleration a(t) = 2t - 4 m/s². If it starts at x = 0 with velocity v₀ = 5 m/s, at what time does it return to its starting position?`,
-        `Two objects are moving along the same line. Object A starts at x = 0 with velocity 10 m/s and acceleration -2 m/s². Object B starts at x = 100 m with velocity -5 m/s and constant acceleration 1 m/s². When do they meet?`,
-        `A ball is thrown vertically upward from a moving platform traveling at 15 m/s horizontally. The ball's initial vertical velocity is 20 m/s relative to the platform. What is the ball's velocity relative to the ground when it reaches maximum height? (g = 10 m/s²)`,
-        `An object undergoes multi-phase motion: it accelerates from rest at 3 m/s² for 4 seconds, then moves at constant velocity for 6 seconds, then decelerates at -2 m/s² until it stops. What is the total displacement?`,
-        `A particle's position is given by x(t) = t³ - 6t² + 9t meters. At what times does the particle change direction?`,
-        `Two projectiles are launched simultaneously from the same point. Projectile A has initial velocity 30 m/s at 45°, Projectile B has 40 m/s at 30°. Considering air resistance effects on their trajectories, which one reaches a higher maximum height? (g = 10 m/s²)`,
-        `An object moves with velocity v(t) = 4t² - 8t + 3 m/s. Find the time intervals during which the object is moving in the positive direction and calculate the total distance traveled from t = 0 to t = 3 seconds.`,
-        `A ball is dropped from a height of 20 m. Simultaneously, another ball is thrown upward from the ground with velocity 15 m/s. When and where do they meet? (g = 10 m/s²)`,
-        `A particle moves along x-axis with acceleration a = -kx, where k = 2 s⁻². If it starts at x = 5 m with velocity v = 0, what is its position when velocity becomes -10 m/s?`
-      ];
-
-      // Select questions based on level
-      const questionTexts = level === 'level_1' ? level1Questions : 
-                           level === 'level_2' ? level2Questions : 
-                           level3Questions;
-
+      const bank = getSampleMcqDefsForLevel(level);
       const sampleQuestions = Array.from({ length: questionCount }, (_, index) => {
-        const correctAnswerIndex = index % 4;
-        const correctAnswerLetter = ['A', 'B', 'C', 'D'][correctAnswerIndex];
-        
-        const answers = [
-          ['0 m/s', '10 m/s', '20 m/s', '40 m/s'],
-          ['10 m', '20 m', '40 m', '80 m'],
-          ['2 m/s²', '4 m/s²', '5 m/s²', '6 m/s²'],
-          ['7 m/s', '11 m/s', '15 m/s', '19 m/s'],
-          ['5 m/s', '10 m/s', '15 m/s', '20 m/s'],
-          ['2 s', '3 s', '4 s', '5 s'],
-          ['5 m', '10 m', '15 m', '20 m'],
-          ['10 m/s', '16.67 m/s', '20 m/s', '25 m/s'],
-          ['11.25 m', '15 m', '22.5 m', '30 m'],
-          ['2 m/s²', '4 m/s²', '5 m/s²', '10 m/s²']
-        ];
-        
-        const correctAnswers = ['A', 'C', 'B', 'B', 'C', 'B', 'B', 'B', 'A', 'B'];
-        
-        const questionText = questionTexts[index % questionTexts.length] || 
-          `Sample physics question ${index + 1} about ${subtopicName}`;
-        const answerSet = answers[index % answers.length];
-        const correctAnswer = correctAnswers[index % correctAnswers.length];
-        
-        const optionsObj: Record<string, string> = {};
-        answerSet.forEach((ans, i) => {
-          optionsObj[['A', 'B', 'C', 'D'][i]] = ans;
-        });
-
+        const def = bank[index % bank.length];
         return buildBasicsMcqSupabaseRow({
           id: crypto.randomUUID(),
           topicId: topic.id,
           subtopicName,
-          questionText,
-          optionsObj,
-          correctLetter: correctAnswer,
+          questionText: def.questionText,
+          optionsObj: def.optionsObj,
+          correctLetter: def.correctLetter,
           level,
           generatedDate: today,
           aiGenerated: false,
-          solutionSteps: [
-            `Step 1: Identify the given information and what needs to be found.`,
-            `Step 2: Select the appropriate physics formula for ${subtopicName}.`,
-            `Step 3: Substitute the given values into the formula.`,
-            `Step 4: Solve for the unknown quantity.`,
-            `Step 5: Verify the answer has correct units and is reasonable.`,
-          ],
+          solutionSteps: def.solutionSteps,
         });
       });
 
