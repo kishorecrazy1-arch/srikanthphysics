@@ -1,6 +1,6 @@
 import { useEffect } from 'react';
 import { useNavigate } from 'react-router-dom';
-import { BookOpen, GraduationCap, ArrowRight, LogOut } from 'lucide-react';
+import { BookOpen, GraduationCap, ArrowRight, LogOut, Layers } from 'lucide-react';
 import { useAuthStore } from '../store/authStore';
 
 /**
@@ -61,7 +61,7 @@ export function PostSignIn() {
           Choose your program. You can switch anytime from the site navigation.
         </p>
 
-        <div className="grid sm:grid-cols-2 gap-4 sm:gap-6">
+        <div className="grid sm:grid-cols-2 lg:grid-cols-3 gap-4 sm:gap-6">
           <button
             type="button"
             onClick={() => navigate('/ap-physics', { replace: true })}
@@ -76,6 +76,23 @@ export function PostSignIn() {
             <h2 className="text-xl sm:text-2xl font-bold mb-1">AP Physics</h2>
             <p className="text-blue-100 text-sm leading-relaxed">
               Topics, practice, simulators, and the AP Physics 1 learning hub.
+            </p>
+          </button>
+
+          <button
+            type="button"
+            onClick={() => navigate('/daily-practice', { replace: true })}
+            className="group text-left rounded-2xl border border-indigo-500/30 bg-gradient-to-br from-indigo-600 to-violet-700 p-6 sm:p-8 text-white shadow-xl hover:shadow-2xl hover:scale-[1.02] transition-all focus:outline-none focus:ring-2 focus:ring-indigo-300 focus:ring-offset-2 focus:ring-offset-slate-900"
+          >
+            <div className="flex items-start justify-between gap-3 mb-4">
+              <div className="w-14 h-14 rounded-xl bg-white/15 flex items-center justify-center backdrop-blur-sm">
+                <Layers className="w-7 h-7" />
+              </div>
+              <ArrowRight className="w-5 h-5 opacity-70 group-hover:translate-x-0.5 transition-transform shrink-0" />
+            </div>
+            <h2 className="text-xl sm:text-2xl font-bold mb-1">Multi-syllabus daily</h2>
+            <p className="text-indigo-100 text-sm leading-relaxed">
+              Pick syllabus → subtopic and run 10 MCQs from the shared `dqe_*` question bank.
             </p>
           </button>
 

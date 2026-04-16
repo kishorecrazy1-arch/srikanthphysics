@@ -49,6 +49,35 @@ export type GenerateDailyBody = {
 
 export type McqOptionRow = { id: string; text: string; isCorrect: boolean };
 
+/** POST /v1/generate/daily-batch (FastAPI) */
+export type DailyBatchBody = {
+  for_date?: string;
+  difficulty: DailyDifficulty;
+  count: number;
+  syllabus_slug?: string | null;
+  only_missing: boolean;
+  max_subtopics: number;
+};
+
+export type DailyBatchResultRow = {
+  subtopic_id: string;
+  ok: boolean;
+  parsed?: number;
+  status?: number;
+  error?: string;
+};
+
+export type DailyBatchResponse = {
+  ok: boolean;
+  for_date: string;
+  selected_subtopics: number;
+  succeeded: number;
+  failed: number;
+  only_missing: boolean;
+  syllabus_slug: string | null;
+  results: DailyBatchResultRow[];
+};
+
 export type DqeQuestionRow = {
   id: string;
   syllabus_id: string;

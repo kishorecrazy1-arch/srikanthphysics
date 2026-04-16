@@ -1,12 +1,22 @@
 /**
- * Admin UI: multi-syllabus daily MCQ engine (FastAPI backend).
- * Dev: run `uvicorn app.main:app` in `python/daily_question_engine` and use Vite proxy `/daily-engine-api`.
+ * Admin UI: multi-syllabus daily MCQ engine.
+ * - Catalog + stored questions: read from Supabase `dqe_*` (works on Vercel without Python).
+ * - Generate: POST to FastAPI (`VITE_DAILY_ENGINE_API` in prod, or Vite dev proxy `/daily-engine-api`).
  */
 
 import { useCallback, useEffect, useMemo, useState } from 'react';
 import { Link } from 'react-router-dom';
 import { ChevronDown, ChevronUp, Loader2 } from 'lucide-react';
+import { supabase } from '../../lib/supabase';
+import {
+  adminDqeFetchQuestions,
+  adminDqeFetchSubjects,
+  adminDqeFetchSubtopics,
+  adminDqeFetchSyllabi,
+  adminDqeFetchTopics,
+} from '../../lib/dqeAdminCatalogFromSupabase';
 import type {
+  DailyBatchResponse,
   DqeQuestionRow,
   DqeSubject,
   DqeSubtopic,
@@ -15,21 +25,12 @@ import type {
   DailyDifficulty,
 } from '../../dailyEngine/types';
 
-function engineBase(): string {
-  const raw = (import.meta as ImportMeta & { env?: { VITE_DAILY_ENGINE_API?: string } }).env?.VITE_DAILY_ENGINE_API;
-  return (raw && raw.trim()) || '/daily-engine-api';
-}
-
-async function j<T>(path: string, init?: RequestInit): Promise<T> {
-  const res = await fetch(`${engineBase()}${path}`, {
-    ...init,
-    headers: { 'Content-Type': 'application/json', ...(init?.headers || {}) },
-  });
-  if (!res.ok) {
-    const t = await res.text();
-    throw new Error(t || res.statusText);
-  }
-  return res.json() as Promise<T>;
+/** Base URL for POST /v1/generate only. Null in production if unset (catalog still works via Supabase). */
+function engineBaseForGenerate(): string | null {
+  const raw = (import.meta as ImportMeta & { env?: { VITE_DAILY_ENGINE_API?: string } }).env?.VITE_DAILY_ENGINE_API?.trim();
+  if (raw) return raw.replace(/\/$/, '');
+  if (import.meta.env.DEV) return '/daily-engine-api';
+  return null;
 }
 
 export function MultiSyllabusDailyEngine() {
@@ -49,12 +50,19 @@ export function MultiSyllabusDailyEngine() {
   const [err, setErr] = useState<string | null>(null);
   const [questions, setQuestions] = useState<DqeQuestionRow[]>([]);
   const [openId, setOpenId] = useState<string | null>(null);
+  const [batchOnlyMissing, setBatchOnlyMissing] = useState(true);
+  const [batchMaxSubtopics, setBatchMaxSubtopics] = useState(25);
+  const [batchSyllabusSlug, setBatchSyllabusSlug] = useState('');
+  const [batchLoading, setBatchLoading] = useState(false);
+  const [batchResult, setBatchResult] = useState<DailyBatchResponse | null>(null);
+
+  const generateConfigured = engineBaseForGenerate() != null;
 
   const loadSyllabi = useCallback(async () => {
     setLoadingTree(true);
     setErr(null);
     try {
-      const rows = await j<DqeSyllabus[]>('/v1/catalog/syllabi');
+      const rows = await adminDqeFetchSyllabi(supabase);
       setSyllabi(rows);
       setSyllabusId((prev) => prev || rows[0]?.id || '');
     } catch (e) {
@@ -72,7 +80,7 @@ export function MultiSyllabusDailyEngine() {
     if (!syllabusId) return;
     void (async () => {
       try {
-        const rows = await j<DqeSubject[]>(`/v1/catalog/subjects?syllabus_id=${encodeURIComponent(syllabusId)}`);
+        const rows = await adminDqeFetchSubjects(supabase, syllabusId);
         setSubjects(rows);
         setSubjectId(rows[0]?.id || '');
         setTopics([]);
@@ -89,7 +97,7 @@ export function MultiSyllabusDailyEngine() {
     if (!subjectId) return;
     void (async () => {
       try {
-        const rows = await j<DqeTopic[]>(`/v1/catalog/topics?subject_id=${encodeURIComponent(subjectId)}`);
+        const rows = await adminDqeFetchTopics(supabase, subjectId);
         setTopics(rows);
         setTopicId(rows[0]?.id || '');
         setSubtopics([]);
@@ -104,7 +112,7 @@ export function MultiSyllabusDailyEngine() {
     if (!topicId) return;
     void (async () => {
       try {
-        const rows = await j<DqeSubtopic[]>(`/v1/catalog/subtopics?topic_id=${encodeURIComponent(topicId)}`);
+        const rows = await adminDqeFetchSubtopics(supabase, topicId);
         setSubtopics(rows);
         setSubtopicId(rows[0]?.id || '');
       } catch (e) {
@@ -116,9 +124,7 @@ export function MultiSyllabusDailyEngine() {
   const refreshQuestions = useCallback(async () => {
     if (!subtopicId) return;
     try {
-      const rows = await j<DqeQuestionRow[]>(
-        `/v1/questions?subtopic_id=${encodeURIComponent(subtopicId)}&for_date=${encodeURIComponent(forDate)}`
-      );
+      const rows = await adminDqeFetchQuestions(supabase, subtopicId, forDate);
       setQuestions(rows);
     } catch {
       setQuestions([]);
@@ -129,15 +135,26 @@ export function MultiSyllabusDailyEngine() {
     void refreshQuestions();
   }, [refreshQuestions]);
 
-  const canGenerate = useMemo(() => Boolean(subtopicId && !genLoading), [subtopicId, genLoading]);
+  const canGenerate = useMemo(
+    () => Boolean(subtopicId && !genLoading && generateConfigured),
+    [subtopicId, genLoading, generateConfigured]
+  );
 
   async function handleGenerate() {
     if (!subtopicId) return;
+    const base = engineBaseForGenerate();
+    if (!base) {
+      setErr(
+        'Set VITE_DAILY_ENGINE_API in Vercel to your deployed FastAPI URL (see python/daily_question_engine/README.md), then redeploy. Locally: run uvicorn on port 8000 and npm run dev (Vite proxies /daily-engine-api).'
+      );
+      return;
+    }
     setGenLoading(true);
     setErr(null);
     try {
-      await j('/v1/generate', {
+      const res = await fetch(`${base}/v1/generate`, {
         method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({
           subtopic_id: subtopicId,
           difficulty,
@@ -145,11 +162,54 @@ export function MultiSyllabusDailyEngine() {
           for_date: forDate,
         }),
       });
+      if (!res.ok) {
+        const t = await res.text();
+        throw new Error(t || res.statusText);
+      }
+      await res.json().catch(() => ({}));
       await refreshQuestions();
     } catch (e) {
       setErr(e instanceof Error ? e.message : String(e));
     } finally {
       setGenLoading(false);
+    }
+  }
+
+  async function handleDailyBatch() {
+    const base = engineBaseForGenerate();
+    if (!base) {
+      setErr(
+        'Set VITE_DAILY_ENGINE_API (or use npm run dev + uvicorn) before running a multi-syllabus daily batch.'
+      );
+      return;
+    }
+    setBatchLoading(true);
+    setErr(null);
+    setBatchResult(null);
+    try {
+      const res = await fetch(`${base}/v1/generate/daily-batch`, {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({
+          for_date: forDate,
+          difficulty,
+          count,
+          syllabus_slug: batchSyllabusSlug.trim() || null,
+          only_missing: batchOnlyMissing,
+          max_subtopics: batchMaxSubtopics,
+        }),
+      });
+      const text = await res.text();
+      if (!res.ok) {
+        throw new Error(text || res.statusText);
+      }
+      const data = JSON.parse(text) as DailyBatchResponse;
+      setBatchResult(data);
+      await refreshQuestions();
+    } catch (e) {
+      setErr(e instanceof Error ? e.message : String(e));
+    } finally {
+      setBatchLoading(false);
     }
   }
 
@@ -160,7 +220,9 @@ export function MultiSyllabusDailyEngine() {
           <div>
             <h1 className="text-2xl font-bold text-white">Daily Question Engine</h1>
             <p className="text-sm text-slate-400 mt-1">
-              Syllabus → subject → topic → subtopic, then generate MCQs via Anthropic (FastAPI service).
+              Syllabus tree and stored questions load from Supabase. Generating new MCQs still calls the Python FastAPI
+              service (Anthropic) when <code className="text-slate-300">VITE_DAILY_ENGINE_API</code> is set, or the dev
+              proxy in <code className="text-slate-300">npm run dev</code>.
             </p>
           </div>
           <Link to="/dashboard" className="text-cyan-400 text-sm hover:underline">
@@ -172,8 +234,10 @@ export function MultiSyllabusDailyEngine() {
           <div className="rounded-lg border border-red-800 bg-red-950/50 text-red-200 text-sm p-4 whitespace-pre-wrap">
             {err}
             <p className="text-xs text-red-300 mt-2">
-              Start the API: <code className="text-red-100">cd python/daily_question_engine &amp;&amp; uvicorn app.main:app --port 8000</code>
-              , or set <code className="text-red-100">VITE_DAILY_ENGINE_API</code> to a deployed engine URL.
+              If this is a catalog/Supabase error, check migrations and RLS. For generation only: run{' '}
+              <code className="text-red-100">cd python/daily_question_engine &amp;&amp; uvicorn app.main:app --port 8000</code>{' '}
+              with <code className="text-red-100">npm run dev</code>, or set <code className="text-red-100">VITE_DAILY_ENGINE_API</code>{' '}
+              on Vercel to a deployed engine URL.
             </p>
           </div>
         )}
@@ -283,6 +347,85 @@ export function MultiSyllabusDailyEngine() {
             {genLoading && <Loader2 className="w-4 h-4 animate-spin" />}
             Generate daily questions
           </button>
+          {!generateConfigured && (
+            <p className="text-xs text-amber-200/90">
+              Generate is off until the FastAPI engine URL is configured: set{' '}
+              <code className="text-amber-100">VITE_DAILY_ENGINE_API</code> in Vercel and redeploy, or use{' '}
+              <code className="text-amber-100">npm run dev</code> with uvicorn on port 8000.
+            </p>
+          )}
+        </div>
+
+        <div className="rounded-xl border border-indigo-800/60 bg-slate-900/50 p-6 space-y-4">
+          <div>
+            <h2 className="text-lg font-semibold text-white">Multi-syllabus daily batch</h2>
+            <p className="text-sm text-slate-400 mt-1">
+              Calls <code className="text-slate-300">POST /v1/generate/daily-batch</code> on the FastAPI engine. It walks
+              subtopics (all syllabi or one syllabus) and generates the same <code className="text-slate-300">count</code>{' '}
+              MCQs per subtopic for the <strong>for date</strong> above, using the same difficulty. With{' '}
+              <strong>only subtopics below target</strong> on, a subtopic is skipped if it already has at least{' '}
+              <code className="text-slate-300">count</code> rows for that date. Cap each HTTP run with{' '}
+              <strong>max subtopics</strong> (run again or use cron to cover the full catalog).
+            </p>
+          </div>
+          <div className="grid sm:grid-cols-2 gap-4">
+            <label className="block text-sm">
+              <span className="text-slate-400 block mb-1">Syllabus filter (slug)</span>
+              <select
+                className="w-full bg-slate-800 border border-slate-600 rounded-lg px-3 py-2"
+                value={batchSyllabusSlug}
+                onChange={(e) => setBatchSyllabusSlug(e.target.value)}
+                disabled={batchLoading}
+              >
+                <option value="">All syllabi</option>
+                {syllabi.map((s) => (
+                  <option key={s.id} value={s.slug}>
+                    {s.name} ({s.slug})
+                  </option>
+                ))}
+              </select>
+            </label>
+            <label className="block text-sm">
+              <span className="text-slate-400 block mb-1">Max subtopics this run</span>
+              <input
+                type="number"
+                min={1}
+                max={150}
+                className="w-full bg-slate-800 border border-slate-600 rounded-lg px-3 py-2"
+                value={batchMaxSubtopics}
+                onChange={(e) => setBatchMaxSubtopics(Number(e.target.value))}
+                disabled={batchLoading}
+              />
+            </label>
+          </div>
+          <label className="flex items-center gap-2 text-sm text-slate-300 cursor-pointer">
+            <input
+              type="checkbox"
+              checked={batchOnlyMissing}
+              onChange={(e) => setBatchOnlyMissing(e.target.checked)}
+              disabled={batchLoading}
+              className="rounded border-slate-600"
+            />
+            Only subtopics below target count for this date (recommended)
+          </label>
+          <button
+            type="button"
+            disabled={!generateConfigured || batchLoading}
+            onClick={() => void handleDailyBatch()}
+            className="inline-flex items-center gap-2 px-5 py-2.5 rounded-lg bg-gradient-to-r from-indigo-600 to-violet-600 font-semibold disabled:opacity-40"
+          >
+            {batchLoading && <Loader2 className="w-4 h-4 animate-spin" />}
+            Run daily batch (engine)
+          </button>
+          {batchResult && (
+            <div className="rounded-lg border border-slate-700 bg-slate-950/80 p-3 text-xs text-slate-300 overflow-x-auto">
+              <p className="text-slate-200 font-medium mb-2">
+                Batch finished: {batchResult.succeeded} ok, {batchResult.failed} failed,{' '}
+                {batchResult.selected_subtopics} subtopics selected for {batchResult.for_date}
+              </p>
+              <pre className="whitespace-pre-wrap break-all">{JSON.stringify(batchResult.results, null, 2)}</pre>
+            </div>
+          )}
         </div>
 
         <div className="space-y-3">

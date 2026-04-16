@@ -1,0 +1,29 @@
+# Render Blueprint — Daily Question Engine (FastAPI)
+# https://render.com/docs/blueprint-spec
+#
+# After first deploy, set these in the Render dashboard (Environment) — do not commit secrets:
+#   DATABASE_URL      = Supabase Postgres URI (?sslmode=require)
+#   ANTHROPIC_API_KEY = sk-ant-...
+#   CORS_ORIGINS      = https://www.srikanthsacademy.com,https://srikanthsacademy.com
+#
+# Then in Vercel set VITE_DAILY_ENGINE_API = this service’s URL (e.g. https://daily-question-engine.onrender.com)
+
+services:
+  - type: web
+    name: daily-question-engine
+    runtime: python
+    region: singapore
+    plan: starter
+    rootDir: python/daily_question_engine
+    buildCommand: pip install -r requirements.txt
+    startCommand: uvicorn app.main:app --host 0.0.0.0 --port $PORT
+    healthCheckPath: /health
+    envVars:
+      - key: PYTHON_VERSION
+        value: "3.12.6"
+      - key: DATABASE_URL
+        sync: false
+      - key: ANTHROPIC_API_KEY
+        sync: false
+      - key: CORS_ORIGINS
+        sync: false

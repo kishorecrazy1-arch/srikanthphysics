@@ -12,6 +12,7 @@ import {
   Target,
   TrendingUp,
   ScrollText,
+  Layers,
 } from 'lucide-react';
 import { useAuthStore } from '../store/authStore';
 import { FOUNDATION_SYLLABUS } from '../lib/foundationSyllabus';
@@ -26,6 +27,13 @@ function getUserInfoFromStorage() {
 }
 
 const SECTIONS = [
+  {
+    to: '/daily-practice',
+    title: 'Multi-syllabus daily MCQ',
+    desc: 'Choose any syllabus → subtopic from the `dqe_*` catalog; 10 MCQs from `dqe_question`',
+    icon: Layers,
+    gradient: 'from-indigo-600 to-violet-600',
+  },
   {
     to: '/foundation-dashboard/practice',
     title: 'Daily Practice',

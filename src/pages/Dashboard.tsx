@@ -172,6 +172,27 @@ export function Dashboard() {
       <div>
         <h2 className="text-2xl font-bold text-gray-800 mb-4">Courses 🎓</h2>
 
+        <div
+          role="button"
+          tabIndex={0}
+          onClick={() => navigate('/daily-practice')}
+          onKeyDown={(e) => {
+            if (e.key === 'Enter' || e.key === ' ') navigate('/daily-practice');
+          }}
+          className="mb-6 rounded-2xl border-2 border-indigo-200 bg-gradient-to-r from-indigo-50 to-violet-50 p-6 cursor-pointer hover:border-indigo-400 hover:shadow-md transition-all"
+        >
+          <div className="flex items-center justify-between gap-4">
+            <div>
+              <h3 className="text-xl font-bold text-indigo-900">Multi-syllabus daily MCQ</h3>
+              <p className="text-indigo-800/90 text-sm mt-1">
+                AP · Foundation · IIT JEE · NEET · CBSE — pick a subtopic and practice from the shared question bank
+                (`dqe_question`).
+              </p>
+            </div>
+            <ArrowRight className="w-8 h-8 text-indigo-600 shrink-0" />
+          </div>
+        </div>
+
         <div className="grid md:grid-cols-2 gap-6 mb-6">
           <div
             onClick={() => navigate('/ap-physics')}
