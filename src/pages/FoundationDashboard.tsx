@@ -29,7 +29,7 @@ const SECTIONS = [
   {
     to: '/foundation-dashboard/practice',
     title: 'Daily Practice',
-    desc: 'Same AP Physics 1 daily basics MCQs (Supabase), matched to your Foundation unit',
+    desc: 'Foundation engine MCQs (`dqe_*`) when generated; otherwise AP Physics 1 basics, matched by unit',
     icon: Sparkles,
     gradient: 'from-cyan-600 to-blue-600',
   },

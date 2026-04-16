@@ -16,6 +16,17 @@ import {
   questionRowId,
   type ApSubtopicRef,
 } from '../lib/foundationApDailyQuestions';
+import {
+  dqeQuestionRowId,
+  dqeQuestionRowToGeneratedMcq,
+  fetchDqeQuestionPoolForSubtopic,
+  fetchFoundationDqeSubtopicCatalog,
+  foundationDqeSeenStorageKey,
+  readFoundationDqeSeenSet,
+  rememberFoundationDqeSeenId,
+  resolveFoundationToDqeSubtopic,
+  type DqeSubtopicRef,
+} from '../lib/foundationDqeDailyQuestions';
 
 function getUserInfoFromStorage() {
   return {
@@ -59,6 +70,8 @@ function formatExamBadgeLabel(examStyle: string | undefined): string | null {
   const u = examStyle.toUpperCase();
   if (u.includes('JEE')) return 'JEE';
   if (u.includes('NEET')) return 'NEET';
+  if (u.includes('FOUNDATION')) return 'Foundation';
+  if (u.includes('CBSE')) return 'CBSE';
   if (u.includes('AP')) return 'AP';
   if (u.includes('IGCSE') || u.includes('IB')) return 'IGCSE';
   const t = examStyle.trim();
@@ -109,10 +122,16 @@ export function FoundationDailyPractice() {
   const [sessionEmail, setSessionEmail] = useState<string | null>(null);
   /** Same session: never reuse these AP `questions.id` values. */
   const sessionUsedApQuestionIdsRef = useRef<string[]>([]);
+  /** Same session: never reuse these `dqe_question.id` values. */
+  const sessionUsedDqeQuestionIdsRef = useRef<string[]>([]);
   const apSubtopicCatalogRef = useRef<ApSubtopicRef[] | null>(null);
+  const foundationDqeCatalogRef = useRef<DqeSubtopicRef[] | null>(null);
   /** Ordered MCQs — same pool and order as AP Physics Basics “Strengthen Your Basics”. */
   const apDailyOrderedPoolRef = useRef<GeneratedQuestion[]>([]);
   const apDailyPoolCacheKeyRef = useRef('');
+  /** Multi-syllabus engine (`dqe_question`) pool for matched Foundation subtopic. */
+  const dqeDailyOrderedPoolRef = useRef<GeneratedQuestion[]>([]);
+  const dqeDailyPoolCacheKeyRef = useRef('');
 
   const stored = getUserInfoFromStorage();
   const userInfo = {
@@ -173,8 +192,12 @@ export function FoundationDailyPractice() {
 
   function resetSessionState() {
     sessionUsedApQuestionIdsRef.current = [];
+    sessionUsedDqeQuestionIdsRef.current = [];
     apDailyOrderedPoolRef.current = [];
     apDailyPoolCacheKeyRef.current = '';
+    dqeDailyOrderedPoolRef.current = [];
+    dqeDailyPoolCacheKeyRef.current = '';
+    foundationDqeCatalogRef.current = null;
     setSessionActive(false);
     setSessionComplete(false);
     setCurrentQuestionNumber(1);
@@ -192,6 +215,55 @@ export function FoundationDailyPractice() {
     setQuestion(null);
 
     try {
+      const today = new Date().toISOString().split('T')[0];
+
+      // Prefer multi-syllabus Foundation engine questions (`dqe_*`) when catalog + rows exist.
+      try {
+        if (!foundationDqeCatalogRef.current) {
+          foundationDqeCatalogRef.current = await fetchFoundationDqeSubtopicCatalog(supabase);
+        }
+        const dqeResolved = resolveFoundationToDqeSubtopic(
+          activeUnit.name,
+          activeTopic,
+          foundationDqeCatalogRef.current
+        );
+        if (dqeResolved) {
+          const dqePoolKey = `dqe|${dqeResolved.subtopicId}|${today}`;
+          if (dqeDailyPoolCacheKeyRef.current !== dqePoolKey || dqeDailyOrderedPoolRef.current.length === 0) {
+            const rows = await fetchDqeQuestionPoolForSubtopic(supabase, dqeResolved.subtopicId, today);
+            const seenRow = new Set<string>();
+            const ordered: GeneratedQuestion[] = [];
+            for (const r of rows) {
+              const id = dqeQuestionRowId(r);
+              const g = dqeQuestionRowToGeneratedMcq(r, dqeResolved);
+              if (!g || !id || seenRow.has(id)) continue;
+              seenRow.add(id);
+              ordered.push(g as GeneratedQuestion);
+            }
+            dqeDailyOrderedPoolRef.current = ordered;
+            dqeDailyPoolCacheKeyRef.current = dqePoolKey;
+          }
+
+          const dqeSeenKey = foundationDqeSeenStorageKey(email, dqeResolved.subtopicId, today);
+          const alreadyDqeToday = readFoundationDqeSeenSet(dqeSeenKey);
+          const usedDqe = new Set([...sessionUsedDqeQuestionIdsRef.current, ...alreadyDqeToday]);
+          const nextDqe = dqeDailyOrderedPoolRef.current.find(
+            (g) => g.sourceQuestionId && !usedDqe.has(g.sourceQuestionId)
+          );
+
+          if (nextDqe?.sourceQuestionId) {
+            sessionUsedDqeQuestionIdsRef.current = [...sessionUsedDqeQuestionIdsRef.current, nextDqe.sourceQuestionId];
+            rememberFoundationDqeSeenId(dqeSeenKey, nextDqe.sourceQuestionId);
+            setQuestion(nextDqe);
+            setLoading(false);
+            return;
+          }
+        }
+      } catch (dqeErr) {
+        console.warn('Foundation DQE daily pool skipped:', dqeErr);
+      }
+
+      // Fallback: AP Physics 1 “basics” pool (legacy)
       if (!apSubtopicCatalogRef.current) {
         apSubtopicCatalogRef.current = await fetchApSubtopicCatalog(supabase);
       }
@@ -201,13 +273,13 @@ export function FoundationDailyPractice() {
         setQuestion({
           error: true,
           kind: 'no_ap',
-          apiMessage: 'Could not match this Foundation topic to an AP Physics 1 subtopic.',
+          apiMessage:
+            'No multi-syllabus Foundation questions are available for this topic yet (run /admin/daily-question-engine), and we could not match it to an AP Physics 1 subtopic for the legacy pool.',
         });
         setLoading(false);
         return;
       }
 
-      const today = new Date().toISOString().split('T')[0];
       const poolKey = `${resolved.topicId}|${resolved.subtopicName}|${today}`;
 
       if (apDailyPoolCacheKeyRef.current !== poolKey || apDailyOrderedPoolRef.current.length === 0) {
@@ -236,8 +308,8 @@ export function FoundationDailyPractice() {
           kind: 'no_ap',
           apiMessage:
             alreadyShownToday.size > 0 && apDailyOrderedPoolRef.current.length > 0
-              ? 'You have already worked through every AP Physics daily basics question we have for this topic today (same pool as AP Physics “Strengthen Your Basics”). Pick another Foundation topic, try again tomorrow, or open AP Physics to generate more for this subtopic.'
-              : 'No AP Physics daily basics questions found for the matched topic yet, or you have finished every question in today’s set. Open AP Physics → the same unit → Daily Practice to generate today’s set, or pick another Foundation topic.',
+              ? 'You have finished today’s questions for this topic. If you use the Foundation engine, generate more at /admin/daily-question-engine; otherwise pick another topic or open AP Physics for more AP basics.'
+              : 'No questions found yet. Generate Foundation engine MCQs in /admin/daily-question-engine for this subtopic, or open AP Physics → Strengthen Your Basics to create today’s AP set.',
         });
         setLoading(false);
         return;
@@ -537,7 +609,7 @@ export function FoundationDailyPractice() {
             {loading && (
               <div className="bg-slate-800/50 backdrop-blur-sm border border-slate-700/50 rounded-2xl p-10 text-center">
                 <div className="text-5xl mb-4 animate-pulse">⚙️</div>
-                <p className="text-slate-400 text-sm">Loading an AP Physics daily question…</p>
+                <p className="text-slate-400 text-sm">Loading a daily question (Foundation engine first, then AP pool)…</p>
               </div>
             )}
 
@@ -545,25 +617,33 @@ export function FoundationDailyPractice() {
               <div className="bg-red-950/40 border border-red-800 rounded-2xl p-6 text-center space-y-3">
                 {'kind' in question && question.kind === 'no_ap' ? (
                   <>
-                    <p className="text-red-300 font-medium">⚠️ No AP Physics question available</p>
+                    <p className="text-red-300 font-medium">⚠️ No daily questions available</p>
                     <p className="text-slate-400 text-sm break-words max-w-lg mx-auto text-left">
                       {('apiMessage' in question && question.apiMessage) ||
-                        'Foundation daily practice now uses the same Supabase “basics” pool as AP Physics. Generate or open daily practice under AP Physics for the matching unit so questions exist for today.'}
+                        'We first look for Foundation engine questions (`dqe_question`), then fall back to AP Physics basics. Generate MCQs for the matched subtopic in the admin engine, or open AP Physics to refresh the legacy pool.'}
                     </p>
-                    <button
-                      type="button"
-                      onClick={() => navigate('/ap-physics')}
-                      className="bg-cyan-700 hover:bg-cyan-600 text-white px-6 py-2 rounded-xl text-sm font-semibold"
-                    >
-                      Open AP Physics topics
-                    </button>
+                    <div className="flex flex-wrap gap-3 justify-center">
+                      <button
+                        type="button"
+                        onClick={() => navigate('/admin/daily-question-engine')}
+                        className="bg-emerald-700 hover:bg-emerald-600 text-white px-6 py-2 rounded-xl text-sm font-semibold"
+                      >
+                        Open Daily Question Engine
+                      </button>
+                      <button
+                        type="button"
+                        onClick={() => navigate('/ap-physics')}
+                        className="bg-cyan-700 hover:bg-cyan-600 text-white px-6 py-2 rounded-xl text-sm font-semibold"
+                      >
+                        Open AP Physics topics
+                      </button>
+                    </div>
                   </>
                 ) : 'kind' in question && question.kind === 'config' ? (
                   <>
                     <p className="text-red-300 font-medium">⚠️ Configuration</p>
                     <p className="text-slate-400 text-sm text-left max-w-lg mx-auto">
-                      Daily practice is served from the AP Physics question bank. Check Supabase connection and topic
-                      data.
+                      Check Supabase connection, `dqe_*` migrations, and AP topic data for the fallback pool.
                     </p>
                   </>
                 ) : (
