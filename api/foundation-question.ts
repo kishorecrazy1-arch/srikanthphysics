@@ -28,6 +28,11 @@ type CorrectDigit = '1' | '2' | '3' | '4';
 
 type OptionsFourTuple = readonly [string, string, string, string];
 
+/** OpenAI / Anthropic helper responses; discriminated on `ok`. */
+type FoundationLlmGenerateResult =
+  | { ok: true; text: string }
+  | { ok: false; status: number; error: string };
+
 function readString(v: unknown): string | undefined {
   return typeof v === 'string' ? v.trim() : undefined;
 }
@@ -421,7 +426,7 @@ async function generateFoundationViaOpenAI(
   apiKey: string,
   userContent: string,
   systemInstruction: string | undefined
-): Promise<{ ok: true; text: string } | { ok: false; status: number; error: string }> {
+): Promise<FoundationLlmGenerateResult> {
   const messages: Array<{ role: string; content: string }> = [];
   if (systemInstruction) {
     messages.push({ role: 'system', content: systemInstruction });
@@ -461,7 +466,7 @@ async function generateFoundationViaAnthropic(
   apiKey: string,
   userContent: string,
   systemInstruction: string | undefined
-): Promise<{ ok: true; text: string } | { ok: false; status: number; error: string }> {
+): Promise<FoundationLlmGenerateResult> {
   const messageBody: Record<string, unknown> = {
     model: 'claude-sonnet-4-20250514',
     max_tokens: 4096,
@@ -553,19 +558,16 @@ export default async function handler(req: HttpRequest, res: HttpResponse) {
     }
 
     const preferOpenAI = Boolean(openaiKey);
-    let gen: { ok: true; text: string } | { ok: false; status: number; error: string };
-    if (preferOpenAI) {
-      gen = await generateFoundationViaOpenAI(openaiKey, userContent, systemInstruction);
-    } else {
-      gen = await generateFoundationViaAnthropic(anthropicKey, userContent, systemInstruction);
+    const gen: FoundationLlmGenerateResult = preferOpenAI
+      ? await generateFoundationViaOpenAI(openaiKey, userContent, systemInstruction)
+      : await generateFoundationViaAnthropic(anthropicKey, userContent, systemInstruction);
+
+    if (gen.ok) {
+      const processed = postProcessModelJsonText(gen.text);
+      return res.status(200).json({ text: processed, source: 'ai', provider: preferOpenAI ? 'openai' : 'anthropic' });
     }
 
-    if (!gen.ok) {
-      return res.status(gen.status).json({ error: gen.error });
-    }
-
-    const processed = postProcessModelJsonText(gen.text);
-    return res.status(200).json({ text: processed, source: 'ai', provider: preferOpenAI ? 'openai' : 'anthropic' });
+    return res.status(gen.status).json({ error: gen.error });
   } catch (error) {
     const message = error instanceof Error ? error.message : String(error);
     return res.status(500).json({ error: message || 'Unexpected server error' });

@@ -5,9 +5,7 @@ import { isFoundationCourseType, sheetRedirectIsFoundation } from '../lib/postAu
 
 export function ProtectedRoute({ children }: { children: React.ReactNode }) {
   const location = useLocation();
-  const { user, loading, emailVerified, approved, approvalRedirectTo, approvalCourseType, approvalUser } = useAuthStore();
-  const storedApprovalStatus =
-    typeof window !== 'undefined' ? localStorage.getItem('approvalStatus') : null;
+  const { user, loading, emailVerified, approvalRedirectTo, approvalCourseType, approvalUser } = useAuthStore();
 
   // Dev only: bypass auth for UI preview (main.tsx sets this from ?testMode=1)
   const testMode =
@@ -38,8 +36,8 @@ export function ProtectedRoute({ children }: { children: React.ReactNode }) {
     return <EmailConfirmationRequired />;
   }
 
-  // Foundation dashboard & AP Physics learning hub: any signed-in user with a confirmed email (or OAuth)
-  // gets immediate access without Google Sheet / n8n approval. Other protected routes keep the approval gate below.
+  // Foundation dashboard & AP Physics hub: open to any signed-in user with confirmed email (or OAuth).
+  // All other protected routes below require the same login + email verification only (no sheet approval gate).
   const isFoundationDashboardRoute =
     location.pathname === '/foundation-dashboard' ||
     location.pathname.startsWith('/foundation-dashboard/');
@@ -59,32 +57,8 @@ export function ProtectedRoute({ children }: { children: React.ReactNode }) {
     return <>{children}</>;
   }
 
-  // Hard block pending users even before state hydration completes.
-  if (storedApprovalStatus === 'pending' && approved !== true) {
-    return <Navigate to="/approval-pending" replace />;
-  }
-
-  // Check approval status from Google Sheet (via n8n)
-  // approved can be: null (checking), true (approved), false (not approved)
-  if (approved === false) {
-    return <Navigate to="/approval-pending" replace />;
-  }
-
-  // If approval status is still being checked (null), show loading
-  if (approved === null && emailVerified === true) {
-    return (
-      <div className="min-h-screen flex items-center justify-center bg-gradient-to-br from-blue-50 to-cyan-50">
-        <div className="text-center">
-          <div className="inline-block animate-spin rounded-full h-12 w-12 border-4 border-blue-500 border-t-transparent"></div>
-          <p className="mt-4 text-gray-600">Checking approval status...</p>
-        </div>
-      </div>
-    );
-  }
-
-  // User is approved (approved === true) and email is confirmed
-  // If n8n said redirect to foundation-dashboard but user landed on /dashboard (e.g. OAuth), redirect and set localStorage
-  // Allow sub-routes (e.g. /foundation-dashboard/practice) — only redirect when path is outside that destination tree
+  // Optional post-login redirect from n8n (e.g. /dashboard vs /foundation-dashboard). Never force users onto
+  // /approval-pending now that manual approval is disabled.
   const onApprovalDestination =
     !approvalRedirectTo ||
     location.pathname === approvalRedirectTo ||
@@ -93,7 +67,14 @@ export function ProtectedRoute({ children }: { children: React.ReactNode }) {
     sheetRedirectIsFoundation(approvalRedirectTo) &&
     !!user?.courseType &&
     !isFoundationCourseType(user.courseType);
-  if (approvalRedirectTo && !onApprovalDestination && !profileMismatchFoundationRedirect) {
+  const isApprovalGateRedirect =
+    approvalRedirectTo === '/approval-pending' || approvalRedirectTo === '/approval-required';
+  if (
+    approvalRedirectTo &&
+    !isApprovalGateRedirect &&
+    !onApprovalDestination &&
+    !profileMismatchFoundationRedirect
+  ) {
     try {
       localStorage.setItem('courseType', approvalCourseType || 'ap_physics');
       if (approvalUser?.course) localStorage.setItem('userCourse', approvalUser.course);
