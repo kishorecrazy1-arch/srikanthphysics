@@ -1,0 +1,19 @@
+[project]
+name = "daily-question-engine"
+version = "1.0.0"
+description = "Srikanth Academy Daily Question Engine (FastAPI)"
+requires-python = ">=3.12"
+dependencies = [
+  "fastapi>=0.115.0",
+  "uvicorn[standard]>=0.32.0",
+  "anthropic>=0.40.0",
+  "sqlalchemy>=2.0.36",
+  "psycopg2-binary>=2.9.10",
+  "python-dotenv>=1.0.1",
+  "pydantic>=2.9.0",
+  "pydantic-settings>=2.6.0",
+]
+
+# Vercel Python runtime: expose the FastAPI ASGI app (see Vercel FastAPI docs).
+[project.scripts]
+app = "app.main:app"

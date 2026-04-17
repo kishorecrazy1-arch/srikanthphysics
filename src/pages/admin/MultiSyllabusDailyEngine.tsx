@@ -1,7 +1,8 @@
 /**
  * Admin UI: multi-syllabus daily MCQ engine.
  * - Catalog + stored questions: read from Supabase `dqe_*` (works on Vercel without Python).
- * - Generate: POST to FastAPI (`VITE_DAILY_ENGINE_API` in prod, or Vite dev proxy `/daily-engine-api`).
+ * - Generate: POST to FastAPI — dev: Vite proxy `/daily-engine-api`; prod: same-origin `/api/daily-engine/*`
+ *   (Vercel serverless → Render, set `DAILY_ENGINE_URL` on Vercel) or direct `VITE_DAILY_ENGINE_API` if set.
  */
 
 import { useCallback, useEffect, useMemo, useState } from 'react';
@@ -25,12 +26,19 @@ import type {
   DailyDifficulty,
 } from '../../dailyEngine/types';
 
-/** Base URL for POST /v1/generate only. Null in production if unset (catalog still works via Supabase). */
-function engineBaseForGenerate(): string | null {
+/** Base URL for POST /v1/generate (and batch). Prod defaults to Vercel proxy to avoid browser CORS on Render. */
+function engineBaseForGenerate(): string {
+  if (import.meta.env.DEV) return '/daily-engine-api';
   const raw = (import.meta as ImportMeta & { env?: { VITE_DAILY_ENGINE_API?: string } }).env?.VITE_DAILY_ENGINE_API?.trim();
   if (raw) return raw.replace(/\/$/, '');
-  if (import.meta.env.DEV) return '/daily-engine-api';
-  return null;
+  return '/api/daily-engine';
+}
+
+async function engineAuthHeaders(): Promise<Record<string, string>> {
+  const { data } = await supabase.auth.getSession();
+  const token = data.session?.access_token;
+  if (!token) return {};
+  return { Authorization: `Bearer ${token}` };
 }
 
 export function MultiSyllabusDailyEngine() {
@@ -55,8 +63,6 @@ export function MultiSyllabusDailyEngine() {
   const [batchSyllabusSlug, setBatchSyllabusSlug] = useState('');
   const [batchLoading, setBatchLoading] = useState(false);
   const [batchResult, setBatchResult] = useState<DailyBatchResponse | null>(null);
-
-  const generateConfigured = engineBaseForGenerate() != null;
 
   const loadSyllabi = useCallback(async () => {
     setLoadingTree(true);
@@ -135,26 +141,17 @@ export function MultiSyllabusDailyEngine() {
     void refreshQuestions();
   }, [refreshQuestions]);
 
-  const canGenerate = useMemo(
-    () => Boolean(subtopicId && !genLoading && generateConfigured),
-    [subtopicId, genLoading, generateConfigured]
-  );
+  const canGenerate = useMemo(() => Boolean(subtopicId && !genLoading), [subtopicId, genLoading]);
 
   async function handleGenerate() {
     if (!subtopicId) return;
     const base = engineBaseForGenerate();
-    if (!base) {
-      setErr(
-        'Set VITE_DAILY_ENGINE_API in Vercel to your deployed FastAPI URL (see python/daily_question_engine/README.md), then redeploy. Locally: run uvicorn on port 8000 and npm run dev (Vite proxies /daily-engine-api).'
-      );
-      return;
-    }
     setGenLoading(true);
     setErr(null);
     try {
       const res = await fetch(`${base}/v1/generate`, {
         method: 'POST',
-        headers: { 'Content-Type': 'application/json' },
+        headers: { 'Content-Type': 'application/json', ...(await engineAuthHeaders()) },
         body: JSON.stringify({
           subtopic_id: subtopicId,
           difficulty,
@@ -177,19 +174,13 @@ export function MultiSyllabusDailyEngine() {
 
   async function handleDailyBatch() {
     const base = engineBaseForGenerate();
-    if (!base) {
-      setErr(
-        'Set VITE_DAILY_ENGINE_API (or use npm run dev + uvicorn) before running a multi-syllabus daily batch.'
-      );
-      return;
-    }
     setBatchLoading(true);
     setErr(null);
     setBatchResult(null);
     try {
       const res = await fetch(`${base}/v1/generate/daily-batch`, {
         method: 'POST',
-        headers: { 'Content-Type': 'application/json' },
+        headers: { 'Content-Type': 'application/json', ...(await engineAuthHeaders()) },
         body: JSON.stringify({
           for_date: forDate,
           difficulty,
@@ -220,9 +211,10 @@ export function MultiSyllabusDailyEngine() {
           <div>
             <h1 className="text-2xl font-bold text-white">Daily Question Engine</h1>
             <p className="text-sm text-slate-400 mt-1">
-              Syllabus tree and stored questions load from Supabase. Generating new MCQs still calls the Python FastAPI
-              service (Anthropic) when <code className="text-slate-300">VITE_DAILY_ENGINE_API</code> is set, or the dev
-              proxy in <code className="text-slate-300">npm run dev</code>.
+              Syllabus tree and stored questions load from Supabase. Generating new MCQs calls the Python FastAPI
+              service via the dev proxy, or on Vercel via <code className="text-slate-300">/api/daily-engine</code>{' '}
+              (set <code className="text-slate-300">DAILY_ENGINE_URL</code> on Vercel), unless{' '}
+              <code className="text-slate-300">VITE_DAILY_ENGINE_API</code> overrides with a direct URL.
             </p>
           </div>
           <Link to="/dashboard" className="text-cyan-400 text-sm hover:underline">
@@ -234,10 +226,10 @@ export function MultiSyllabusDailyEngine() {
           <div className="rounded-lg border border-red-800 bg-red-950/50 text-red-200 text-sm p-4 whitespace-pre-wrap">
             {err}
             <p className="text-xs text-red-300 mt-2">
-              If this is a catalog/Supabase error, check migrations and RLS. For generation only: run{' '}
+              If this is a catalog/Supabase error, check migrations and RLS. For generation: run{' '}
               <code className="text-red-100">cd python/daily_question_engine &amp;&amp; uvicorn app.main:app --port 8000</code>{' '}
-              with <code className="text-red-100">npm run dev</code>, or set <code className="text-red-100">VITE_DAILY_ENGINE_API</code>{' '}
-              on Vercel to a deployed engine URL.
+              with <code className="text-red-100">npm run dev</code>, or on Vercel set <code className="text-red-100">DAILY_ENGINE_URL</code>{' '}
+              (proxy) / <code className="text-red-100">VITE_DAILY_ENGINE_API</code> (direct).
             </p>
           </div>
         )}
@@ -347,13 +339,6 @@ export function MultiSyllabusDailyEngine() {
             {genLoading && <Loader2 className="w-4 h-4 animate-spin" />}
             Generate daily questions
           </button>
-          {!generateConfigured && (
-            <p className="text-xs text-amber-200/90">
-              Generate is off until the FastAPI engine URL is configured: set{' '}
-              <code className="text-amber-100">VITE_DAILY_ENGINE_API</code> in Vercel and redeploy, or use{' '}
-              <code className="text-amber-100">npm run dev</code> with uvicorn on port 8000.
-            </p>
-          )}
         </div>
 
         <div className="rounded-xl border border-indigo-800/60 bg-slate-900/50 p-6 space-y-4">
@@ -410,7 +395,7 @@ export function MultiSyllabusDailyEngine() {
           </label>
           <button
             type="button"
-            disabled={!generateConfigured || batchLoading}
+            disabled={batchLoading}
             onClick={() => void handleDailyBatch()}
             className="inline-flex items-center gap-2 px-5 py-2.5 rounded-lg bg-gradient-to-r from-indigo-600 to-violet-600 font-semibold disabled:opacity-40"
           >

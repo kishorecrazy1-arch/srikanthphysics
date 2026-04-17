@@ -1,12 +1,14 @@
-# Render Blueprint — Daily Question Engine (FastAPI)
+# Optional Render Blueprint — Daily Question Engine (FastAPI). Skip if you deploy the engine on Vercel Python instead (see python/daily_question_engine/README.md).
 # https://render.com/docs/blueprint-spec
 #
 # After first deploy, set these in the Render dashboard (Environment) — do not commit secrets:
 #   DATABASE_URL      = Supabase Postgres URI (?sslmode=require)
 #   ANTHROPIC_API_KEY = sk-ant-...
-#   CORS_ORIGINS      = https://www.srikanthsacademy.com,https://srikanthsacademy.com
+#   CORS_ORIGINS      = only needed if the *browser* calls Render directly; if you use the Vercel proxy, set
+#                        DAILY_ENGINE_URL on Vercel instead and you can omit or minimize CORS on Render.
 #
-# Then in Vercel set VITE_DAILY_ENGINE_API = this service’s URL (e.g. https://daily-question-engine.onrender.com)
+# Vercel (recommended): set DAILY_ENGINE_URL (server-only) = this service URL, e.g. https://daily-question-engine.onrender.com
+# Optional override: VITE_DAILY_ENGINE_API = same URL for direct browser → Render (then CORS_ORIGINS on Render is required).
 
 services:
   - type: web

@@ -21,6 +21,10 @@ def create_app() -> FastAPI:
     app.include_router(generate.router, prefix="/v1", tags=["generate"])
     app.include_router(questions.router, prefix="/v1", tags=["questions"])
 
+    @app.get("/", include_in_schema=False)
+    def root():
+        return {"service": "daily-question-engine", "health": "/health", "docs": "/docs"}
+
     @app.get("/health")
     def health():
         return {"status": "ok", "service": "daily-question-engine"}
