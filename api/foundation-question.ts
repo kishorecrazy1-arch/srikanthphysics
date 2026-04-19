@@ -1,6 +1,7 @@
-import { readFileSync } from 'node:fs';
-import { join } from 'node:path';
-import { createClient } from '@supabase/supabase-js';
+/**
+ * Foundation Level-2 MCQ generator — LLM only (no question bank).
+ * POST JSON: { unitName, topic, usedQuestions?, usedScenarios?, usedQuestionHashes? } or { prompt } legacy.
+ */
 
 type HttpResponse = {
   status: (code: number) => HttpResponse;
@@ -18,17 +19,17 @@ type FoundationQuestionPayload = {
   unitName?: unknown;
   topic?: unknown;
   usedQuestionHashes?: unknown;
-  /** Last few scenario labels already used this session (client may send from localStorage). */
+  usedQuestions?: unknown;
   usedScenarios?: unknown;
-  /** Legacy: full prompt from client */
   prompt?: unknown;
 };
 
-type CorrectDigit = '1' | '2' | '3' | '4';
+type McqLetter = 'A' | 'B' | 'C' | 'D';
 
 type OptionsFourTuple = readonly [string, string, string, string];
 
-/** OpenAI / Anthropic helper responses; discriminated on `ok`. */
+const MCQ_LETTERS: readonly McqLetter[] = ['A', 'B', 'C', 'D'];
+
 type FoundationLlmGenerateResult =
   | { ok: true; text: string }
   | { ok: false; status: number; error: string };
@@ -50,6 +51,14 @@ function readUsedScenariosList(v: unknown): string[] {
     .slice(0, 5);
 }
 
+function readUsedQuestionsList(v: unknown): string[] {
+  if (!Array.isArray(v)) return [];
+  return v
+    .filter((x): x is string => typeof x === 'string' && x.trim().length > 0)
+    .map((s) => s.trim().slice(0, 400))
+    .slice(0, 15);
+}
+
 function parsePayload(body: unknown): FoundationQuestionPayload {
   if (body && typeof body === 'object' && !Array.isArray(body)) {
     return body as FoundationQuestionPayload;
@@ -57,119 +66,166 @@ function parsePayload(body: unknown): FoundationQuestionPayload {
   return {};
 }
 
-function isUnitsMeasurementsContext(unitName: string, topic: string): boolean {
-  const u = unitName.toLowerCase();
-  const t = topic.toLowerCase();
-  return (
-    (u.includes('units') && u.includes('measurement')) ||
-    t.includes('si units') ||
-    t.includes('dimensional') ||
-    t.includes('significant figure') ||
-    t.includes('measurement error')
-  );
-}
-
 function escapeForPrompt(s: string): string {
   return s.replace(/\\/g, '\\\\').replace(/"/g, '\\"');
 }
 
-/** LLM system message: difficulty, scenario diversity, MCQ discipline (user-facing contract). */
-const FOUNDATION_SYSTEM_PROMPT = `You are an expert IIT JEE Foundation physics teacher.
+function formatUsedQuestionsLine(usedQuestionStems: string[], usedHashes: string[]): string {
+  if (usedQuestionStems.length > 0) {
+    return usedQuestionStems.map((q) => escapeForPrompt(q)).join(', ');
+  }
+  if (usedHashes.length > 0) {
+    return usedHashes.map((h) => escapeForPrompt(h)).join(', ');
+  }
+  return '(none yet)';
+}
 
-STRICT RULES — MUST FOLLOW:
-1. MEDIUM difficulty only — NOT basic definitions or one-line recall.
-2. The main problem MUST require 2–3 steps of reasoning or calculation (not a single formula plug with trivial numbers).
-3. Use a DIFFERENT physical scenario each time. Rotate among: bullet, rocket, satellite, spring, pendulum, water tank, inclined plane, pulley, electric circuit, train, swimmer, elevator, pipe flow, balloon, battery/bulb network — and similar varied setups.
-4. NEVER use "racing car", "sports car", or "fast car" tropes. Avoid generic "car accelerates from rest" unless unavoidable; prefer non-automotive contexts.
-5. Multiple choice: provide options as A, B, C, D. Put the correct answer at a RANDOM letter (not always B). Wrong options must be plausible and each include a numeric value WITH UNITS where the question is numeric.
-6. All four MCQ options must include numbers with SI or stated units whenever the stem is quantitative.
+function formatUsedScenariosLine(usedScenarios: string[]): string {
+  if (usedScenarios.length === 0) return '(none yet)';
+  return usedScenarios.map((s) => escapeForPrompt(s)).join(', ');
+}
 
-MEDIUM means (style examples — do not copy numbers verbatim):
-✓ "A bullet of 10 g hits a wall at 400 m/s and rebounds at 100 m/s in 0.01 s. Find the average force on the bullet."
-✓ "Two resistors 3 Ω and 6 Ω in parallel across 12 V. Find the current through the 3 Ω resistor."
-✗ "What is Newton's First Law?" (too basic)
-✗ Reusing the same scenario family you used in a prior turn when the user lists banned fingerprints or scenarios.
-
-The API response must be ONLY the JSON object described in the user message — no markdown, no code fences, no commentary before or after.`;
-
-function buildFoundationUserPrompt(
+/**
+ * FRESH FOUNDATION QUESTION GENERATOR — Level 2 (AP Physics–style contract).
+ */
+function buildFreshFoundationLevel2SystemPrompt(
   unitName: string,
   topic: string,
+  usedQuestionStems: string[],
   usedHashes: string[],
   usedScenarios: string[]
 ): string {
-  const avoidBlock =
-    usedHashes.length > 0
-      ? `
+  const et = escapeForPrompt(topic);
+  const eu = escapeForPrompt(unitName);
+  const usedQuestionsLine = formatUsedQuestionsLine(usedQuestionStems, usedHashes);
+  const usedScenariosLine = formatUsedScenariosLine(usedScenarios);
 
-IMPORTANT — non-repetition:
-The following fingerprints identify questions already shown this session for this topic. Do NOT repeat those setups (same numbers, same story beats, or same sub-part tasks). Invent a new context and different numerical values.
-Fingerprints (opaque hashes; treat each as a distinct banned repeat):
-${usedHashes.map((h, i) => `${i + 1}. ${h}`).join('\n')}`
-      : '';
+  return `You are an expert IIT JEE/NEET Foundation physics instructor creating Level 2 (Intermediate) MCQ questions for Class 9-11 students preparing for entrance exams.
 
-  const scenarioAvoidBlock =
-    usedScenarios.length > 0
-      ? `
+═══════════════════════════════════════
+TARGET DIFFICULTY: LEVEL 2 (INTERMEDIATE)
+═══════════════════════════════════════
 
-SESSION SCENARIO MEMORY — do NOT reuse any of these physical setups or story frames in your new question (pick something clearly different):
-${usedScenarios.map((s, i) => `${i + 1}. ${s}`).join('\n')}`
-      : '';
+LEVEL 2 means:
+✅ Requires 2-3 calculation steps
+✅ Uses 1-2 formulas combined
+✅ Real-world numerical scenario
+✅ Application of concepts (not just definitions)
 
-  const unitsMeasurementsBlock = isUnitsMeasurementsContext(unitName, topic)
-    ? `
+GOOD LEVEL 2 examples:
+✅ "A bullet of mass 50g moving at 200 m/s hits a wooden block of mass 950g at rest. After collision they move together. Find common velocity."
+✅ "A wire of length 2m has resistance 4Ω. If stretched to double its length, new resistance is?"
+✅ "A satellite orbits Earth at height equal to Earth's radius. Find its orbital velocity."
 
-UNITS & MEASUREMENTS — REQUIRED FOCUS (this unit/topic):
-- Prefer: dimensional analysis; unit conversion; significant figures; density/volume; measurement error; flow rate.
-- NEVER use racing car, sports car, or generic "fast car" scenarios for this topic.`
-    : '';
+BAD examples (DO NOT generate):
+❌ "Define velocity" (Level 1 - too basic)
+❌ "What is Newton's First Law" (definition)
+❌ "A particle moves with derivative dx/dt..." (Level 3)
 
-  return `Generate exactly ONE MEDIUM-difficulty foundation question.
+═══════════════════════════════════════
+CRITICAL ANTI-REPETITION RULES
+═══════════════════════════════════════
 
-Topic: "${escapeForPrompt(topic)}"
-Unit: "${escapeForPrompt(unitName)}"
+NEVER use these scenarios in same session:
+- Racing car / Sports car
+- "A particle moves along x-axis"
 
-QUESTION SHAPE (follow strictly):
-- Numerical or multi-step application (NOT definition-only).
-- Three sub-parts labelled (a), (b), (c) in the "subQuestions" array.
-- Include a "formulas" array (relevant formulas).
-- In "answer", give step-by-step working for parts a, b, c with final numeric or symbolic results.
-- Include one MCQ (options A–D) testing the key result or concept; exactly one correct letter; each option with plausible numbers+units when the stem is numeric.
-- difficulty must be the string "Medium".
-${unitsMeasurementsBlock}
+ROTATE through these scenarios randomly:
 
-Return ONLY valid JSON. No markdown, no code fences, no commentary.
+MECHANICS scenarios:
+bullet, rocket, train, lift, swimmer, pendulum,
+spring, ball thrown, cricket bat, hammer, pulley
 
-RESPONSE FORMAT:
+FLUIDS/MATTER:
+water tank, pipe, balloon, swimming pool, syringe,
+hydraulic lift, oil drum, wire, rod, beam
+
+ASTRONOMY:
+satellite, planet, moon orbit, rocket launch, ISS,
+space station, comet
+
+ELECTRICITY:
+bulb, battery cell, motor, fan, charger, resistor
+network, capacitor, generator
+
+THERMODYNAMICS:
+gas in cylinder, balloon expanding, ice melting,
+water heating, refrigerator, engine
+
+OPTICS:
+mirror, lens, prism, fiber cable, microscope
+
+═══════════════════════════════════════
+EXACT JSON RESPONSE FORMAT
+═══════════════════════════════════════
+
+Return ONLY valid JSON, no extra text.
+
+The field "correct_answer" must be exactly one JSON string: "A", "B", "C", or "D" (pick one; never use multiple letters in one value).
+
 {
-  "question": "A complete problem statement with concrete numbers/context (full stem for all parts).",
-  "subQuestions": [
-    "(a) First sub-task with numbers",
-    "(b) Second sub-task",
-    "(c) Third sub-task"
-  ],
-  "formulas": ["v = u + at", "s = ut + \u00bdat\u00b2"],
-  "difficulty": "Medium",
-  "topic": "${escapeForPrompt(topic)}",
-  "unit": "${escapeForPrompt(unitName)}",
-  "answer": {
-    "a": "Step 1: ... Step 2: ... Answer: ...",
-    "b": "Step 1: ... Answer: ...",
-    "c": "Step 1: ... Answer: ..."
-  },
+  "question": "Full Level 2 problem with numbers and units",
   "options": {
-    "A": "...",
-    "B": "...",
-    "C": "...",
-    "D": "..."
+    "A": "value with unit",
+    "B": "value with unit",
+    "C": "value with unit",
+    "D": "value with unit"
   },
-  "correct": "B",
-  "explanation": "Why the chosen MCQ letter is correct (2–4 sentences).",
-  "tip": "Key concept: ..."
-}${avoidBlock}${scenarioAvoidBlock}`;
+  "correct_answer": "A",
+  "explanation": "Step 1: Identify given values\\nStep 2: Apply formula\\nStep 3: Calculate\\nFinal answer: X units",
+  "formulas_used": ["F = ma", "v = u + at"],
+  "common_mistakes": ["Forgot to convert km/h to m/s"],
+  "difficulty_level": "Level 2",
+  "scenario_type": "bullet/satellite/spring/etc",
+  "topic": "${et}",
+  "unit": "${eu}"
 }
 
-/** Strip optional ```json fences and isolate outermost `{ ... }`. */
+Rules:
+- "common_mistakes" must be a non-empty array of short strings.
+- "formulas_used" must be a non-empty array of formula strings used in the solution.
+- "scenario_type" is a short label matching the story you used.
+
+═══════════════════════════════════════
+ANSWER POSITION RANDOMIZATION
+═══════════════════════════════════════
+
+Randomly distribute correct answer:
+- 25% Q's correct = A
+- 25% Q's correct = B
+- 25% Q's correct = C
+- 25% Q's correct = D
+
+NEVER make B always correct.
+
+For each question, FIRST decide correct position randomly, THEN place correct value there, fill others with plausible wrong values from common calculation mistakes.
+
+═══════════════════════════════════════
+PREVENT REPEATING IN SESSION
+═══════════════════════════════════════
+
+Previously asked questions in this session:
+${usedQuestionsLine}
+
+Previously used scenarios:
+${usedScenariosLine}
+
+DO NOT repeat any of above.
+Pick NEW scenario from rotation list.
+
+═══════════════════════════════════════
+SUBJECT/EXAM CONTEXT
+═══════════════════════════════════════
+
+Generate question following:
+- IIT JEE Foundation pattern
+- Indian textbook style (Errorless, HC Verma)
+- Numerical with proper SI units
+- Single concept focus
+- Clear, unambiguous wording
+- Test understanding through calculation`;
+}
+
 function extractJsonObjectString(raw: string): string {
   let s = raw.replace(/```json\s*/gi, '').replace(/```\s*/g, '').trim();
   const start = s.indexOf('{');
@@ -197,7 +253,7 @@ function readOptionsFourTuple(options: unknown): OptionsFourTuple | null {
     return [texts[0]!, texts[1]!, texts[2]!, texts[3]!];
   }
   if (options && typeof options === 'object' && !Array.isArray(options)) {
-    const o = options as Record<string, unknown>;
+    const o: Record<string, unknown> = options;
     const pick = (a: string, b: string): string | undefined => {
       const u = o[a];
       const l = o[b];
@@ -228,46 +284,78 @@ function resolveCorrectIndex0(correct: unknown): number | null {
   return null;
 }
 
-function shuffleMcqOptions(
-  ordered: OptionsFourTuple,
+/** Server-side shuffle (spec: shuffleAnswerPosition) using unbiased RNG instead of Math.random. */
+function shuffleAnswerPosition(question: {
+  options: Record<McqLetter, string>;
+  correct_answer: McqLetter;
+}): { options: Record<McqLetter, string>; correct_answer: McqLetter } {
+  const opts = MCQ_LETTERS.map((k) => question.options[k]);
+  const correctIdx = MCQ_LETTERS.indexOf(question.correct_answer);
+  if (correctIdx < 0) {
+    throw new Error('Invalid correct_answer');
+  }
+  const correctVal = opts[correctIdx]!;
+  const wrong = opts.filter((_, i) => i !== correctIdx);
+  for (let i = wrong.length - 1; i > 0; i--) {
+    const j = secureRandomBelow(i + 1);
+    const tmp = wrong[i]!;
+    wrong[i] = wrong[j]!;
+    wrong[j] = tmp;
+  }
+  const newPos = secureRandomBelow(4);
+  const merged = [...wrong];
+  merged.splice(newPos, 0, correctVal);
+  const out: Record<McqLetter, string> = {
+    A: merged[0]!,
+    B: merged[1]!,
+    C: merged[2]!,
+    D: merged[3]!,
+  };
+  return { options: out, correct_answer: MCQ_LETTERS[newPos]! };
+}
+
+function optionsTupleToLetterMap(
+  tuple: OptionsFourTuple,
   correctIndex0: number
-): { options: string[]; correct: CorrectDigit } {
+): { options: Record<McqLetter, string>; correct_answer: McqLetter } {
   if (correctIndex0 < 0 || correctIndex0 > 3) {
     throw new Error('Invalid correct index');
   }
-  type Tagged = { text: string; wasCorrect: boolean };
-  const entries: Tagged[] = ordered.map((text, i) => ({
-    text,
-    wasCorrect: i === correctIndex0,
-  }));
-  for (let i = entries.length - 1; i > 0; i--) {
-    const j = secureRandomBelow(i + 1);
-    const tmp = entries[i]!;
-    entries[i] = entries[j]!;
-    entries[j] = tmp;
-  }
-  const idx = entries.findIndex((e) => e.wasCorrect);
-  if (idx < 0) {
-    throw new Error('Correct option lost during shuffle');
-  }
-  const digit = String(idx + 1);
-  if (digit !== '1' && digit !== '2' && digit !== '3' && digit !== '4') {
-    throw new Error('Invalid shuffled index');
-  }
   return {
-    options: entries.map((e) => e.text),
-    correct: digit as CorrectDigit,
+    options: { A: tuple[0]!, B: tuple[1]!, C: tuple[2]!, D: tuple[3]! },
+    correct_answer: MCQ_LETTERS[correctIndex0]!,
   };
+}
+
+function normalizeFoundationAiFields(obj: Record<string, unknown>): Record<string, unknown> {
+  const out: Record<string, unknown> = { ...obj };
+  const fu = out.formulas_used;
+  if (!('formulas' in out) && Array.isArray(fu)) {
+    const formulas = fu.filter((x): x is string => typeof x === 'string' && x.trim().length > 0);
+    if (formulas.length > 0) {
+      out.formulas = formulas;
+    }
+  }
+  return out;
 }
 
 function tryShuffleMcqInObject(obj: Record<string, unknown>): Record<string, unknown> {
   const tuple = readOptionsFourTuple(obj.options);
   if (!tuple) return obj;
-  const idx = resolveCorrectIndex0(obj.correct);
+  const idx = resolveCorrectIndex0(obj.correct ?? obj.correct_answer);
   if (idx === null) return obj;
   try {
-    const { options, correct } = shuffleMcqOptions(tuple, idx);
-    return { ...obj, options, correct };
+    const letterMap = optionsTupleToLetterMap(tuple, idx);
+    const shuffled = shuffleAnswerPosition(letterMap);
+    const { correct: _legacyCorrect, correct_answer: _ca, options: _opts, ...rest } = obj;
+    void _legacyCorrect;
+    void _ca;
+    void _opts;
+    return {
+      ...rest,
+      options: shuffled.options,
+      correct_answer: shuffled.correct_answer,
+    };
   } catch {
     return obj;
   }
@@ -284,134 +372,9 @@ function postProcessModelJsonText(raw: string): string {
   if (!parsed || typeof parsed !== 'object' || Array.isArray(parsed)) {
     return raw;
   }
-  const out = tryShuffleMcqInObject(parsed as Record<string, unknown>);
+  const base = normalizeFoundationAiFields(parsed as Record<string, unknown>);
+  const out = tryShuffleMcqInObject(base);
   return JSON.stringify(out);
-}
-
-type FoundationBankRow = {
-  unit: string;
-  topic: string;
-  exam_style?: string | null;
-  difficulty?: string | null;
-  level?: number | null;
-  section?: string | null;
-  question: string;
-  options: unknown;
-  correct: string;
-  explanation?: string | null;
-  formula?: string | null;
-};
-
-function hashQuestionStem(text: string): string {
-  const n = text.replace(/\s+/g, ' ').trim().toLowerCase();
-  let h = 5381;
-  const cap = Math.min(n.length, 600);
-  for (let i = 0; i < cap; i++) {
-    h = (h * 33) ^ n.charCodeAt(i);
-  }
-  return (h >>> 0).toString(36);
-}
-
-const NAME_ALIASES: Record<string, string> = {
-  'Units & Measurements': 'Units and Measurements',
-  'Units and Measurements': 'Units & Measurements',
-  'Dual Nature, Atoms & Nuclei': 'Dual Nature, Atoms and Nuclei',
-  'Dual Nature, Atoms and Nuclei': 'Dual Nature, Atoms & Nuclei',
-};
-
-function expandNameVariants(s: string): string[] {
-  const t = s.trim();
-  const out = new Set<string>([t]);
-  const mapped = NAME_ALIASES[t];
-  if (mapped) out.add(mapped);
-  if (t.includes('&')) out.add(t.replace(/\s*&\s*/g, ' and '));
-  return [...out];
-}
-
-function loadLocalFoundationBank(): FoundationBankRow[] {
-  const paths = [
-    join(process.cwd(), 'api', 'foundationQuestionsBank.json'),
-    join(process.cwd(), 'foundationQuestionsBank.json'),
-  ];
-  for (const p of paths) {
-    try {
-      const raw = readFileSync(p, 'utf8');
-      const parsed = JSON.parse(raw) as FoundationBankRow[];
-      if (Array.isArray(parsed) && parsed.length > 0) return parsed;
-    } catch {
-      // try next path
-    }
-  }
-  return [];
-}
-
-async function tryPickFoundationBankQuestion(
-  unitName: string,
-  topic: string,
-  usedHashes: string[]
-): Promise<Record<string, unknown> | null> {
-  const unitSet = expandNameVariants(unitName);
-  const topicSet = expandNameVariants(topic);
-
-  let rows: FoundationBankRow[] = [];
-
-  const supabaseUrl = String(process.env.SUPABASE_URL || process.env.VITE_SUPABASE_URL || '').trim();
-  const supabaseKey = String(
-    process.env.SUPABASE_SERVICE_ROLE_KEY ||
-      process.env.SUPABASE_ANON_KEY ||
-      process.env.VITE_SUPABASE_ANON_KEY ||
-      ''
-  ).trim();
-
-  if (supabaseUrl && supabaseKey && /^https?:\/\//i.test(supabaseUrl)) {
-    try {
-      const supabase = createClient(supabaseUrl, supabaseKey);
-      const { data, error } = await supabase
-        .from('foundation_questions')
-        .select('*')
-        .eq('level', 1)
-        .eq('section', 'Ordinary Thinking')
-        .in('unit', unitSet)
-        .in('topic', topicSet);
-      if (!error && Array.isArray(data) && data.length > 0) {
-        rows = data as FoundationBankRow[];
-      }
-    } catch {
-      rows = [];
-    }
-  }
-
-  if (rows.length === 0) {
-    rows = loadLocalFoundationBank().filter(
-      (r) =>
-        Number(r.level) === 1 &&
-        String(r.section || '').trim() === 'Ordinary Thinking' &&
-        unitSet.includes(r.unit) &&
-        topicSet.includes(r.topic)
-    );
-  }
-
-  if (rows.length === 0) return null;
-
-  let candidates = rows.filter((r) => !usedHashes.includes(hashQuestionStem(r.question)));
-  if (candidates.length === 0) candidates = rows;
-
-  const row = candidates[secureRandomBelow(candidates.length)]!;
-  if (!Array.isArray(row.options) || row.options.length !== 4) return null;
-  const texts = row.options.map((x) => (typeof x === 'string' ? x.trim() : ''));
-  if (texts.some((t) => !t)) return null;
-
-  return {
-    unit: row.unit,
-    topic: row.topic,
-    question: row.question,
-    options: texts,
-    correct: String(row.correct ?? '').trim(),
-    explanation: row.explanation ?? '',
-    formula: row.formula ?? undefined,
-    difficulty: row.difficulty ?? 'Easy',
-    examStyle: row.exam_style ?? undefined,
-  };
 }
 
 function readServerApiKey(...envNames: string[]): string {
@@ -527,30 +490,30 @@ export default async function handler(req: HttpRequest, res: HttpResponse) {
     const unitName = readString(body.unitName);
     const topic = readString(body.topic);
     const usedQuestionHashes = readHashList(body.usedQuestionHashes);
+    const usedQuestionStems = readUsedQuestionsList(body.usedQuestions);
     const usedScenarios = readUsedScenariosList(body.usedScenarios);
     const legacyPrompt = readString(body.prompt);
-
-    if (unitName && topic) {
-      const fromBank = await tryPickFoundationBankQuestion(unitName, topic, usedQuestionHashes);
-      if (fromBank) {
-        const processed = postProcessModelJsonText(JSON.stringify(fromBank));
-        return res.status(200).json({ text: processed, source: 'bank' });
-      }
-    }
 
     if (!openaiKey && !anthropicKey) {
       return res.status(500).json({
         code: 'missing_config',
         error:
-          'No foundation bank match for this topic, and no LLM API key is configured on the server. Set OPENAI_API_KEY or VITE_OPENAI_API_KEY (preferred), or ANTHROPIC_API_KEY / VITE_ANTHROPIC_API_KEY, or apply the foundation_questions migration + Supabase env vars.',
+          'No LLM API key configured on the server. Set OPENAI_API_KEY or VITE_OPENAI_API_KEY, or ANTHROPIC_API_KEY or VITE_ANTHROPIC_API_KEY.',
       });
     }
 
     let userContent: string;
     let systemInstruction: string | undefined;
     if (unitName && topic) {
-      systemInstruction = FOUNDATION_SYSTEM_PROMPT;
-      userContent = buildFoundationUserPrompt(unitName, topic, usedQuestionHashes, usedScenarios);
+      systemInstruction = buildFreshFoundationLevel2SystemPrompt(
+        unitName,
+        topic,
+        usedQuestionStems,
+        usedQuestionHashes,
+        usedScenarios
+      );
+      userContent =
+        'Generate exactly ONE new Level 2 (Intermediate) MCQ now. Return only the JSON object defined in your instructions — no markdown, no code fences, no extra text.';
     } else if (legacyPrompt) {
       userContent = legacyPrompt;
     } else {

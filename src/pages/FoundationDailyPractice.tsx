@@ -27,6 +27,7 @@ import {
   resolveFoundationToDqeSubtopic,
   type DqeSubtopicRef,
 } from '../lib/foundationDqeDailyQuestions';
+import { fetchFoundationLiveMcq, hashQuestionStemClient } from '../lib/foundationLiveQuestionApi';
 
 function getUserInfoFromStorage() {
   return {
@@ -101,7 +102,10 @@ export function FoundationDailyPractice() {
   const location = useLocation();
   const signOut = useAuthStore((s) => s.signOut);
   const authUser = useAuthStore((s) => s.user);
-  const isHomeworkMode = new URLSearchParams(location.search).get('mode') === 'homework';
+  const practiceSearchParams = new URLSearchParams(location.search);
+  const isHomeworkMode = practiceSearchParams.get('mode') === 'homework';
+  /** When true, practice uses only `POST /api/foundation-question` (Level 2 + server shuffle). */
+  const useLiveFoundationLlm = practiceSearchParams.get('foundationLlm') === '1';
 
   const [activeUnit, setActiveUnit] = useState(FOUNDATION_SYLLABUS[0]);
   const [activeTopic, setActiveTopic] = useState(FOUNDATION_SYLLABUS[0].topics[0]);
@@ -132,6 +136,10 @@ export function FoundationDailyPractice() {
   /** Multi-syllabus engine (`dqe_question`) pool for matched Foundation subtopic. */
   const dqeDailyOrderedPoolRef = useRef<GeneratedQuestion[]>([]);
   const dqeDailyPoolCacheKeyRef = useRef('');
+  /** Session stems sent to `/api/foundation-question` as `usedQuestions` / hashes. */
+  const sessionLiveStemsRef = useRef<string[]>([]);
+  /** Session `scenario_type` labels for anti-repeat on the server. */
+  const sessionLiveScenariosRef = useRef<string[]>([]);
 
   const stored = getUserInfoFromStorage();
   const userInfo = {
@@ -197,6 +205,8 @@ export function FoundationDailyPractice() {
     apDailyPoolCacheKeyRef.current = '';
     dqeDailyOrderedPoolRef.current = [];
     dqeDailyPoolCacheKeyRef.current = '';
+    sessionLiveStemsRef.current = [];
+    sessionLiveScenariosRef.current = [];
     foundationDqeCatalogRef.current = null;
     setSessionActive(false);
     setSessionComplete(false);
@@ -216,6 +226,44 @@ export function FoundationDailyPractice() {
 
     try {
       const today = new Date().toISOString().split('T')[0];
+
+      async function pullLiveFoundationQuestion(): Promise<
+        { ok: true; question: GeneratedQuestion } | { ok: false; message: string }
+      > {
+        const outcome = await fetchFoundationLiveMcq({
+          unitName: activeUnit.name,
+          topic: activeTopic,
+          usedQuestions: [...sessionLiveStemsRef.current],
+          usedScenarios: [...sessionLiveScenariosRef.current],
+          usedQuestionHashes: sessionLiveStemsRef.current.map((s) => hashQuestionStemClient(s)),
+        });
+        if (!outcome.ok) {
+          return { ok: false, message: outcome.message };
+        }
+        const live = outcome.payload;
+        sessionLiveStemsRef.current.push(live.question.question.trim().slice(0, 400));
+        if (live.scenarioType) {
+          sessionLiveScenariosRef.current = [...sessionLiveScenariosRef.current, live.scenarioType].slice(-5);
+        }
+        return { ok: true, question: live.question as GeneratedQuestion };
+      }
+
+      if (useLiveFoundationLlm) {
+        const pulled = await pullLiveFoundationQuestion();
+        if (pulled.ok) {
+          setQuestion(pulled.question);
+          setLoading(false);
+          return;
+        }
+        setQuestion({
+          error: true,
+          kind: 'api',
+          apiMessage:
+            `Live Level-2 mode could not load a question. Server said: ${pulled.message}\n\nUse the deployed site (Vercel serves /api/foundation-question) or run vercel dev locally. Set OPENAI_API_KEY or ANTHROPIC_API_KEY on the server when the question bank has no row for this topic.`,
+        });
+        setLoading(false);
+        return;
+      }
 
       // Prefer multi-syllabus Foundation engine questions (`dqe_*`) when catalog + rows exist.
       try {
@@ -270,11 +318,17 @@ export function FoundationDailyPractice() {
       const catalog = apSubtopicCatalogRef.current;
       const resolved = resolveFoundationToApSubtopic(activeUnit.name, activeTopic, catalog);
       if (!resolved) {
+        const liveFallback = await pullLiveFoundationQuestion();
+        if (liveFallback.ok) {
+          setQuestion(liveFallback.question);
+          setLoading(false);
+          return;
+        }
         setQuestion({
           error: true,
           kind: 'no_ap',
           apiMessage:
-            'No multi-syllabus Foundation questions are available for this topic yet (run /admin/daily-question-engine), and we could not match it to an AP Physics 1 subtopic for the legacy pool.',
+            `No multi-syllabus Foundation questions are available for this topic yet (run /admin/daily-question-engine), and we could not match it to an AP Physics 1 subtopic for the legacy pool.\n\nLive generator (/api/foundation-question) was tried but failed: ${liveFallback.message}`,
         });
         setLoading(false);
         return;
@@ -303,13 +357,20 @@ export function FoundationDailyPractice() {
       const next = apDailyOrderedPoolRef.current.find((g) => g.sourceQuestionId && !usedIds.has(g.sourceQuestionId));
 
       if (!next) {
+        const liveWhenPoolEmpty = await pullLiveFoundationQuestion();
+        if (liveWhenPoolEmpty.ok) {
+          setQuestion(liveWhenPoolEmpty.question);
+          setLoading(false);
+          return;
+        }
+        const baseMsg =
+          alreadyShownToday.size > 0 && apDailyOrderedPoolRef.current.length > 0
+            ? 'You have finished today’s questions for this topic. If you use the Foundation engine, generate more at /admin/daily-question-engine; otherwise pick another topic or open AP Physics for more AP basics.'
+            : 'No questions found yet. Generate Foundation engine MCQs in /admin/daily-question-engine for this subtopic, or open AP Physics → Strengthen Your Basics to create today’s AP set.';
         setQuestion({
           error: true,
           kind: 'no_ap',
-          apiMessage:
-            alreadyShownToday.size > 0 && apDailyOrderedPoolRef.current.length > 0
-              ? 'You have finished today’s questions for this topic. If you use the Foundation engine, generate more at /admin/daily-question-engine; otherwise pick another topic or open AP Physics for more AP basics.'
-              : 'No questions found yet. Generate Foundation engine MCQs in /admin/daily-question-engine for this subtopic, or open AP Physics → Strengthen Your Basics to create today’s AP set.',
+          apiMessage: `${baseMsg}\n\nLive generator (/api/foundation-question) was tried but failed: ${liveWhenPoolEmpty.message}\n\nTip: open /foundation-dashboard/practice?foundationLlm=1 to practice with live Level-2 only. On Vercel, set OPENAI_API_KEY or ANTHROPIC_API_KEY for the API route.`,
         });
         setLoading(false);
         return;
@@ -370,6 +431,9 @@ export function FoundationDailyPractice() {
 
   function startPracticeSession() {
     sessionUsedApQuestionIdsRef.current = [];
+    sessionUsedDqeQuestionIdsRef.current = [];
+    sessionLiveStemsRef.current = [];
+    sessionLiveScenariosRef.current = [];
     apDailyOrderedPoolRef.current = [];
     apDailyPoolCacheKeyRef.current = '';
     setSessionActive(true);
@@ -596,6 +660,14 @@ export function FoundationDailyPractice() {
                 <p className="text-slate-400 text-sm mb-6">
                   Topic: <span className="text-cyan-300 font-semibold">{activeTopic}</span>
                 </p>
+                {useLiveFoundationLlm && (
+                  <p className="text-amber-200/90 text-xs mb-4 max-w-md mx-auto leading-relaxed border border-amber-600/40 bg-amber-950/25 rounded-lg px-3 py-2">
+                    This session uses the live Level-2 generator only (
+                    <code className="text-amber-100">/api/foundation-question</code>
+                    ). Use your deployed site or run <code className="text-amber-100">vercel dev</code> so that
+                    route exists locally.
+                  </p>
+                )}
                 <button
                   type="button"
                   onClick={startPracticeSession}
@@ -609,7 +681,11 @@ export function FoundationDailyPractice() {
             {loading && (
               <div className="bg-slate-800/50 backdrop-blur-sm border border-slate-700/50 rounded-2xl p-10 text-center">
                 <div className="text-5xl mb-4 animate-pulse">⚙️</div>
-                <p className="text-slate-400 text-sm">Loading a daily question (Foundation engine first, then AP pool)…</p>
+                <p className="text-slate-400 text-sm">
+                  {useLiveFoundationLlm
+                    ? 'Loading a Level-2 question from the live Foundation API…'
+                    : 'Loading a daily question (Foundation engine first, then AP pool)…'}
+                </p>
               </div>
             )}
 
