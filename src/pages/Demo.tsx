@@ -1,19 +1,39 @@
 import { DemoForm } from '../components/DemoForm';
 import { CourseNavigation } from '../components/CourseNavigation';
 import { CheckCircle, ArrowLeft, Play, Clock } from 'lucide-react';
-import { useNavigate, useLocation } from 'react-router-dom';
-import { useAuthStore } from '../store/authStore';
-
+import { useNavigate } from 'react-router-dom';
 export function Demo() {
   const navigate = useNavigate();
-  const location = useLocation();
-  const { user } = useAuthStore();
-  const selectedBatch = (location.state as any)?.selectedBatch || localStorage.getItem('selectedBatch');
-  
+
   const allBatches = [
-    { id: 'foundation-batch-1', name: 'Foundation Batch 1', timing: '7:00 PM IST', days: 'Commencing from 16th March, 2026', duration: '1 month' },
-    { id: 'foundation-batch-2', name: 'Foundation Batch 2', timing: '6:00 PM IST', days: 'Commencing from 6th April, 2026', duration: '1 month' },
-    { id: 'foundation-batch-3', name: 'Foundation Batch 3', timing: '7:00 PM IST', days: 'Commencing from 20th April, 2026', duration: '1 month' }
+    {
+      id: 'foundation-batch-1',
+      name: 'Physics Foundation 1',
+      timing: '7:00 PM IST',
+      days: 'Commencing from 16th March, 2026',
+      duration: '1 month',
+    },
+    {
+      id: 'foundation-batch-2',
+      name: 'Physics Foundation 2',
+      timing: '6:00 PM IST',
+      days: 'Commencing from 6th April, 2026',
+      duration: '1 month',
+    },
+    {
+      id: 'foundation-batch-3',
+      name: 'Physics Foundation 3',
+      timing: '7:00 PM IST',
+      days: 'Commencing from 20th April, 2026',
+      duration: '1 month',
+    },
+    {
+      id: 'maths-foundation-batch',
+      name: 'Maths Foundation',
+      timing: '5:00 PM IST',
+      days: 'Commencing 27 April 2026',
+      duration: '1 month',
+    },
   ];
 
   return (
@@ -68,11 +88,21 @@ export function Demo() {
           <div className="space-y-6">
             {/* Foundation course info - all 3 batches for students to compare timings */}
             <div className="bg-white rounded-2xl shadow-xl p-8">
-              <h3 className="text-xl font-bold text-gray-900 mb-4">Foundation Course – Choose Your Batch</h3>
-              <p className="text-gray-600 text-sm mb-4">Check timings below and register for the batch that suits you</p>
+              <h3 className="text-xl font-bold text-gray-900 mb-4">Foundation — Choose your batch</h3>
+              <p className="text-gray-600 text-sm mb-4">
+                Physics Foundation 1–3 and one Maths Foundation intake. Pick your batch on the Foundation page, then
+                register here.
+              </p>
               <div className="space-y-3">
                 {allBatches.map((batch) => (
-                  <div key={batch.id} className="p-4 bg-gradient-to-r from-blue-50 to-cyan-50 rounded-xl border border-blue-200">
+                  <div
+                    key={batch.id}
+                    className={`p-4 rounded-xl border ${
+                      batch.id.startsWith('maths-')
+                        ? 'bg-gradient-to-r from-violet-50 to-fuchsia-50 border-violet-200'
+                        : 'bg-gradient-to-r from-blue-50 to-cyan-50 border-blue-200'
+                    }`}
+                  >
                     <div className="flex items-center gap-2 mb-2">
                       <CheckCircle className="w-5 h-5 text-blue-600 flex-shrink-0" />
                       <h4 className="font-bold text-gray-900">{batch.name}</h4>

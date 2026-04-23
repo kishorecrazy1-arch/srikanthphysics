@@ -16,7 +16,7 @@ interface FoundationBatch {
 const PHYSICS_BATCHES: FoundationBatch[] = [
   {
     id: 'foundation-batch-1',
-    name: 'Physics Foundation Batch 1',
+    name: 'Physics Foundation 1',
     timing: '7:00 PM IST',
     days: 'Commencing from 16th March, 2026',
     duration: '1 month',
@@ -25,7 +25,7 @@ const PHYSICS_BATCHES: FoundationBatch[] = [
   },
   {
     id: 'foundation-batch-2',
-    name: 'Physics Foundation Batch 2',
+    name: 'Physics Foundation 2',
     timing: '6:00 PM IST',
     days: 'Commencing from 6th April, 2026',
     duration: '1 month',
@@ -34,7 +34,7 @@ const PHYSICS_BATCHES: FoundationBatch[] = [
   },
   {
     id: 'foundation-batch-3',
-    name: 'Physics Foundation Batch 3',
+    name: 'Physics Foundation 3',
     timing: '7:00 PM IST',
     days: 'Commencing from 20th April, 2026',
     duration: '1 month',
@@ -46,7 +46,7 @@ const PHYSICS_BATCHES: FoundationBatch[] = [
 const MATHS_BATCHES: FoundationBatch[] = [
   {
     id: 'maths-foundation-batch',
-    name: 'Maths Foundation Batch',
+    name: 'Maths Foundation',
     timing: '5:00 PM IST',
     days: 'Commencing 27 April 2026',
     duration: '1 month',

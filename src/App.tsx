@@ -29,6 +29,7 @@ import { APPhysicsMechanics } from './pages/APPhysicsMechanics';
 import { APPhysicsEM } from './pages/APPhysicsEM';
 import { APPhysics2 } from './pages/APPhysics2';
 import { FoundationCourse } from './pages/FoundationCourse';
+import { MathsFoundationCourse } from './pages/MathsFoundationCourse';
 import { FoundationSelection } from './pages/FoundationSelection';
 import { AdminGeneratePracticeBank } from './pages/AdminGeneratePracticeBank';
 import { MultiSyllabusDailyEngine } from './pages/admin/MultiSyllabusDailyEngine';
@@ -60,8 +61,9 @@ function App() {
       <Routes>
         <Route path="/" element={<SrikanthLanding />} />
         <Route path="/old-landing" element={<Landing />} />
-        <Route path="/course/:courseId" element={<CourseDetails />} />
         <Route path="/course/foundation" element={<FoundationCourse />} />
+        <Route path="/course/maths-foundation" element={<MathsFoundationCourse />} />
+        <Route path="/course/:courseId" element={<CourseDetails />} />
         <Route path="/course/ap-physics-2" element={<APPhysics2 />} />
         <Route path="/course/ap-physics-mechanics" element={<APPhysicsMechanics />} />
         <Route path="/course/ap-physics-em" element={<APPhysicsEM />} />

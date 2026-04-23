@@ -398,12 +398,12 @@ export function Signup() {
                   className="w-full px-4 py-3 border-2 border-gray-300 rounded-xl focus:ring-2 focus:ring-blue-500 focus:border-blue-500 transition-colors"
                 >
                   <optgroup label="Physics Foundation batches">
-                    <option value="foundation_batch_1">Physics Foundation Batch 1</option>
-                    <option value="foundation_batch_2">Physics Foundation Batch 2</option>
-                    <option value="foundation_batch_3">Physics Foundation Batch 3</option>
+                    <option value="foundation_batch_1">Physics Foundation 1</option>
+                    <option value="foundation_batch_2">Physics Foundation 2</option>
+                    <option value="foundation_batch_3">Physics Foundation 3</option>
                   </optgroup>
                   <optgroup label="Maths Foundation">
-                    <option value="maths_foundation_batch">Maths Foundation Batch (27 Apr · 5:00 PM IST)</option>
+                    <option value="maths_foundation_batch">Maths Foundation (27 Apr · 5:00 PM IST)</option>
                   </optgroup>
                   <optgroup label="Programs">
                     <option value="ap_physics_1">AP Physics 1</option>

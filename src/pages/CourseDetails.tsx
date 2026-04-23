@@ -13,6 +13,11 @@ export function CourseDetails() {
     return null;
   }
 
+  if (courseId === 'maths-foundation') {
+    navigate('/course/maths-foundation');
+    return null;
+  }
+
   if (courseId === 'igcse') {
     navigate('/course/igcse');
     return null;
