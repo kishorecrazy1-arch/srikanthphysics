@@ -36,7 +36,7 @@ const PHYSICS_BATCHES: FoundationBatch[] = [
     id: 'foundation-batch-3',
     name: 'Physics Foundation 3',
     timing: '7:00 PM IST',
-    days: 'Commencing from 20th April, 2026',
+    days: 'Commencing from 27th April, 2026',
     duration: '1 month',
     seats: 'Limited seats available',
     status: 'available',

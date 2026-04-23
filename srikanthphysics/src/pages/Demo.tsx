@@ -15,7 +15,7 @@ export function Demo() {
     const batchMap: Record<string, { name: string; timing: string; days: string }> = {
       'foundation-batch-1': { name: 'Foundation Batch 1', timing: '7:00 PM IST', days: 'Commencing from 16th March, 2026' },
       'foundation-batch-2': { name: 'Foundation Batch 2', timing: '6:00 PM IST', days: 'Commencing from 6th April, 2026' },
-      'foundation-batch-3': { name: 'Foundation Batch 3', timing: '7:00 PM IST', days: 'Commencing from 20th April, 2026' }
+      'foundation-batch-3': { name: 'Foundation Batch 3', timing: '7:00 PM IST', days: 'Commencing from 27th April, 2026' }
     };
     return batchMap[batchId] || null;
   };
@@ -64,7 +64,7 @@ export function Demo() {
                 </li>
                 <li className="flex items-start gap-2">
                   <CheckCircle className="w-5 h-5 text-blue-600 flex-shrink-0 mt-0.5" />
-                  <span>Batch 3: 7:00 PM IST (from 20th April 2026)</span>
+                  <span>Batch 3: 7:00 PM IST (from 27th April 2026)</span>
                 </li>
               </ul>
             </div>
