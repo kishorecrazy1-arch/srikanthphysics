@@ -62,9 +62,14 @@ export function Signup() {
       // Map localStorage course IDs to course types
       const courseTypeMap: Record<string, CourseType> = {
         foundation: 'foundation_batch_1',
+        'maths-foundation': 'maths_foundation_batch',
         'foundation-batch-1': 'foundation_batch_1',
         'foundation-batch-2': 'foundation_batch_2',
         'foundation-batch-3': 'foundation_batch_3',
+        'maths-foundation-batch': 'maths_foundation_batch',
+        'maths-foundation-batch-1': 'maths_foundation_batch',
+        'maths-foundation-batch-2': 'maths_foundation_batch',
+        'maths-foundation-batch-3': 'maths_foundation_batch',
         'ap-physics': 'ap_physics_1',
         'ap-physics-1': 'ap_physics_1',
         'ap-physics-2': 'ap_physics_2',
@@ -85,6 +90,10 @@ export function Signup() {
         'foundation-batch-1': 'foundation_batch_1',
         'foundation-batch-2': 'foundation_batch_2',
         'foundation-batch-3': 'foundation_batch_3',
+        'maths-foundation-batch': 'maths_foundation_batch',
+        'maths-foundation-batch-1': 'maths_foundation_batch',
+        'maths-foundation-batch-2': 'maths_foundation_batch',
+        'maths-foundation-batch-3': 'maths_foundation_batch',
       };
       const fromBatch = batchToCourse[selectedBatch];
       if (fromBatch) {
@@ -388,10 +397,13 @@ export function Signup() {
                   onChange={(e) => setFormData({ ...formData, courseType: e.target.value as CourseType })}
                   className="w-full px-4 py-3 border-2 border-gray-300 rounded-xl focus:ring-2 focus:ring-blue-500 focus:border-blue-500 transition-colors"
                 >
-                  <optgroup label="Foundation batches">
-                    <option value="foundation_batch_1">Foundation Batch 1</option>
-                    <option value="foundation_batch_2">Foundation Batch 2</option>
-                    <option value="foundation_batch_3">Foundation Batch 3</option>
+                  <optgroup label="Physics Foundation batches">
+                    <option value="foundation_batch_1">Physics Foundation Batch 1</option>
+                    <option value="foundation_batch_2">Physics Foundation Batch 2</option>
+                    <option value="foundation_batch_3">Physics Foundation Batch 3</option>
+                  </optgroup>
+                  <optgroup label="Maths Foundation">
+                    <option value="maths_foundation_batch">Maths Foundation Batch (27 Apr · 5:00 PM IST)</option>
                   </optgroup>
                   <optgroup label="Programs">
                     <option value="ap_physics_1">AP Physics 1</option>

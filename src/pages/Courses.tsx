@@ -6,7 +6,20 @@ export function Courses() {
   const navigate = useNavigate();
 
   const courses = [
-    { id: 'foundation', label: 'Foundation Course', icon: '🏗️', description: 'Complete physics fundamentals from basics to advanced topics - 13 comprehensive units', color: 'from-orange-600 to-amber-500' },
+    {
+      id: 'foundation',
+      label: 'Physics Foundation',
+      icon: '🏗️',
+      description: 'Physics fundamentals — 13 units. Pick a batch, same sign-in and automation as other courses.',
+      color: 'from-orange-600 to-amber-500',
+    },
+    {
+      id: 'maths-foundation',
+      label: 'Maths Foundation',
+      icon: '📐',
+      description: 'Single Maths Foundation batch — 27 Apr 2026, 5:00 PM IST. Same registration, sign-in, and n8n workflow as physics foundation.',
+      color: 'from-violet-600 to-fuchsia-500',
+    },
     { id: 'ap-physics', label: 'AP Physics 1', icon: '⚡', description: 'Master algebra-based mechanics & waves for college credit', color: 'from-blue-600 to-cyan-500' },
     { id: 'ap-physics-2', label: 'AP Physics 2', icon: '🔬', description: 'Advanced algebra-based physics covering thermodynamics, fluids, and more', color: 'from-purple-600 to-pink-500' },
     { id: 'ap-physics-mechanics', label: 'AP Physics C: Mechanics', icon: '📐', description: 'Calculus-based mechanics for engineering-focused students', color: 'from-indigo-600 to-purple-500' },
@@ -24,6 +37,11 @@ export function Courses() {
   ];
 
   const handleCourseClick = (courseId: string) => {
+    if (courseId === 'maths-foundation') {
+      localStorage.setItem('selectedCourse', 'maths-foundation');
+      navigate('/foundation');
+      return;
+    }
     navigate(`/course/${courseId}`);
   };
 

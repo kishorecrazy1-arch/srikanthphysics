@@ -20,11 +20,12 @@ export function CourseNavigation() {
     { id: 'about', label: 'About', icon: Info, path: '#about' },
     { id: 'success', label: 'Success Stories', icon: Sparkles, path: '#success' },
     { id: 'support', label: 'Support', icon: HeadphonesIcon, path: '#support' },
-    { id: 'foundation', label: 'Foundation Course', icon: GraduationCap, path: '/foundation', onClick: () => navigate('/foundation') }
+    { id: 'foundation', label: 'Foundation (Physics & Maths)', icon: GraduationCap, path: '/foundation', onClick: () => navigate('/foundation') }
   ];
 
   const courses = [
-    { id: 'foundation', label: 'Foundation Course', icon: '🏗️' },
+    { id: 'foundation', label: 'Physics & Maths Foundation', icon: '🏗️' },
+    { id: 'maths-foundation', label: 'Maths Foundation', icon: '📐' },
     { id: 'ap-physics', label: 'AP Physics 1', icon: '⚡' },
     { id: 'ap-physics-2', label: 'AP Physics 2', icon: '🔬' },
     { id: 'ap-physics-mechanics', label: 'AP Physics C: Mechanics', icon: '📐' },
@@ -50,12 +51,11 @@ export function CourseNavigation() {
     setShowCoursesDropdown(false);
     localStorage.setItem('selectedCourse', courseId);
     
-    // Foundation Course goes to batch selection page
-    if (courseId === 'foundation') {
+    if (courseId === 'foundation' || courseId === 'maths-foundation') {
       navigate('/foundation');
-    } else {
-      navigate(`/course/${courseId}`);
+      return;
     }
+    navigate(`/course/${courseId}`);
   };
 
   return (

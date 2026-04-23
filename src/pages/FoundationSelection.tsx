@@ -3,7 +3,6 @@ import { useNavigate } from 'react-router-dom';
 import { CourseNavigation } from '../components/CourseNavigation';
 import { Clock, Calendar, CheckCircle, ArrowRight } from 'lucide-react';
 
-// Foundation batch selection – 1 month duration
 interface FoundationBatch {
   id: string;
   name: string;
@@ -14,39 +13,51 @@ interface FoundationBatch {
   status: 'available' | 'full' | 'upcoming';
 }
 
+const PHYSICS_BATCHES: FoundationBatch[] = [
+  {
+    id: 'foundation-batch-1',
+    name: 'Physics Foundation Batch 1',
+    timing: '7:00 PM IST',
+    days: 'Commencing from 16th March, 2026',
+    duration: '1 month',
+    seats: 'Limited seats available',
+    status: 'available',
+  },
+  {
+    id: 'foundation-batch-2',
+    name: 'Physics Foundation Batch 2',
+    timing: '6:00 PM IST',
+    days: 'Commencing from 6th April, 2026',
+    duration: '1 month',
+    seats: 'Limited seats available',
+    status: 'available',
+  },
+  {
+    id: 'foundation-batch-3',
+    name: 'Physics Foundation Batch 3',
+    timing: '7:00 PM IST',
+    days: 'Commencing from 20th April, 2026',
+    duration: '1 month',
+    seats: 'Limited seats available',
+    status: 'available',
+  },
+];
+
+const MATHS_BATCHES: FoundationBatch[] = [
+  {
+    id: 'maths-foundation-batch',
+    name: 'Maths Foundation Batch',
+    timing: '5:00 PM IST',
+    days: 'Commencing 27 April 2026',
+    duration: '1 month',
+    seats: 'Limited seats available',
+    status: 'available',
+  },
+];
+
 export function FoundationSelection() {
   const navigate = useNavigate();
   const [selectedBatch, setSelectedBatch] = useState<string | null>(null);
-
-  const batches: FoundationBatch[] = [
-    {
-      id: 'foundation-batch-1',
-      name: 'Foundation Batch 1',
-      timing: '7:00 PM IST',
-      days: 'Commencing from 16th March, 2026',
-      duration: '1 month',
-      seats: 'Limited seats available',
-      status: 'available'
-    },
-    {
-      id: 'foundation-batch-2',
-      name: 'Foundation Batch 2',
-      timing: '6:00 PM IST',
-      days: 'Commencing from 6th April, 2026',
-      duration: '1 month',
-      seats: 'Limited seats available',
-      status: 'available'
-    },
-    {
-      id: 'foundation-batch-3',
-      name: 'Foundation Batch 3',
-      timing: '7:00 PM IST',
-      days: 'Commencing from 20th April, 2026',
-      duration: '1 month',
-      seats: 'Limited seats available',
-      status: 'available'
-    }
-  ];
 
   const handleBatchSelect = (batchId: string) => {
     setSelectedBatch(batchId);
@@ -59,76 +70,90 @@ export function FoundationSelection() {
     }
   };
 
+  function renderBatchGrid(batches: FoundationBatch[]) {
+    return (
+      <div className="grid md:grid-cols-3 gap-6 mb-8">
+        {batches.map((batch) => (
+          <div
+            key={batch.id}
+            onClick={() => handleBatchSelect(batch.id)}
+            className={`bg-white rounded-2xl shadow-lg p-6 cursor-pointer transition-all border-2 ${
+              selectedBatch === batch.id
+                ? 'border-blue-600 shadow-xl scale-105'
+                : 'border-gray-200 hover:border-blue-300 hover:shadow-xl'
+            }`}
+          >
+            <div className="flex items-center justify-between mb-4">
+              <h3 className="text-xl font-bold text-gray-900 leading-tight">{batch.name}</h3>
+              {selectedBatch === batch.id && (
+                <div className="w-8 h-8 bg-blue-600 rounded-full flex items-center justify-center shrink-0">
+                  <CheckCircle className="w-5 h-5 text-white" />
+                </div>
+              )}
+            </div>
+
+            <div className="space-y-3">
+              <div className="flex items-center gap-2 text-gray-700">
+                <Clock className="w-5 h-5 text-blue-600 shrink-0" />
+                <span className="font-semibold">{batch.timing}</span>
+              </div>
+
+              <div className="flex items-center gap-2 text-gray-600">
+                <Calendar className="w-5 h-5 text-blue-600 shrink-0" />
+                <span>{batch.days}</span>
+              </div>
+
+              <div className="pt-3 border-t border-gray-200">
+                <p className="text-sm text-gray-600 mb-1">
+                  <span className="font-semibold">Duration:</span> {batch.duration}
+                </p>
+                <p className="text-sm text-blue-600 font-semibold">{batch.seats}</p>
+              </div>
+            </div>
+
+            {batch.status === 'full' && (
+              <div className="mt-4 px-3 py-2 bg-red-100 text-red-700 rounded-lg text-sm font-semibold text-center">
+                Batch Full
+              </div>
+            )}
+            {batch.status === 'upcoming' && (
+              <div className="mt-4 px-3 py-2 bg-yellow-100 text-yellow-700 rounded-lg text-sm font-semibold text-center">
+                Coming Soon
+              </div>
+            )}
+          </div>
+        ))}
+      </div>
+    );
+  }
+
   return (
     <div className="min-h-screen bg-gradient-to-br from-blue-50 via-white to-cyan-50">
       <CourseNavigation />
 
       <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-12">
-        {/* Header */}
         <div className="text-center mb-12">
-          <h1 className="text-4xl md:text-5xl font-bold text-gray-900 mb-4">
-            Foundation Course - Select Your Batch
-          </h1>
+          <h1 className="text-4xl md:text-5xl font-bold text-gray-900 mb-4">Foundation — Select your batch</h1>
           <p className="text-xl text-gray-600 max-w-2xl mx-auto">
-            Choose the batch timing that works best for you
+            Physics and Maths foundation streams use the same registration, sign-in, and automation as other programs.
           </p>
         </div>
 
-        {/* Batch Selection Cards */}
-        <div className="grid md:grid-cols-3 gap-6 mb-8">
-          {batches.map((batch) => (
-            <div
-              key={batch.id}
-              onClick={() => handleBatchSelect(batch.id)}
-              className={`bg-white rounded-2xl shadow-lg p-6 cursor-pointer transition-all border-2 ${
-                selectedBatch === batch.id
-                  ? 'border-blue-600 shadow-xl scale-105'
-                  : 'border-gray-200 hover:border-blue-300 hover:shadow-xl'
-              }`}
-            >
-              <div className="flex items-center justify-between mb-4">
-                <h3 className="text-2xl font-bold text-gray-900">{batch.name}</h3>
-                {selectedBatch === batch.id && (
-                  <div className="w-8 h-8 bg-blue-600 rounded-full flex items-center justify-center">
-                    <CheckCircle className="w-5 h-5 text-white" />
-                  </div>
-                )}
-              </div>
+        <section className="mb-14">
+          <h2 className="text-2xl font-bold text-gray-900 mb-2">Physics Foundation</h2>
+          <p className="text-gray-600 mb-6 max-w-3xl">Choose a physics batch timing. Same dashboard and practice tools after you enroll.</p>
+          {renderBatchGrid(PHYSICS_BATCHES)}
+        </section>
 
-              <div className="space-y-3">
-                <div className="flex items-center gap-2 text-gray-700">
-                  <Clock className="w-5 h-5 text-blue-600" />
-                  <span className="font-semibold">{batch.timing}</span>
-                </div>
+        <section className="mb-10">
+          <h2 className="text-2xl font-bold text-gray-900 mb-2">Maths Foundation</h2>
+          <p className="text-gray-600 mb-6 max-w-3xl">
+            One intake: <span className="font-semibold text-gray-800">27 April 2026 · 5:00 PM IST</span>. Same registration and
+            sign-in workflow as physics foundation.
+          </p>
+          <div className="max-w-xl mx-auto md:mx-0">{renderBatchGrid(MATHS_BATCHES)}</div>
+        </section>
 
-                <div className="flex items-center gap-2 text-gray-600">
-                  <Calendar className="w-5 h-5 text-blue-600" />
-                  <span>{batch.days}</span>
-                </div>
-
-                <div className="pt-3 border-t border-gray-200">
-                  <p className="text-sm text-gray-600 mb-1">
-                    <span className="font-semibold">Duration:</span> {batch.duration}
-                  </p>
-                  <p className="text-sm text-blue-600 font-semibold">{batch.seats}</p>
-                </div>
-              </div>
-
-              {batch.status === 'full' && (
-                <div className="mt-4 px-3 py-2 bg-red-100 text-red-700 rounded-lg text-sm font-semibold text-center">
-                  Batch Full
-                </div>
-              )}
-              {batch.status === 'upcoming' && (
-                <div className="mt-4 px-3 py-2 bg-yellow-100 text-yellow-700 rounded-lg text-sm font-semibold text-center">
-                  Coming Soon
-                </div>
-              )}
-            </div>
-          ))}
-        </div>
-
-        {/* Continue Button */}
         <div className="text-center">
           <button
             onClick={handleContinue}
@@ -138,9 +163,7 @@ export function FoundationSelection() {
             Continue to Registration
             <ArrowRight className="w-5 h-5" />
           </button>
-          {!selectedBatch && (
-            <p className="text-sm text-gray-500 mt-2">Please select a batch to continue</p>
-          )}
+          {!selectedBatch && <p className="text-sm text-gray-500 mt-2">Please select one batch to continue</p>}
         </div>
       </div>
     </div>

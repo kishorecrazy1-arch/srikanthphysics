@@ -26,9 +26,10 @@ export function DemoForm({ showCalendly = false }: DemoFormProps) {
 
   function getBatchLabel(batchId: string): string {
     const batchMap: Record<string, string> = {
-      'foundation-batch-1': 'Foundation Batch 1',
-      'foundation-batch-2': 'Foundation Batch 2',
-      'foundation-batch-3': 'Foundation Batch 3'
+      'foundation-batch-1': 'Physics Foundation Batch 1',
+      'foundation-batch-2': 'Physics Foundation Batch 2',
+      'foundation-batch-3': 'Physics Foundation Batch 3',
+      'maths-foundation-batch': 'Maths Foundation Batch',
     };
     return batchMap[batchId] || '';
   }
@@ -82,14 +83,22 @@ export function DemoForm({ showCalendly = false }: DemoFormProps) {
         // Check if this is a foundation batch registration
         // Check both selectedBatch and board field
         const batchId = selectedBatch || (validation.data.board?.includes('Foundation Batch') ? validation.data.board : null);
-        const isFoundationBatch = batchId && (
-          batchId === 'foundation-batch-1' ||
-          batchId === 'foundation-batch-2' ||
-          batchId === 'foundation-batch-3' ||
-          validation.data.board === 'Foundation Batch 1' ||
-          validation.data.board === 'Foundation Batch 2' ||
-          validation.data.board === 'Foundation Batch 3'
-        );
+        const foundationBoards = [
+          'Physics Foundation Batch 1',
+          'Physics Foundation Batch 2',
+          'Physics Foundation Batch 3',
+          'Maths Foundation Batch',
+          'Foundation Batch 1',
+          'Foundation Batch 2',
+          'Foundation Batch 3',
+        ];
+        const isFoundationBatch =
+          batchId &&
+          (batchId === 'foundation-batch-1' ||
+            batchId === 'foundation-batch-2' ||
+            batchId === 'foundation-batch-3' ||
+            batchId === 'maths-foundation-batch' ||
+            foundationBoards.includes(String(validation.data.board || '')));
 
         if (isFoundationBatch) {
           // Determine the batch ID and name
@@ -97,10 +106,16 @@ export function DemoForm({ showCalendly = false }: DemoFormProps) {
           let finalBatchName = validation.data.board || '';
           
           if (!finalBatchId && validation.data.board) {
-            // Extract batch ID from board name
-            if (validation.data.board === 'Foundation Batch 1') finalBatchId = 'foundation-batch-1';
-            else if (validation.data.board === 'Foundation Batch 2') finalBatchId = 'foundation-batch-2';
-            else if (validation.data.board === 'Foundation Batch 3') finalBatchId = 'foundation-batch-3';
+            const boardToId: Record<string, string> = {
+              'Foundation Batch 1': 'foundation-batch-1',
+              'Foundation Batch 2': 'foundation-batch-2',
+              'Foundation Batch 3': 'foundation-batch-3',
+              'Physics Foundation Batch 1': 'foundation-batch-1',
+              'Physics Foundation Batch 2': 'foundation-batch-2',
+              'Physics Foundation Batch 3': 'foundation-batch-3',
+              'Maths Foundation Batch': 'maths-foundation-batch',
+            };
+            finalBatchId = boardToId[validation.data.board] ?? finalBatchId;
           }
           
           if (finalBatchId) {
@@ -254,9 +269,10 @@ export function DemoForm({ showCalendly = false }: DemoFormProps) {
             ) : (
               // Otherwise show all courses
               <>
-                <option value="Foundation Batch 1">Foundation Batch 1</option>
-                <option value="Foundation Batch 2">Foundation Batch 2</option>
-                <option value="Foundation Batch 3">Foundation Batch 3</option>
+                <option value="Physics Foundation Batch 1">Physics Foundation Batch 1</option>
+                <option value="Physics Foundation Batch 2">Physics Foundation Batch 2</option>
+                <option value="Physics Foundation Batch 3">Physics Foundation Batch 3</option>
+                <option value="Maths Foundation Batch">Maths Foundation Batch</option>
                 <option value="AP Physics">AP Physics</option>
                 <option value="AP Chemistry">AP Chemistry</option>
                 <option value="AP Mathematics">AP Mathematics</option>
