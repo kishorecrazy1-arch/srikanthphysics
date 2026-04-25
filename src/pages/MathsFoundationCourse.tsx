@@ -20,7 +20,7 @@ import {
 import { CourseNavigation } from '../components/CourseNavigation';
 
 /** Syllabus PDF (static asset) */
-const MATHS_SYLLABUS_PDF = '/srikanth.pdf';
+const MATHS_SYLLABUS_PDF = '/maths%20syllabus.pdf';
 
 export function MathsFoundationCourse() {
   const navigate = useNavigate();
@@ -348,7 +348,7 @@ export function MathsFoundationCourse() {
               onClick={() => {
                 const link = document.createElement('a');
                 link.href = MATHS_SYLLABUS_PDF;
-                link.download = 'Maths-Foundation-Syllabus.pdf';
+                link.download = 'maths syllabus.pdf';
                 document.body.appendChild(link);
                 link.click();
                 document.body.removeChild(link);
