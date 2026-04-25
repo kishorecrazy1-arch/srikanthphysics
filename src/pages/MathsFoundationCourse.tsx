@@ -58,7 +58,7 @@ export function MathsFoundationCourse() {
     { label: 'Success rate', value: '95%', icon: <TrendingUp />, color: 'text-emerald-400' },
   ];
 
-  /** Starter outline — replace topics/subtopics when your full syllabus is ready. */
+  /** Maths syllabus mapped from uploaded PDF in public/maths syllabus.pdf */
   const syllabusData: Record<
     string,
     {
@@ -70,90 +70,140 @@ export function MathsFoundationCourse() {
       subtopics: Record<string, string[]>;
     }
   > = {
-    'Number systems & sets': {
-      color: 'from-violet-500 to-purple-500',
-      icon: <Grid3x3 className="w-8 h-8" />,
-      iconBg: 'bg-violet-600',
-      duration: '6 hours',
-      mainTopics: [
-        { name: 'Real numbers', icon: '🔢' },
-        { name: 'Sets & logic', icon: '📐' },
-      ],
-      subtopics: {
-        'Real numbers': ['Rational & irrational numbers', 'Intervals', 'Absolute value', 'Approximation & errors'],
-        'Sets & logic': ['Set notation', 'Union & intersection', 'Venn diagrams', 'Basic proof ideas'],
-      },
-    },
-    Algebra: {
+    'Quadratic Equations': {
       color: 'from-fuchsia-500 to-pink-500',
       icon: <Sigma className="w-8 h-8" />,
       iconBg: 'bg-fuchsia-600',
       duration: '12 hours',
       mainTopics: [
-        { name: 'Expressions & equations', icon: '📝' },
-        { name: 'Quadratics', icon: '📈' },
-        { name: 'Sequences', icon: '🔁' },
+        { name: 'Polynomials & roots', icon: '📝' },
+        { name: 'Root behavior', icon: '📈' },
       ],
       subtopics: {
-        'Expressions & equations': ['Linear equations', 'Systems', 'Inequalities', 'Polynomial operations'],
-        Quadratics: ['Factoring', 'Completing the square', 'Roots & discriminant', 'Graphs of parabolas'],
-        Sequences: ['AP & GP', 'Summation', 'Recurrence intuition', 'Applications'],
+        'Polynomials & roots': [
+          'Polynomials',
+          'Relations between roots and coefficient',
+          'Formation of quadratic equations with given roots',
+          'Nature of roots',
+        ],
+        'Root behavior': ['Transformation of equations', 'Common roots', 'Analysis of graph of quadratic', 'Location of roots'],
       },
     },
-    Trigonometry: {
+    'Sequence and Series': {
       color: 'from-purple-500 to-indigo-500',
-      icon: <Shapes className="w-8 h-8" />,
+      icon: <LineChart className="w-8 h-8" />,
       iconBg: 'bg-indigo-600',
       duration: '8 hours',
       mainTopics: [
-        { name: 'Ratios & identities', icon: '📐' },
-        { name: 'Equations', icon: '⚖️' },
+        { name: 'Progressions', icon: '🔁' },
+        { name: 'Means & special series', icon: '📊' },
       ],
       subtopics: {
-        'Ratios & identities': ['Unit circle', 'sin/cos/tan', 'Pythagorean identity', 'Angle addition'],
-        Equations: ['Solving trig equations', 'Inverse functions', 'Law of sines/cosines', 'Applications'],
+        Progressions: ['Nth term of a sequence', 'Arithmetic progression', 'Sum of terms in A.P.', 'Geometric progression'],
+        'Means & special series': ['Arithmetic mean', 'Sum of terms in G.P.', 'Geometric mean', 'Arithmetico-geometric & harmonic progression'],
       },
     },
-    'Coordinate geometry': {
+    Trigonometry: {
+      color: 'from-violet-500 to-purple-500',
+      icon: <Shapes className="w-8 h-8" />,
+      iconBg: 'bg-violet-600',
+      duration: '6 hours',
+      mainTopics: [
+        { name: 'Angles & polygons', icon: '📐' },
+        { name: 'Trig functions', icon: '⚖️' },
+      ],
+      subtopics: {
+        'Angles & polygons': ['System of measuring an angle', 'Regular polygon'],
+        'Trig functions': ['Trigonometric functions', 'Compound angles formulae'],
+      },
+    },
+    Sets: {
       color: 'from-cyan-500 to-blue-500',
-      icon: <LineChart className="w-8 h-8" />,
+      icon: <Grid3x3 className="w-8 h-8" />,
       iconBg: 'bg-cyan-600',
+      duration: '5 hours',
+      mainTopics: [
+        { name: 'Set basics', icon: '📦' },
+        { name: 'Set operations', icon: '🧩' },
+      ],
+      subtopics: {
+        'Set basics': ['Definition and description of sets', 'Types of sets', 'Subset & power set'],
+        'Set operations': ['Operation on sets', 'Cardinality based problems'],
+      },
+    },
+    'Relations & Functions': {
+      color: 'from-blue-500 to-indigo-500',
+      icon: <TrendingUp className="w-8 h-8" />,
+      iconBg: 'bg-blue-600',
       duration: '8 hours',
       mainTopics: [
-        { name: 'Lines & circles', icon: '📍' },
-        { name: 'Conics intro', icon: '🥚' },
+        { name: 'Relations', icon: '🔗' },
+        { name: 'Functions', icon: '📈' },
       ],
       subtopics: {
-        'Lines & circles': ['Distance & midpoint', 'Slope', 'Parallel/perpendicular', 'Circle equations'],
-        'Conics intro': ['Parabola', 'Ellipse', 'Hyperbola', 'Standard forms'],
+        Relations: ['Cartesian product of sets', 'Relation', 'Inverse relation'],
+        Functions: ['Definition & associated terms of a function', 'Classification of function', 'Domain of a function', 'Modulus and greatest integer functions'],
       },
     },
-    'Calculus foundations': {
+    Lines: {
       color: 'from-rose-500 to-orange-500',
-      icon: <TrendingUp className="w-8 h-8" />,
+      icon: <LineChart className="w-8 h-8" />,
       iconBg: 'bg-rose-600',
-      duration: '10 hours',
+      duration: '8 hours',
       mainTopics: [
-        { name: 'Limits', icon: '➡️' },
-        { name: 'Derivatives', icon: '📉' },
+        { name: 'Coordinate geometry basics', icon: '📍' },
+        { name: 'Line equations', icon: '📏' },
       ],
       subtopics: {
-        Limits: ['Intuitive limit', 'Continuity', 'Standard limits', 'Sandwich theorem'],
-        Derivatives: ['Rate of change', 'Rules (sum, product, quotient)', 'Chain rule intro', 'Max/min problems'],
+        'Coordinate geometry basics': [
+          'Cartesian system of rectangular coordinates in a plane',
+          'Section formula',
+          'Centres of a triangle',
+          'Area of a triangle and collinearity',
+        ],
+        'Line equations': ['Line equation', 'The slope of a line'],
       },
     },
-    'Probability & statistics': {
+    Probability: {
       color: 'from-emerald-500 to-teal-500',
-      icon: <Grid3x3 className="w-8 h-8" />,
+      icon: <Shapes className="w-8 h-8" />,
       iconBg: 'bg-teal-600',
       duration: '6 hours',
       mainTopics: [
-        { name: 'Data & charts', icon: '📊' },
-        { name: 'Probability', icon: '🎲' },
+        { name: 'Probability basics', icon: '🎲' },
+        { name: 'Combinatorics tools', icon: '🧮' },
       ],
       subtopics: {
-        'Data & charts': ['Mean, median, mode', 'Variance', 'Histograms', 'Scatter plots'],
-        Probability: ['Sample space', 'Events', 'Conditional probability', 'Bayes intro'],
+        'Probability basics': ['Probability of an event', 'Probability of non occurrence of an event', 'Classification of pack of cards'],
+        'Combinatorics tools': ['Factorial notation', 'nCr and nPr notation', 'Problems based on nCr and nPr'],
+      },
+    },
+    Logarithms: {
+      color: 'from-lime-500 to-green-500',
+      icon: <BookOpen className="w-8 h-8" />,
+      iconBg: 'bg-lime-600',
+      duration: '4 hours',
+      mainTopics: [
+        { name: 'Log basics', icon: '📘' },
+        { name: 'Log rules', icon: '➕' },
+      ],
+      subtopics: {
+        'Log basics': ['Conversion of exponential form into logarithmic form'],
+        'Log rules': ['Addition and subtraction rules of logarithm'],
+      },
+    },
+    Statistics: {
+      color: 'from-amber-500 to-yellow-500',
+      icon: <Grid3x3 className="w-8 h-8" />,
+      iconBg: 'bg-amber-600',
+      duration: '5 hours',
+      mainTopics: [
+        { name: 'Data types & central tendency', icon: '📊' },
+        { name: 'Dispersion', icon: '📉' },
+      ],
+      subtopics: {
+        'Data types & central tendency': ['Types of Data', 'Mean of grouped data', 'Mean, Mode and Median'],
+        Dispersion: ['Standard Deviation and Variance'],
       },
     },
   };
