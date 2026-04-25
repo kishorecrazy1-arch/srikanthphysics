@@ -54,8 +54,7 @@ export function MathsFoundationCourse() {
 
   const stats = [
     { label: 'Strong numeracy', value: '100%', icon: <Star />, color: 'text-fuchsia-400' },
-    { label: 'Program length', value: '50+ hrs', icon: <Clock />, color: 'text-violet-400' },
-    { label: 'Students', value: '5K+', icon: <Users />, color: 'text-purple-400' },
+    { label: 'Program length', value: '1 month', icon: <Clock />, color: 'text-violet-400' },
     { label: 'Success rate', value: '95%', icon: <TrendingUp />, color: 'text-emerald-400' },
   ];
 
@@ -209,19 +208,18 @@ export function MathsFoundationCourse() {
             <h1 className="text-5xl md:text-6xl font-bold bg-gradient-to-r from-fuchsia-300 via-violet-300 to-purple-300 bg-clip-text text-transparent">
               Maths Foundation
             </h1>
-            <p className="text-xl text-slate-300">Class 9–11 · IIT JEE / NEET numeracy track</p>
+            <p className="text-xl text-slate-300">Please give some time to change the today it self.</p>
             <p className="text-lg text-slate-400 max-w-3xl mx-auto">
-              Same registration flow as physics foundation. Download the full syllabus PDF using the button in the section
-              below.
+              Suitable for all grades. IITJEE/ CBSE/ ICSE / CBSE / AQA / IB / ADVANCED PLACEMENT
             </p>
             <div className="flex flex-wrap justify-center gap-4 pt-6">
               <div className="flex items-center gap-2 px-6 py-3 bg-violet-500/20 rounded-xl border border-violet-500/30">
                 <BookOpen className="w-5 h-5 text-violet-300" />
-                <span className="text-violet-200">6 core units (expandable)</span>
+                <span className="text-violet-200">9 core units (expandable)</span>
               </div>
               <div className="flex items-center gap-2 px-6 py-3 bg-fuchsia-500/20 rounded-xl border border-fuchsia-500/30">
                 <Clock className="w-5 h-5 text-fuchsia-300" />
-                <span className="text-fuchsia-200">50+ hours</span>
+                <span className="text-fuchsia-200">1 month</span>
               </div>
             </div>
           </div>
