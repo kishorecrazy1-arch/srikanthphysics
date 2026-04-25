@@ -82,7 +82,7 @@ export async function submitDemoLead(
 
   const n8nUrl = String(import.meta.env.VITE_N8N_WEBHOOK_URL ?? '').trim();
 
-  await Promise.allSettled([
+  const [n8nOutcome, directOutcome] = await Promise.allSettled([
     (async (): Promise<void> => {
       if (!n8nUrl) {
         throw new Error('n8n_webhook_url_missing');
@@ -105,8 +105,26 @@ export async function submitDemoLead(
       if (!response.ok) {
         throw new Error(`save-registration HTTP ${String(response.status)}`);
       }
+      // Endpoint can return 200 with partial failure details.
+      const result = (await response.json()) as Partial<{ ok: boolean; sheet: boolean; email: boolean }>;
+      if (result.ok === true && (result.sheet === false || result.email === false)) {
+        throw new Error(
+          `save-registration partial failure (sheet=${String(result.sheet)}, email=${String(result.email)})`,
+        );
+      }
     })(),
   ]);
+
+  if (n8nOutcome.status === 'rejected') {
+    console.error('demo submit: n8n failed', n8nOutcome.reason);
+  }
+  if (directOutcome.status === 'rejected') {
+    console.error('demo submit: direct api failed', directOutcome.reason);
+  }
+
+  if (n8nOutcome.status === 'rejected' && directOutcome.status === 'rejected') {
+    return { success: false, error: 'Both registration channels failed. Please retry in 1 minute.' };
+  }
 
   return { success: true };
 }

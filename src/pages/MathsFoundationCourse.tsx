@@ -19,7 +19,7 @@ import {
 } from 'lucide-react';
 import { CourseNavigation } from '../components/CourseNavigation';
 
-/** Syllabus PDF served from `public/srikanth.pdf` */
+/** Syllabus PDF (static asset) */
 const MATHS_SYLLABUS_PDF = '/srikanth.pdf';
 
 export function MathsFoundationCourse() {
@@ -211,8 +211,8 @@ export function MathsFoundationCourse() {
             </h1>
             <p className="text-xl text-slate-300">Class 9–11 · IIT JEE / NEET numeracy track</p>
             <p className="text-lg text-slate-400 max-w-3xl mx-auto">
-              Same registration flow as physics foundation. The downloadable syllabus uses{' '}
-              <code className="text-fuchsia-200 text-sm">public/srikanth.pdf</code>.
+              Same registration flow as physics foundation. Download the full syllabus PDF using the button in the section
+              below.
             </p>
             <div className="flex flex-wrap justify-center gap-4 pt-6">
               <div className="flex items-center gap-2 px-6 py-3 bg-violet-500/20 rounded-xl border border-violet-500/30">
@@ -359,9 +359,6 @@ export function MathsFoundationCourse() {
               Download syllabus PDF
             </button>
           </div>
-          <p className="text-sm text-fuchsia-100/90 mt-6 max-w-xl mx-auto">
-            PDF file: <span className="font-mono font-semibold">public/srikanth.pdf</span> (replace that file to update the download).
-          </p>
         </div>
       </div>
     </div>

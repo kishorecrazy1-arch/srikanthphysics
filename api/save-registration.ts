@@ -212,10 +212,10 @@ export default async function handler(req: HttpRequest, res: HttpResponse): Prom
   ]);
 
   if (sheetOutcome.status === 'rejected') {
-    console.error('save-registration: sheet append failed');
+    console.error('save-registration: sheet append failed', sheetOutcome.reason);
   }
   if (emailOutcome.status === 'rejected') {
-    console.error('save-registration: email send failed');
+    console.error('save-registration: email send failed', emailOutcome.reason);
   }
 
   res.status(200).json({
