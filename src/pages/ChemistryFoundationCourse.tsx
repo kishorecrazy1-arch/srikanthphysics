@@ -8,7 +8,6 @@ import {
   CheckCircle,
   Play,
   Clock,
-  GraduationCap,
   Lightbulb,
   X,
   Atom,
@@ -56,7 +55,7 @@ export function ChemistryFoundationCourse() {
     { label: 'Core modules', value: '7', icon: <TrendingUp />, color: 'text-cyan-400' },
   ];
 
-  /** IIT Foundation crash course — Chemistry */
+  /** Chemistry Foundation syllabus modules */
   const syllabusData: Record<
     string,
     {
@@ -282,18 +281,16 @@ export function ChemistryFoundationCourse() {
         <div className="absolute inset-0 bg-gradient-to-br from-emerald-500/20 via-teal-500/10 to-cyan-500/20" />
         <div className="relative max-w-7xl mx-auto px-6 py-16">
           <div className="text-center space-y-6">
-            <div className="inline-flex items-center gap-2 px-4 py-2 bg-fuchsia-500/20 rounded-full border border-emerald-500/30">
-              <GraduationCap className="w-4 h-4 text-fuchsia-300" />
-              <span className="text-sm text-fuchsia-200">IIT Foundation crash course</span>
-            </div>
             <h1 className="text-5xl md:text-6xl font-bold bg-gradient-to-r from-emerald-300 via-teal-300 to-cyan-300 bg-clip-text text-transparent">
               Chemistry Foundation
             </h1>
             <p className="text-lg text-slate-400 max-w-3xl mx-auto">
-              Starts <span className="text-emerald-300 font-medium">19 May 2026 · 8:00 PM IST</span> — 15-day intensive foundation
-              for Class 9–12 (IIT JEE / NEET chemistry).
+              Starts <span className="text-emerald-300 font-medium">19 May 2026 · 8:00 PM IST</span>
             </p>
-            <div className="flex flex-wrap justify-center gap-4 pt-6">
+            <p className="text-sm md:text-base text-slate-400 max-w-4xl mx-auto leading-relaxed">
+              IITJEE | NEET | CBSE | ICSE | IB | AQA | IGCSE | Advanced Placement Exams
+            </p>
+            <div className="flex flex-wrap justify-center gap-4 pt-2">
               <div className="flex items-center gap-2 px-6 py-3 bg-violet-500/20 rounded-xl border border-violet-500/30">
                 <BookOpen className="w-5 h-5 text-violet-300" />
                 <span className="text-emerald-200">7 modules</span>
@@ -333,9 +330,12 @@ export function ChemistryFoundationCourse() {
       <div className="max-w-7xl mx-auto px-6 py-16">
         <div className="text-center mb-12">
           <h2 className="text-4xl font-bold mb-4 bg-gradient-to-r from-emerald-300 to-teal-300 bg-clip-text text-transparent">
-            Syllabus — IIT Foundation crash course
+            Chemistry Foundation syllabus
           </h2>
-          <p className="text-slate-400 text-lg">Click a topic chip to expand subtopics (edit this page when your final syllabus is fixed).</p>
+          <p className="text-slate-400 text-lg">
+            IITJEE | NEET | CBSE | ICSE | IB | AQA | IGCSE | Advanced Placement Exams — click a topic chip to expand
+            subtopics.
+          </p>
         </div>
 
         <div className="space-y-8">
@@ -414,7 +414,7 @@ export function ChemistryFoundationCourse() {
         <div className="bg-gradient-to-r from-emerald-600 to-teal-600 rounded-3xl p-12 text-center">
           <h2 className="text-4xl font-bold mb-4">Ready for Chemistry Foundation?</h2>
           <p className="text-xl text-emerald-100 mb-8">
-            Starts 19 May 2026 at 8:00 PM IST — 15-day IIT foundation crash course. Register to secure your seat.
+            Starts 19 May 2026 at 8:00 PM IST. Register to secure your seat.
           </p>
           <div className="flex flex-wrap justify-center gap-4">
             <button
