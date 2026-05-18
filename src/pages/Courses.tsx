@@ -20,6 +20,13 @@ export function Courses() {
       description: 'Single Maths Foundation batch — 27 Apr 2026, 5:00 PM IST. Same registration, sign-in, and n8n workflow as physics foundation.',
       color: 'from-violet-600 to-fuchsia-500',
     },
+    {
+      id: 'chemistry-foundation',
+      label: 'Chemistry Foundation',
+      icon: '🧪',
+      description: '19 May 2026, 8:00 PM IST — 15-day IIT Foundation crash course. Same registration, sign-in, and n8n workflow as other foundation programs.',
+      color: 'from-emerald-600 to-teal-500',
+    },
     { id: 'ap-physics', label: 'AP Physics 1', icon: '⚡', description: 'Master algebra-based mechanics & waves for college credit', color: 'from-blue-600 to-cyan-500' },
     { id: 'ap-physics-2', label: 'AP Physics 2', icon: '🔬', description: 'Advanced algebra-based physics covering thermodynamics, fluids, and more', color: 'from-purple-600 to-pink-500' },
     { id: 'ap-physics-mechanics', label: 'AP Physics C: Mechanics', icon: '📐', description: 'Calculus-based mechanics for engineering-focused students', color: 'from-indigo-600 to-purple-500' },
@@ -37,8 +44,8 @@ export function Courses() {
   ];
 
   const handleCourseClick = (courseId: string) => {
-    if (courseId === 'maths-foundation') {
-      localStorage.setItem('selectedCourse', 'maths-foundation');
+    if (courseId === 'maths-foundation' || courseId === 'chemistry-foundation') {
+      localStorage.setItem('selectedCourse', courseId);
       navigate('/foundation');
       return;
     }

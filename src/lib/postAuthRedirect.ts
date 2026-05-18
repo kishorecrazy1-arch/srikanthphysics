@@ -5,6 +5,7 @@ const FOUNDATION_COURSES: readonly CourseType[] = [
   'foundation_batch_2',
   'foundation_batch_3',
   'maths_foundation_batch',
+  'chemistry_foundation_batch',
 ];
 
 function isFoundationCourse(courseType: CourseType | undefined | null): boolean {

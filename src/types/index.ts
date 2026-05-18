@@ -3,6 +3,7 @@ export type CourseType =
   | 'foundation_batch_2'
   | 'foundation_batch_3'
   | 'maths_foundation_batch'
+  | 'chemistry_foundation_batch'
   | 'ap_physics_1'
   | 'ap_physics_2'
   | 'ap_physics_c_mechanics'

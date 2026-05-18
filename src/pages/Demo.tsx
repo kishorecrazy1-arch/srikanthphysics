@@ -34,6 +34,13 @@ export function Demo() {
       days: 'Commencing 27 April 2026',
       duration: '1 month',
     },
+    {
+      id: 'chemistry-foundation-batch',
+      name: 'Chemistry Foundation',
+      timing: '8:00 PM IST',
+      days: 'Commencing 19 May 2026',
+      duration: '15 days',
+    },
   ];
 
   return (
@@ -90,8 +97,8 @@ export function Demo() {
             <div className="bg-white rounded-2xl shadow-xl p-8">
               <h3 className="text-xl font-bold text-gray-900 mb-4">Foundation — Choose your batch</h3>
               <p className="text-gray-600 text-sm mb-4">
-                Physics Foundation 1–3 and one Maths Foundation intake. Pick your batch on the Foundation page, then
-                register here.
+                Physics Foundation 1–3, Maths Foundation, and Chemistry Foundation (15 days). Pick your batch on the Foundation
+                page, then register here.
               </p>
               <div className="space-y-3">
                 {allBatches.map((batch) => (
@@ -100,7 +107,9 @@ export function Demo() {
                     className={`p-4 rounded-xl border ${
                       batch.id.startsWith('maths-')
                         ? 'bg-gradient-to-r from-violet-50 to-fuchsia-50 border-violet-200'
-                        : 'bg-gradient-to-r from-blue-50 to-cyan-50 border-blue-200'
+                        : batch.id.startsWith('chemistry-')
+                          ? 'bg-gradient-to-r from-emerald-50 to-teal-50 border-emerald-200'
+                          : 'bg-gradient-to-r from-blue-50 to-cyan-50 border-blue-200'
                     }`}
                   >
                     <div className="flex items-center gap-2 mb-2">

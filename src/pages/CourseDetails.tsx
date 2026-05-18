@@ -18,6 +18,11 @@ export function CourseDetails() {
     return null;
   }
 
+  if (courseId === 'chemistry-foundation') {
+    navigate('/course/chemistry-foundation');
+    return null;
+  }
+
   if (courseId === 'igcse') {
     navigate('/course/igcse');
     return null;

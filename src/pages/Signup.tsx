@@ -63,6 +63,7 @@ export function Signup() {
       const courseTypeMap: Record<string, CourseType> = {
         foundation: 'foundation_batch_1',
         'maths-foundation': 'maths_foundation_batch',
+        'chemistry-foundation': 'chemistry_foundation_batch',
         'foundation-batch-1': 'foundation_batch_1',
         'foundation-batch-2': 'foundation_batch_2',
         'foundation-batch-3': 'foundation_batch_3',
@@ -70,6 +71,7 @@ export function Signup() {
         'maths-foundation-batch-1': 'maths_foundation_batch',
         'maths-foundation-batch-2': 'maths_foundation_batch',
         'maths-foundation-batch-3': 'maths_foundation_batch',
+        'chemistry-foundation-batch': 'chemistry_foundation_batch',
         'ap-physics': 'ap_physics_1',
         'ap-physics-1': 'ap_physics_1',
         'ap-physics-2': 'ap_physics_2',
@@ -94,6 +96,7 @@ export function Signup() {
         'maths-foundation-batch-1': 'maths_foundation_batch',
         'maths-foundation-batch-2': 'maths_foundation_batch',
         'maths-foundation-batch-3': 'maths_foundation_batch',
+        'chemistry-foundation-batch': 'chemistry_foundation_batch',
       };
       const fromBatch = batchToCourse[selectedBatch];
       if (fromBatch) {
@@ -404,6 +407,9 @@ export function Signup() {
                   </optgroup>
                   <optgroup label="Maths Foundation">
                     <option value="maths_foundation_batch">Maths Foundation (27 Apr · 5:00 PM IST)</option>
+                  </optgroup>
+                  <optgroup label="Chemistry Foundation">
+                    <option value="chemistry_foundation_batch">Chemistry Foundation (19 May · 8:00 PM IST · 15 days)</option>
                   </optgroup>
                   <optgroup label="Programs">
                     <option value="ap_physics_1">AP Physics 1</option>

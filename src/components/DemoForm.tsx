@@ -30,6 +30,7 @@ export function DemoForm({ showCalendly = false }: DemoFormProps) {
       'foundation-batch-2': 'Physics Foundation 2',
       'foundation-batch-3': 'Physics Foundation 3',
       'maths-foundation-batch': 'Maths Foundation',
+      'chemistry-foundation-batch': 'Chemistry Foundation',
     };
     return batchMap[batchId] || '';
   }
@@ -87,6 +88,7 @@ export function DemoForm({ showCalendly = false }: DemoFormProps) {
           selectedBatch ||
           (boardStr.includes('Physics Foundation') ||
           boardStr.includes('Maths Foundation') ||
+          boardStr.includes('Chemistry Foundation') ||
           boardStr.includes('Foundation Batch')
             ? validation.data.board
             : null);
@@ -95,10 +97,12 @@ export function DemoForm({ showCalendly = false }: DemoFormProps) {
           'Physics Foundation 2',
           'Physics Foundation 3',
           'Maths Foundation',
+          'Chemistry Foundation',
           'Physics Foundation Batch 1',
           'Physics Foundation Batch 2',
           'Physics Foundation Batch 3',
           'Maths Foundation Batch',
+          'Chemistry Foundation Batch',
           'Foundation Batch 1',
           'Foundation Batch 2',
           'Foundation Batch 3',
@@ -109,6 +113,7 @@ export function DemoForm({ showCalendly = false }: DemoFormProps) {
             batchId === 'foundation-batch-2' ||
             batchId === 'foundation-batch-3' ||
             batchId === 'maths-foundation-batch' ||
+            batchId === 'chemistry-foundation-batch' ||
             foundationBoards.includes(String(validation.data.board || '')));
 
         if (isFoundationBatch) {
@@ -129,6 +134,8 @@ export function DemoForm({ showCalendly = false }: DemoFormProps) {
               'Physics Foundation Batch 3': 'foundation-batch-3',
               'Maths Foundation': 'maths-foundation-batch',
               'Maths Foundation Batch': 'maths-foundation-batch',
+              'Chemistry Foundation': 'chemistry-foundation-batch',
+              'Chemistry Foundation Batch': 'chemistry-foundation-batch',
             };
             finalBatchId = boardToId[validation.data.board] ?? finalBatchId;
           }
@@ -146,7 +153,11 @@ export function DemoForm({ showCalendly = false }: DemoFormProps) {
           }));
           
           const foundationSyllabusPath =
-            finalBatchId === 'maths-foundation-batch' ? '/course/maths-foundation' : '/course/foundation';
+            finalBatchId === 'maths-foundation-batch'
+              ? '/course/maths-foundation'
+              : finalBatchId === 'chemistry-foundation-batch'
+                ? '/course/chemistry-foundation'
+                : '/course/foundation';
           navigate(foundationSyllabusPath);
         } else {
           // Store form data in sessionStorage for success page
@@ -289,6 +300,7 @@ export function DemoForm({ showCalendly = false }: DemoFormProps) {
                 <option value="Physics Foundation 2">Physics Foundation 2</option>
                 <option value="Physics Foundation 3">Physics Foundation 3</option>
                 <option value="Maths Foundation">Maths Foundation</option>
+                <option value="Chemistry Foundation">Chemistry Foundation</option>
                 <option value="AP Physics">AP Physics</option>
                 <option value="AP Chemistry">AP Chemistry</option>
                 <option value="AP Mathematics">AP Mathematics</option>

@@ -55,6 +55,18 @@ const MATHS_BATCHES: FoundationBatch[] = [
   },
 ];
 
+const CHEMISTRY_BATCHES: FoundationBatch[] = [
+  {
+    id: 'chemistry-foundation-batch',
+    name: 'Chemistry Foundation',
+    timing: '8:00 PM IST',
+    days: 'Commencing 19 May 2026',
+    duration: '15 days',
+    seats: 'Limited seats available',
+    status: 'available',
+  },
+];
+
 export function FoundationSelection() {
   const navigate = useNavigate();
   const [selectedBatch, setSelectedBatch] = useState<string | null>(null);
@@ -135,7 +147,7 @@ export function FoundationSelection() {
         <div className="text-center mb-12">
           <h1 className="text-4xl md:text-5xl font-bold text-gray-900 mb-4">Foundation — Select your batch</h1>
           <p className="text-xl text-gray-600 max-w-2xl mx-auto">
-            Physics and Maths foundation streams use the same registration, sign-in, and automation as other programs.
+            Physics, Maths, and Chemistry foundation streams use the same registration, sign-in, and automation as other programs.
           </p>
         </div>
 
@@ -152,6 +164,16 @@ export function FoundationSelection() {
             sign-in workflow as physics foundation.
           </p>
           <div className="max-w-xl mx-auto md:mx-0">{renderBatchGrid(MATHS_BATCHES)}</div>
+        </section>
+
+        <section className="mb-10">
+          <h2 className="text-2xl font-bold text-gray-900 mb-2">Chemistry Foundation</h2>
+          <p className="text-gray-600 mb-6 max-w-3xl">
+            One intake: <span className="font-semibold text-gray-800">19 May 2026 · 8:00 PM IST</span> ·{' '}
+            <span className="font-semibold text-gray-800">15 days</span>. Same registration and sign-in workflow as physics
+            and maths foundation.
+          </p>
+          <div className="max-w-xl mx-auto md:mx-0">{renderBatchGrid(CHEMISTRY_BATCHES)}</div>
         </section>
 
         <div className="text-center">
