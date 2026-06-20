@@ -31,6 +31,7 @@ export function DemoForm({ showCalendly = false }: DemoFormProps) {
       'foundation-batch-3': 'Physics Foundation 3',
       'maths-foundation-batch': 'Maths Foundation',
       'chemistry-foundation-batch': 'Chemistry Foundation',
+      'quantum-webinar-batch': 'Quantum Computing Webinar',
     };
     return batchMap[batchId] || '';
   }
@@ -89,6 +90,7 @@ export function DemoForm({ showCalendly = false }: DemoFormProps) {
           (boardStr.includes('Physics Foundation') ||
           boardStr.includes('Maths Foundation') ||
           boardStr.includes('Chemistry Foundation') ||
+          boardStr.includes('Quantum Computing') ||
           boardStr.includes('Foundation Batch')
             ? validation.data.board
             : null);
@@ -98,6 +100,7 @@ export function DemoForm({ showCalendly = false }: DemoFormProps) {
           'Physics Foundation 3',
           'Maths Foundation',
           'Chemistry Foundation',
+          'Quantum Computing Webinar',
           'Physics Foundation Batch 1',
           'Physics Foundation Batch 2',
           'Physics Foundation Batch 3',
@@ -114,6 +117,7 @@ export function DemoForm({ showCalendly = false }: DemoFormProps) {
             batchId === 'foundation-batch-3' ||
             batchId === 'maths-foundation-batch' ||
             batchId === 'chemistry-foundation-batch' ||
+            batchId === 'quantum-webinar-batch' ||
             foundationBoards.includes(String(validation.data.board || '')));
 
         if (isFoundationBatch) {
@@ -136,6 +140,7 @@ export function DemoForm({ showCalendly = false }: DemoFormProps) {
               'Maths Foundation Batch': 'maths-foundation-batch',
               'Chemistry Foundation': 'chemistry-foundation-batch',
               'Chemistry Foundation Batch': 'chemistry-foundation-batch',
+              'Quantum Computing Webinar': 'quantum-webinar-batch',
             };
             finalBatchId = boardToId[validation.data.board] ?? finalBatchId;
           }
@@ -157,7 +162,9 @@ export function DemoForm({ showCalendly = false }: DemoFormProps) {
               ? '/course/maths-foundation'
               : finalBatchId === 'chemistry-foundation-batch'
                 ? '/course/chemistry-foundation'
-                : '/course/foundation';
+                : finalBatchId === 'quantum-webinar-batch'
+                  ? '/course/quantum'
+                  : '/course/foundation';
           navigate(foundationSyllabusPath);
         } else {
           // Store form data in sessionStorage for success page
@@ -254,12 +261,12 @@ export function DemoForm({ showCalendly = false }: DemoFormProps) {
         )}
       </div>
 
-      {/* Grade and Board Row */}
+      {/* Academic Level and Courses Row */}
       <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
         <div>
           <label className="block text-sm font-semibold text-gray-700 mb-1">
             <GraduationCap className="inline w-4 h-4 mr-1" />
-            Grade
+            Academic Level
           </label>
           <select
             value={formData.grade || ''}
@@ -267,13 +274,17 @@ export function DemoForm({ showCalendly = false }: DemoFormProps) {
             className="w-full px-4 py-3 border-2 border-gray-300 rounded-xl focus:ring-2 focus:ring-blue-500 focus:border-blue-500 transition-colors"
             disabled={isSubmitting}
           >
-            <option value="">Select grade</option>
+            <option value="">Select academic level</option>
             <option value="7">7th</option>
             <option value="8">8th</option>
             <option value="9">9th</option>
             <option value="10">10th</option>
             <option value="11">11th</option>
             <option value="12">12th</option>
+            <option value="btech-1">B.Tech 1</option>
+            <option value="btech-2">B.Tech 2</option>
+            <option value="btech-3">B.Tech 3</option>
+            <option value="btech-4">B.Tech 4</option>
             <option value="other">Other</option>
           </select>
         </div>
@@ -301,6 +312,7 @@ export function DemoForm({ showCalendly = false }: DemoFormProps) {
                 <option value="Physics Foundation 3">Physics Foundation 3</option>
                 <option value="Maths Foundation">Maths Foundation</option>
                 <option value="Chemistry Foundation">Chemistry Foundation</option>
+                <option value="Quantum Computing Webinar">Quantum Computing Webinar</option>
                 <option value="AP Physics">AP Physics</option>
                 <option value="AP Chemistry">AP Chemistry</option>
                 <option value="AP Mathematics">AP Mathematics</option>

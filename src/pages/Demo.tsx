@@ -41,6 +41,13 @@ export function Demo() {
       days: 'Commencing 19 May 2026',
       duration: '15 days',
     },
+    {
+      id: 'quantum-webinar-batch',
+      name: 'Quantum Computing Webinar',
+      timing: '11:00 AM IST',
+      days: 'Sunday, 28th June 2026',
+      duration: '60 minutes',
+    },
   ];
 
   return (

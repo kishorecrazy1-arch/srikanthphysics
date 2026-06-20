@@ -152,7 +152,7 @@ async function sendRegistrationEmail(data: ParsedRegistration): Promise<void> {
     `Email: ${data.email}`,
     `Phone: ${data.phone}`,
     `Course: ${data.course}`,
-    `Grade: ${data.grade}`,
+    `Academic Level: ${data.grade}`,
     `City: ${data.city}`,
     `Country: ${data.country}`,
     `Timestamp: ${data.timestamp}`,

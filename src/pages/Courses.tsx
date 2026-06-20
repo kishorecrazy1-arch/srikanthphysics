@@ -10,7 +10,7 @@ export function Courses() {
       id: 'quantum',
       label: 'Quantum Physics',
       icon: '⚛️',
-      description: 'Advanced quantum mechanics and modern physics',
+      description: 'Free live webinar — 28 June 2026, 11 AM IST. Superposition + Interference in Quantum Computing.',
       color: 'from-indigo-700 to-purple-800',
     },
     {
