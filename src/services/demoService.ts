@@ -18,6 +18,7 @@ export interface RegistrationSubmitPayload {
   phone: string;
   course: string;
   grade: string;
+  institution: string;
   city: string;
   country: string;
   timestamp: string;
@@ -46,6 +47,7 @@ function buildRegistrationPayload(formData: DemoFormData & DemoFormExtras): Regi
     ''
   ).trim();
   const grade = fd.grade != null && fd.grade !== '' ? String(fd.grade) : '';
+  const institution = (fd.institution ?? '').trim();
   const city = (fd.city ?? '').trim();
   const country = (fd.country ?? '').trim();
   const timestamp = new Date().toLocaleString('en-IN', { timeZone: 'Asia/Kolkata' });
@@ -57,6 +59,7 @@ function buildRegistrationPayload(formData: DemoFormData & DemoFormExtras): Regi
     phone,
     course,
     grade,
+    institution,
     city,
     country,
     timestamp,

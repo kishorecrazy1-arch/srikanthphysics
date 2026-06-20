@@ -137,7 +137,15 @@ export function CourseNavigation() {
                 Sign In
               </button>
               <button
-                onClick={() => navigate('/demo')}
+                onClick={() => {
+                  const course = localStorage.getItem('selectedCourse');
+                  if (course === 'quantum') {
+                    localStorage.setItem('selectedBatch', 'quantum-webinar-batch');
+                    navigate('/demo', { state: { selectedBatch: 'quantum-webinar-batch' } });
+                    return;
+                  }
+                  navigate('/demo');
+                }}
                 className="px-6 py-2 bg-gradient-to-r from-blue-800 to-blue-600 text-white rounded-lg font-semibold hover:opacity-90 transition-opacity shadow-lg"
               >
                 Register

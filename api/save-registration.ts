@@ -14,7 +14,7 @@ type HttpRequest = {
 };
 
 /** Number of columns appended; header row in the sheet should match this order. */
-const NUM_SHEET_COLS = 9;
+const NUM_SHEET_COLS = 10;
 
 interface ParsedRegistration {
   name: string;
@@ -22,6 +22,7 @@ interface ParsedRegistration {
   phone: string;
   course: string;
   grade: string;
+  institution: string;
   city: string;
   country: string;
   timestamp: string;
@@ -65,6 +66,7 @@ function parseRegistrationBody(raw: unknown): ParsedRegistration | null {
     phone: readStringField(o.phone ?? o.phoneNumber ?? o.mobile),
     course,
     grade: readStringField(o.grade),
+    institution: readStringField(o.institution ?? o.academy),
     city: readStringField(o.city),
     country: readStringField(o.country),
     timestamp: readStringField(o.timestamp) || new Date().toISOString(),
@@ -153,6 +155,7 @@ async function sendRegistrationEmail(data: ParsedRegistration): Promise<void> {
     `Phone: ${data.phone}`,
     `Course: ${data.course}`,
     `Academic Level: ${data.grade}`,
+    `Institution / Academy: ${data.institution}`,
     `City: ${data.city}`,
     `Country: ${data.country}`,
     `Timestamp: ${data.timestamp}`,
@@ -200,6 +203,7 @@ export default async function handler(req: HttpRequest, res: HttpResponse): Prom
     parsed.phone,
     parsed.course,
     parsed.grade,
+    parsed.institution,
     parsed.city,
     parsed.country,
     parsed.timestamp,

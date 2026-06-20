@@ -1,6 +1,6 @@
 import { useState, useEffect } from 'react';
 import { useNavigate, useLocation } from 'react-router-dom';
-import { User, Mail, Phone, GraduationCap, MapPin, Globe, CheckCircle, AlertCircle, Loader2 } from 'lucide-react';
+import { User, Mail, Phone, GraduationCap, MapPin, Globe, CheckCircle, AlertCircle, Loader2, Building2 } from 'lucide-react';
 import { demoFormSchema, type DemoFormData } from '../lib/demoSchemas';
 import { submitDemoLead } from '../services/demoService';
 
@@ -18,6 +18,7 @@ export function DemoForm({ showCalendly = false }: DemoFormProps) {
     email: '',
     phone: '',
     grade: '',
+    institution: '',
     board: selectedBatch ? getBatchLabel(selectedBatch) : '',
     city: '',
     country: '',
@@ -287,6 +288,30 @@ export function DemoForm({ showCalendly = false }: DemoFormProps) {
             )}
           </select>
         </div>
+      </div>
+
+      {/* Institution / Academy */}
+      <div>
+        <label className="block text-sm font-semibold text-gray-700 mb-1">
+          <Building2 className="inline w-4 h-4 mr-1" />
+          Institution / Academy
+        </label>
+        <input
+          type="text"
+          value={formData.institution || ''}
+          onChange={(e) => handleChange('institution', e.target.value)}
+          className={`w-full px-4 py-3 border-2 rounded-xl focus:ring-2 focus:ring-blue-500 focus:border-blue-500 transition-colors ${
+            errors.institution ? 'border-red-500' : 'border-gray-300'
+          }`}
+          placeholder="School, college, or academy name"
+          disabled={isSubmitting}
+        />
+        {errors.institution && (
+          <p className="mt-1 text-sm text-red-600 flex items-center gap-1">
+            <AlertCircle className="w-4 h-4" />
+            {errors.institution}
+          </p>
+        )}
       </div>
 
       {/* City and Country Row */}

@@ -31,6 +31,11 @@ export function QuantumPhysicsCourse() {
   const [showSuccessBanner, setShowSuccessBanner] = useState(false);
 
   useEffect(() => {
+    localStorage.setItem('selectedCourse', 'quantum');
+    localStorage.setItem('selectedBatch', 'quantum-webinar-batch');
+  }, []);
+
+  useEffect(() => {
     const stored = sessionStorage.getItem('foundationRegistration');
     if (stored) {
       try {
@@ -48,6 +53,12 @@ export function QuantumPhysicsCourse() {
       }
     }
   }, []);
+
+  const openRegistration = () => {
+    localStorage.setItem('selectedCourse', 'quantum');
+    localStorage.setItem('selectedBatch', 'quantum-webinar-batch');
+    navigate('/demo', { state: { selectedBatch: 'quantum-webinar-batch' } });
+  };
 
   const stats = [
     { label: 'Live webinar', value: 'Free', icon: <Star />, color: 'text-indigo-400' },
@@ -294,9 +305,23 @@ export function QuantumPhysicsCourse() {
                 <span className="text-violet-200">Online Live Webinar · 60 Minutes</span>
               </div>
             </div>
-            <p className="text-amber-300 font-semibold text-lg pt-2">
+            <button
+              type="button"
+              onClick={openRegistration}
+              className="text-amber-300 font-semibold text-lg pt-2 hover:text-amber-200 transition-colors underline-offset-4 hover:underline"
+            >
               🚀 Limited Seats | Free Registration | Reserve Your Spot Now
-            </p>
+            </button>
+            <div className="pt-4">
+              <button
+                type="button"
+                onClick={openRegistration}
+                className="px-8 py-4 bg-gradient-to-r from-indigo-500 to-purple-600 text-white rounded-xl font-bold hover:from-indigo-400 hover:to-purple-500 transition-all flex items-center gap-2 mx-auto shadow-lg hover:shadow-xl"
+              >
+                <Play className="w-5 h-5" />
+                Register for Free
+              </button>
+            </div>
           </div>
         </div>
       </div>
@@ -481,11 +506,7 @@ export function QuantumPhysicsCourse() {
           <div className="flex flex-wrap justify-center gap-4">
             <button
               type="button"
-              onClick={() => {
-                localStorage.setItem('selectedCourse', 'quantum');
-                localStorage.setItem('selectedBatch', 'quantum-webinar-batch');
-                navigate('/demo');
-              }}
+              onClick={openRegistration}
               className="px-8 py-4 bg-white text-indigo-700 rounded-xl font-bold hover:bg-indigo-50 transition-all flex items-center gap-2"
             >
               <Play className="w-5 h-5" />
