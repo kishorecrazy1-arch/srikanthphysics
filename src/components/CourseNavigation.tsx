@@ -24,6 +24,7 @@ export function CourseNavigation() {
   ];
 
   const courses = [
+    { id: 'quantum', label: 'Quantum Physics', icon: '⚛️' },
     { id: 'foundation', label: 'Physics & Maths Foundation', icon: '🏗️' },
     { id: 'maths-foundation', label: 'Maths Foundation', icon: '📐' },
     { id: 'chemistry-foundation', label: 'Chemistry Foundation', icon: '🧪' },
@@ -39,8 +40,7 @@ export function CourseNavigation() {
     { id: 'neet', label: 'NEET', icon: '🏥' },
     { id: 'imat', label: 'IMAT', icon: '🇮🇹' },
     { id: 'cbse', label: 'CBSE', icon: '📖' },
-    { id: 'icse', label: 'ICSE', icon: '📘' },
-    { id: 'quantum', label: 'Quantum Mechanics', icon: '⚛️' }
+    { id: 'icse', label: 'ICSE', icon: '📘' }
   ];
 
   const courseTabs = [

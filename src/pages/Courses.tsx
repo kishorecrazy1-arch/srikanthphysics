@@ -7,6 +7,13 @@ export function Courses() {
 
   const courses = [
     {
+      id: 'quantum',
+      label: 'Quantum Physics',
+      icon: '⚛️',
+      description: 'Advanced quantum mechanics and modern physics',
+      color: 'from-indigo-700 to-purple-800',
+    },
+    {
       id: 'foundation',
       label: 'Physics Foundation',
       icon: '🏗️',
@@ -40,7 +47,6 @@ export function Courses() {
     { id: 'icse', label: 'ICSE', icon: '📘', description: 'Indian Certificate of Secondary Education Physics', color: 'from-violet-600 to-purple-600' },
     { id: 'aqa-physics', label: 'AQA Physics', icon: '📚', description: 'AQA Physics qualification preparation', color: 'from-slate-600 to-gray-700' },
     { id: 'imat', label: 'IMAT', icon: '🇮🇹', description: 'International Medical Admissions Test Physics', color: 'from-emerald-600 to-teal-600' },
-    { id: 'quantum', label: 'Quantum Mechanics', icon: '⚛️', description: 'Advanced quantum mechanics and modern physics', color: 'from-indigo-700 to-purple-800' },
   ];
 
   const handleCourseClick = (courseId: string) => {
