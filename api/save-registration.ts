@@ -22,11 +22,39 @@ interface ParsedRegistration {
   phone: string;
   course: string;
   grade: string;
+  academicLevel: string;
   institution: string;
+  location: string;
   city: string;
   country: string;
   timestamp: string;
   referrer: string;
+  /** Pre-built HTML from the website; used as the email body when present */
+  adminNotificationHtml: string;
+  adminNotificationText: string;
+}
+
+const GRADE_LABELS: Record<string, string> = {
+  '7': '7th',
+  '8': '8th',
+  '9': '9th',
+  '10': '10th',
+  '11': '11th',
+  '12': '12th',
+  'btech-1': 'B.Tech 1',
+  'btech-2': 'B.Tech 2',
+  'btech-3': 'B.Tech 3',
+  'btech-4': 'B.Tech 4',
+  other: 'Other',
+};
+
+function formatAcademicLevel(grade: string): string {
+  if (!grade) return '';
+  return GRADE_LABELS[grade] ?? grade;
+}
+
+function formatLocation(city: string, country: string): string {
+  return [city, country].filter(Boolean).join(', ');
 }
 
 function readStringField(v: unknown): string {
@@ -60,17 +88,31 @@ function parseRegistrationBody(raw: unknown): ParsedRegistration | null {
     readStringField(o.batch) ||
     readStringField(o.board);
 
+  const grade = readStringField(o.grade);
+  const academicLevel =
+    readStringField(o.academicLevel) || formatAcademicLevel(grade);
+  const institution = readStringField(
+    o.institution ?? o.institutionAcademy ?? o.academy,
+  );
+  const city = readStringField(o.city);
+  const country = readStringField(o.country);
+  const location = readStringField(o.location) || formatLocation(city, country);
+
   return {
     name: readStringField(o.name ?? o.fullName),
     email,
     phone: readStringField(o.phone ?? o.phoneNumber ?? o.mobile),
     course,
-    grade: readStringField(o.grade),
-    institution: readStringField(o.institution ?? o.academy),
-    city: readStringField(o.city),
-    country: readStringField(o.country),
+    grade,
+    academicLevel,
+    institution,
+    location,
+    city,
+    country,
     timestamp: readStringField(o.timestamp) || new Date().toISOString(),
     referrer: readStringField(o.referrer),
+    adminNotificationHtml: readStringField(o.adminNotificationHtml),
+    adminNotificationText: readStringField(o.adminNotificationText),
   };
 }
 
@@ -153,19 +195,33 @@ async function sendRegistrationEmail(data: ParsedRegistration): Promise<void> {
     `Name: ${data.name}`,
     `Email: ${data.email}`,
     `Phone: ${data.phone}`,
-    `Course: ${data.course}`,
-    `Academic Level: ${data.grade}`,
-    `Institution / Academy: ${data.institution}`,
-    `City: ${data.city}`,
-    `Country: ${data.country}`,
-    `Timestamp: ${data.timestamp}`,
+    `Course/Batch: ${data.course}`,
+    `Grade: ${data.academicLevel || 'Not provided'}`,
+    `Institution / Academy: ${data.institution || 'Not provided'}`,
+    `Location: ${data.location || 'Not provided'}`,
+    `Registered At: ${data.timestamp}`,
     `Referrer: ${data.referrer}`,
   ];
 
-  const text = lines.join('\n');
-  const html = `<pre style="font-family:system-ui,sans-serif">${lines
-    .map((l) => escapeHtml(l))
-    .join('\n')}</pre>`;
+  const detailRow = (label: string, value: string) =>
+    `<p style="margin:8px 0;font-size:15px;"><strong>${escapeHtml(label)}:</strong> ${escapeHtml(value || 'Not provided')}</p>`;
+
+  const builtHtml = `
+    <div style="font-family:system-ui,sans-serif;max-width:640px;margin:0 auto;padding:16px;">
+      <h2 style="color:#2563eb;margin:0 0 16px;">📋 Student Details</h2>
+      ${detailRow('Name', data.name)}
+      ${detailRow('Email', data.email)}
+      ${detailRow('Phone', data.phone)}
+      ${detailRow('Course/Batch', data.course)}
+      ${detailRow('Grade', data.academicLevel)}
+      ${detailRow('Institution / Academy', data.institution)}
+      ${detailRow('Location', data.location)}
+      ${detailRow('Registered At', data.timestamp)}
+    </div>
+  `.trim();
+
+  const text = data.adminNotificationText.trim() || lines.join('\n');
+  const html = data.adminNotificationHtml.trim() || builtHtml;
 
   await transporter.sendMail({
     from: user,
@@ -202,7 +258,7 @@ export default async function handler(req: HttpRequest, res: HttpResponse): Prom
     parsed.email,
     parsed.phone,
     parsed.course,
-    parsed.grade,
+    parsed.academicLevel || parsed.grade,
     parsed.institution,
     parsed.city,
     parsed.country,

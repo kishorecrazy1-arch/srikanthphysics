@@ -266,7 +266,7 @@ export function DemoForm({ showCalendly = false }: DemoFormProps) {
       <div>
         <label className="block text-sm font-semibold text-gray-700 mb-1">
           <Building2 className="inline w-4 h-4 mr-1" />
-          Institution / Academy
+          Institution / Academy <span className="text-red-500">*</span>
         </label>
         <input
           type="text"
@@ -291,7 +291,7 @@ export function DemoForm({ showCalendly = false }: DemoFormProps) {
         <div>
           <label className="block text-sm font-semibold text-gray-700 mb-1">
             <GraduationCap className="inline w-4 h-4 mr-1" />
-            Academic Level
+            Academic Level <span className="text-red-500">*</span>
           </label>
           <select
             value={formData.grade || ''}

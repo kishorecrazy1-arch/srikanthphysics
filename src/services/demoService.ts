@@ -1,4 +1,9 @@
 import type { DemoFormData } from '../lib/demoSchemas';
+import {
+  buildAdminNotificationHtml,
+  buildAdminNotificationText,
+  buildRegistrationDisplayFields,
+} from '../lib/registrationPayload';
 
 /** Extra keys some forms or n8n workflows may supply */
 type DemoFormExtras = Partial<{
@@ -18,10 +23,20 @@ export interface RegistrationSubmitPayload {
   phone: string;
   course: string;
   grade: string;
+  /** Human-readable academic level for emails (e.g. B.Tech 1) */
+  academicLevel: string;
   institution: string;
+  /** Alias for n8n / Google Sheets */
+  institutionAcademy: string;
+  /** Alias used by some n8n flows and save-registration */
+  academy: string;
+  location: string;
   city: string;
   country: string;
   timestamp: string;
+  /** Pre-built notification body for n8n email nodes */
+  adminNotificationHtml: string;
+  adminNotificationText: string;
   /** Same page URL when running in the browser; omitted on SSR */
   referrer?: string;
   /** Aliases so existing n8n flows keep working */
@@ -53,7 +68,7 @@ function buildRegistrationPayload(formData: DemoFormData & DemoFormExtras): Regi
   const timestamp = new Date().toLocaleString('en-IN', { timeZone: 'Asia/Kolkata' });
   const board = (fd.board ?? '').trim();
 
-  return {
+  const display = buildRegistrationDisplayFields({
     name,
     email,
     phone,
@@ -64,6 +79,26 @@ function buildRegistrationPayload(formData: DemoFormData & DemoFormExtras): Regi
     country,
     timestamp,
     referrer: typeof window !== 'undefined' ? window.location.href : undefined,
+    board,
+  });
+
+  return {
+    name,
+    email,
+    phone,
+    course,
+    grade,
+    academicLevel: display.academicLevel,
+    institution,
+    institutionAcademy: display.institutionAcademy,
+    academy: display.institutionAcademy,
+    location: display.location,
+    city,
+    country,
+    timestamp,
+    adminNotificationHtml: buildAdminNotificationHtml(display),
+    adminNotificationText: buildAdminNotificationText(display),
+    referrer: display.referrer,
     fullName: name,
     emailAddress: email,
     phoneNumber: phone,
