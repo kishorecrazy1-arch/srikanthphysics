@@ -1,6 +1,6 @@
 import { useState } from 'react';
 import { useNavigate } from 'react-router-dom';
-import { Info, GraduationCap, Sparkles, HeadphonesIcon, ChevronDown, Brain } from 'lucide-react';
+import { Info, GraduationCap, Sparkles, HeadphonesIcon, ChevronDown, Brain, Video } from 'lucide-react';
 import { Logo } from './Logo';
 
 interface TabItem {
@@ -19,6 +19,7 @@ export function CourseNavigation() {
   const mainTabs: TabItem[] = [
     { id: 'about', label: 'About', icon: Info, path: '#about' },
     { id: 'success', label: 'Success Stories', icon: Sparkles, path: '#success' },
+    { id: 'webinar', label: 'Free Webinar', icon: Video, path: '/webinar', onClick: () => navigate('/webinar') },
     { id: 'support', label: 'Support', icon: HeadphonesIcon, path: '#support' },
     { id: 'foundation', label: 'Foundation (Physics, Maths & Chemistry)', icon: GraduationCap, path: '/foundation', onClick: () => navigate('/foundation') }
   ];

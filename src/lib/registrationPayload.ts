@@ -36,6 +36,7 @@ export interface RegistrationDisplayFields {
   timestamp: string;
   referrer: string;
   board: string;
+  event?: string;
 }
 
 export function buildRegistrationDisplayFields(input: {
@@ -50,6 +51,7 @@ export function buildRegistrationDisplayFields(input: {
   timestamp: string;
   referrer?: string;
   board: string;
+  event?: string;
 }): RegistrationDisplayFields {
   const academicLevel = formatAcademicLevel(input.grade);
   const institution = input.institution.trim();
@@ -70,6 +72,7 @@ export function buildRegistrationDisplayFields(input: {
     timestamp: input.timestamp,
     referrer: input.referrer ?? '',
     board: input.board,
+    event: input.event,
   };
 }
 
@@ -79,6 +82,7 @@ export function buildAdminNotificationHtml(fields: RegistrationDisplayFields): s
 
   return `
     <h2 style="color:#2563eb;margin:0 0 12px;">📋 Student Details</h2>
+    ${fields.event ? row('Event', fields.event) : ''}
     ${row('Name', fields.name)}
     ${row('Email', fields.email)}
     ${row('Phone', fields.phone)}
@@ -87,12 +91,14 @@ export function buildAdminNotificationHtml(fields: RegistrationDisplayFields): s
     ${row('Institution / Academy', fields.institutionAcademy)}
     ${row('Location', fields.location)}
     ${row('Registered At', fields.timestamp)}
+    ${row('Source', fields.referrer)}
   `.trim();
 }
 
 export function buildAdminNotificationText(fields: RegistrationDisplayFields): string {
   return [
     'Student Details',
+    fields.event ? `Event: ${fields.event}` : '',
     `Name: ${fields.name}`,
     `Email: ${fields.email}`,
     `Phone: ${fields.phone}`,
@@ -101,5 +107,8 @@ export function buildAdminNotificationText(fields: RegistrationDisplayFields): s
     `Institution / Academy: ${fields.institutionAcademy || 'Not provided'}`,
     `Location: ${fields.location || 'Not provided'}`,
     `Registered At: ${fields.timestamp}`,
-  ].join('\n');
+    `Source: ${fields.referrer || 'Not provided'}`,
+  ]
+    .filter(Boolean)
+    .join('\n');
 }

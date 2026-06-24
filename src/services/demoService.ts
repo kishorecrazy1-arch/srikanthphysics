@@ -14,6 +14,8 @@ type DemoFormExtras = Partial<{
   courses: string;
   batch: string;
   course: string;
+  event: string;
+  source: string;
 }>;
 
 /** Body sent to n8n and /api/save-registration (strict JSON shape) */
@@ -49,6 +51,8 @@ export interface RegistrationSubmitPayload {
   courses: string;
   batch: string;
   board: string;
+  event?: string;
+  source?: string;
 }
 
 function buildRegistrationPayload(formData: DemoFormData & DemoFormExtras): RegistrationSubmitPayload {
@@ -58,10 +62,10 @@ function buildRegistrationPayload(formData: DemoFormData & DemoFormExtras): Regi
   const email = (fd.emailAddress ?? fd.email ?? '').trim();
   const phone = (fd.phoneNumber ?? fd.phone ?? fd.mobile ?? '').trim();
   const course = (
-    fd.board ??
+    fd.course ??
     fd.courses ??
     fd.batch ??
-    fd.course ??
+    fd.board ??
     ''
   ).trim();
   const grade = fd.grade != null && fd.grade !== '' ? String(fd.grade) : '';
@@ -70,6 +74,8 @@ function buildRegistrationPayload(formData: DemoFormData & DemoFormExtras): Regi
   const country = (fd.country ?? '').trim();
   const timestamp = new Date().toLocaleString('en-IN', { timeZone: 'Asia/Kolkata' });
   const board = (fd.board ?? '').trim();
+  const event = fd.event?.trim();
+  const source = fd.source?.trim();
 
   const display = buildRegistrationDisplayFields({
     name,
@@ -83,6 +89,7 @@ function buildRegistrationPayload(formData: DemoFormData & DemoFormExtras): Regi
     timestamp,
     referrer: typeof window !== 'undefined' ? window.location.href : undefined,
     board,
+    event,
   });
 
   return {
@@ -110,6 +117,8 @@ function buildRegistrationPayload(formData: DemoFormData & DemoFormExtras): Regi
     courses: course,
     batch: course,
     board,
+    event,
+    source,
   };
 }
 
@@ -167,6 +176,90 @@ export async function submitDemoLead(
 
   if (n8nOutcome.status === 'rejected' && directOutcome.status === 'rejected') {
     return { success: false, error: 'Both registration channels failed. Please retry in 1 minute.' };
+  }
+
+  return { success: true };
+}
+
+const WEBINAR_EVENT = 'Free Webinar - 28 June 2026';
+
+const CLASS_TO_GRADE: Record<string, string> = {
+  '8th': '8',
+  '9th': '9',
+  '10th': '10',
+  '11th': '11',
+  '12th': '12',
+};
+
+export interface WebinarFormData {
+  name: string;
+  phone: string;
+  email: string;
+  studentClass: string;
+  city: string;
+  course: string;
+}
+
+export async function submitWebinarLead(
+  form: WebinarFormData,
+): Promise<{ success: boolean; error?: string }> {
+  const grade = CLASS_TO_GRADE[form.studentClass] ?? form.studentClass;
+  const interestedCourse = form.course.trim() || 'General Interest';
+
+  const payload = buildRegistrationPayload({
+    name: form.name.trim(),
+    email: form.email.trim(),
+    phone: form.phone.trim(),
+    grade,
+    board: WEBINAR_EVENT,
+    course: interestedCourse,
+    city: form.city.trim(),
+    country: '',
+    institution: '',
+    agreeToContact: true,
+    event: WEBINAR_EVENT,
+    source: 'webinar-page',
+  } as DemoFormData & DemoFormExtras);
+
+  const bodyString = JSON.stringify(payload);
+  const n8nUrl = String(import.meta.env.VITE_N8N_WEBHOOK_URL ?? '').trim();
+
+  const [n8nOutcome, directOutcome] = await Promise.allSettled([
+    (async (): Promise<void> => {
+      if (!n8nUrl) throw new Error('n8n_webhook_url_missing');
+      const response = await fetch(n8nUrl, {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: bodyString,
+      });
+      if (!response.ok) {
+        throw new Error(`n8n webhook HTTP ${String(response.status)}`);
+      }
+    })(),
+    (async (): Promise<void> => {
+      const response = await fetch('/api/save-registration', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: bodyString,
+      });
+      if (!response.ok) {
+        throw new Error(`save-registration HTTP ${String(response.status)}`);
+      }
+    })(),
+  ]);
+
+  if (n8nOutcome.status === 'rejected') {
+    console.error('webinar submit: n8n failed', n8nOutcome.reason);
+  }
+  if (directOutcome.status === 'rejected') {
+    console.error('webinar submit: direct api failed', directOutcome.reason);
+  }
+
+  if (n8nOutcome.status === 'rejected' && directOutcome.status === 'rejected') {
+    return {
+      success: false,
+      error: 'Something went wrong. Please WhatsApp us at +91 94929 37716.',
+    };
   }
 
   return { success: true };
