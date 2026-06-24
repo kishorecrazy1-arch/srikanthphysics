@@ -145,6 +145,8 @@ This guide will help you set up n8n to automatically save all demo form submissi
      email → {{ $json.email }}
      phone → {{ $json.phone }}
      grade → {{ $json.grade }}
+     academicLevel → {{ $json.academicLevel || $json.grade }}
+     institution → {{ $json.institutionAcademy || $json.institution || $json.college }}
      board → {{ $json.board }}
      city → {{ $json.city }}
      country → {{ $json.country }}
@@ -171,14 +173,19 @@ This guide will help you set up n8n to automatically save all demo form submissi
    - **To**: `srikanthsacademyforphysics@gmail.com`
    - **Subject**: `New Demo Lead: {{ $json.name }}`
    - **Email Type**: `HTML`
-   - **Message**:
+   - **Message** (recommended — includes Institution / Academy automatically):
+     ```
+     {{ $json.adminNotificationHtml }}
+     ```
+   - Or use this manual template:
      ```html
      <h2>New Demo Lead Submission</h2>
      <p><strong>Name:</strong> {{ $json.name }}</p>
      <p><strong>Email:</strong> {{ $json.email }}</p>
      <p><strong>Phone:</strong> {{ $json.phone || 'Not provided' }}</p>
-     <p><strong>Grade:</strong> {{ $json.grade || 'Not provided' }}</p>
-     <p><strong>Board/Curriculum:</strong> {{ $json.board || 'Not provided' }}</p>
+     <p><strong>Academic Level:</strong> {{ $json.academicLevel || $json.grade || 'Not provided' }}</p>
+     <p><strong>Institution / Academy:</strong> {{ $json.institutionAcademy || $json.institution || $json.college || 'Not provided' }}</p>
+     <p><strong>Course/Batch:</strong> {{ $json.course || $json.board || 'Not provided' }}</p>
      <p><strong>City:</strong> {{ $json.city || 'Not provided' }}</p>
      <p><strong>Country:</strong> {{ $json.country || 'Not provided' }}</p>
      <hr>

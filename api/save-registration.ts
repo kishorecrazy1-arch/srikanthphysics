@@ -92,7 +92,11 @@ function parseRegistrationBody(raw: unknown): ParsedRegistration | null {
   const academicLevel =
     readStringField(o.academicLevel) || formatAcademicLevel(grade);
   const institution = readStringField(
-    o.institution ?? o.institutionAcademy ?? o.academy,
+    o.institution ??
+      o.institutionAcademy ??
+      o.academy ??
+      o.college ??
+      o.collegeName,
   );
   const city = readStringField(o.city);
   const country = readStringField(o.country);

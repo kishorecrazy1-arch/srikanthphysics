@@ -30,6 +30,9 @@ export interface RegistrationSubmitPayload {
   institutionAcademy: string;
   /** Alias used by some n8n flows and save-registration */
   academy: string;
+  /** Common n8n / sheet column names for the same value */
+  college: string;
+  collegeName: string;
   location: string;
   city: string;
   country: string;
@@ -92,6 +95,8 @@ function buildRegistrationPayload(formData: DemoFormData & DemoFormExtras): Regi
     institution,
     institutionAcademy: display.institutionAcademy,
     academy: display.institutionAcademy,
+    college: display.institutionAcademy,
+    collegeName: display.institutionAcademy,
     location: display.location,
     city,
     country,

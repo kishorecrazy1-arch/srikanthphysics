@@ -6,6 +6,7 @@ The website now sends these fields on every registration:
 |-------|---------|
 | `institution` | IIT Hyderabad |
 | `institutionAcademy` | same as institution |
+| `college` / `collegeName` | same as institution (aliases for older n8n/sheet mappings) |
 | `academicLevel` | B.Tech 2 (human-readable) |
 | `grade` | btech-2 (raw value) |
 | `location` | Hyderabad, India |
@@ -36,8 +37,10 @@ return [{
     board: d.board || d.course || d.batch || '',
     grade,
     academicLevel: d.academicLevel || grade,
-    institution: d.institution || d.institutionAcademy || d.academy || '',
-    institutionAcademy: d.institutionAcademy || d.institution || d.academy || '',
+    institution: d.institution || d.institutionAcademy || d.academy || d.college || d.collegeName || '',
+    institutionAcademy: d.institutionAcademy || d.institution || d.academy || d.college || d.collegeName || '',
+    college: d.college || d.collegeName || d.institution || d.institutionAcademy || d.academy || '',
+    collegeName: d.collegeName || d.college || d.institution || d.institutionAcademy || d.academy || '',
     city,
     country,
     location: d.location || [city, country].filter(Boolean).join(', '),

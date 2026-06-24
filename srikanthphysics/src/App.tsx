@@ -32,6 +32,7 @@ import { FoundationSelection } from './pages/FoundationSelection';
 import { AdminGeneratePracticeBank } from './pages/AdminGeneratePracticeBank';
 import { Demo } from './pages/Demo';
 import { DemoSuccess } from './pages/DemoSuccess';
+import { Webinar } from './pages/Webinar';
 import { Courses } from './pages/Courses';
 import { PaymentSuccess } from './pages/PaymentSuccess';
 import { ApproveSubscription } from './pages/ApproveSubscription';
@@ -63,6 +64,7 @@ function App() {
         <Route path="/foundation" element={<FoundationSelection />} />
         <Route path="/demo" element={<Demo />} />
         <Route path="/demo/success" element={<DemoSuccess />} />
+        <Route path="/webinar" element={<Webinar />} />
         <Route path="/courses" element={<Courses />} />
         <Route path="/approve-subscription" element={<ApproveSubscription />} />
         <Route
