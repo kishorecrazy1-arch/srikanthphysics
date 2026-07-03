@@ -18,26 +18,27 @@ const styles = `
   }
   .tab-btn {
     flex: 1;
-    padding: 18px 24px;
+    min-width: 0;
+    padding: 16px 14px;
     background: #131729;
     border: none;
     color: #78909c;
-    font-size: 15px;
+    font-size: 13px;
     font-weight: 600;
     cursor: pointer;
     font-family: 'Inter', sans-serif;
     transition: all 0.2s;
     border-bottom: 3px solid transparent;
     text-align: center;
-    line-height: 1.4;
+    line-height: 1.35;
   }
-  .tab-btn:first-child { border-right: 1.5px solid #1e2547; }
+  .tab-btn:not(:last-child) { border-right: 1.5px solid #1e2547; }
   .tab-btn.active {
     background: #1a1f3c;
     color: #ffffff;
     border-bottom: 3px solid #f5a623;
   }
-  .tab-btn .tab-label { display: block; font-size: 11px; font-weight: 700; letter-spacing: 1.2px; text-transform: uppercase; margin-bottom: 4px; }
+  .tab-btn .tab-label { display: block; font-size: 10px; font-weight: 700; letter-spacing: 1px; text-transform: uppercase; margin-bottom: 4px; }
   .tab-btn.active .tab-label { color: #f5a623; }
   .tab-btn .tab-title { display: block; }
 
@@ -77,6 +78,13 @@ const styles = `
     font-size: 15px;
     color: #b0bec5;
     max-width: 560px;
+    margin: 0 auto 16px;
+    line-height: 1.7;
+  }
+  .hero-desc {
+    font-size: 14px;
+    color: #78909c;
+    max-width: 620px;
     margin: 0 auto 28px;
     line-height: 1.7;
   }
@@ -259,13 +267,25 @@ const styles = `
   }
   .courses-strip strong { color: #78909c; }
 
+  .callout-note {
+    background: #1a2040;
+    border-left: 3px solid #f5a623;
+    padding: 14px 18px;
+    font-size: 13px;
+    color: #90a4ae;
+    font-style: italic;
+    line-height: 1.6;
+    border-radius: 0 8px 8px 0;
+  }
+
   @media (max-width: 600px) {
     .hero { padding: 32px 20px 0; }
     .event-strip { margin: 0 -20px; padding: 12px 20px; }
     .section, .register-section { padding: 20px 16px; }
     .form-row { grid-template-columns: 1fr; }
     .agenda-item { grid-template-columns: 1fr; gap: 3px; }
-    .tab-btn { font-size: 13px; padding: 14px 12px; }
+    .tab-btn { font-size: 11px; padding: 12px 8px; }
+    .tab-btn .tab-label { font-size: 9px; letter-spacing: 0.6px; }
   }
 `;
 
@@ -284,14 +304,19 @@ interface WebinarData {
   eyebrow: string;
   heading: React.ReactNode;
   subheading: string;
+  description?: string;
   event: string;
   badges: WebinarBadge[];
-  whyAttend: string[];
+  whyAttend: string[] | null;
   audience: string[];
   agenda: AgendaItem[];
+  agendaTitle?: string;
   takeaways: string[] | null;
+  takeawaysTitle?: string;
+  note?: string;
   showClassDropdown: boolean;
   courseOptions: string[];
+  regSub?: string;
 }
 
 interface WebinarForm {
@@ -302,6 +327,85 @@ interface WebinarForm {
   city: string;
   course: string;
 }
+
+const webinar0: WebinarData = {
+  eyebrow: "LIVE 8-WEEK PROGRAM · STARTS SUNDAY, 5 JULY 2026",
+  heading: (
+    <>
+      8-Week <span>Quantum Circuits &amp; Computing</span> Foundation Program
+    </>
+  ),
+  subheading:
+    "A slow, structured live program that builds real understanding of quantum physics and quantum circuits — from qubits to QML — one hour every Sunday.",
+  description:
+    "This is a slow, structured 8-week webinar series (1 hour per week) that starts from zero and builds a strong foundation in quantum physics ideas (qubits, superposition, interference) and quantum circuits (gates, diagrams, basic algorithms).",
+  event: "Quantum Circuits Foundation Program - Weekly Sunday",
+  badges: [
+    { icon: "📅", text: "Every Sunday" },
+    { icon: "⏰", text: "11:00 AM – 12:00 PM IST" },
+    { icon: "💻", text: "Online Live Program" },
+    { icon: "👨‍🏫", text: "Srikanth Sir" },
+    { icon: "🎓", text: "8 Weeks" },
+  ],
+  whyAttend: null,
+  audience: [
+    "B.Tech students (AI & ML, CSE, Data Science, IT, ECE, EEE, Mechanical, Civil, Mechatronics)",
+    "M.Tech / MSc students in engineering and applied physics",
+    "Software professionals, data scientists, quant engineers",
+    "Corporate tech teams",
+  ],
+  agendaTitle: "Week-by-Week Agenda",
+  agenda: [
+    {
+      time: "Week 1",
+      topic: "Quantum states & qubits",
+      sub: "Classical bits vs qubits, |0⟩ and |1⟩ notation, superposition, Bloch-sphere intuition, measurement (probabilities and collapse).",
+    },
+    {
+      time: "Week 2",
+      topic: "Single-qubit gates",
+      sub: "H, X, Z, Rz gates; how they transform qubit states and move the Bloch-sphere arrow; simple circuits with measurement outcomes explained.",
+    },
+    {
+      time: "Week 3",
+      topic: "Superposition, phase & interference",
+      sub: "How superposition and phase create constructive and destructive interference; intuitive examples of gates changing probabilities.",
+    },
+    {
+      time: "Week 4",
+      topic: "Two-qubit gates & entanglement",
+      sub: "CNOT and controlled gates; building and reading 2-qubit circuits; Bell states and basic entanglement.",
+    },
+    {
+      time: "Week 5",
+      topic: "Quantum circuit flow & mini-algorithms",
+      sub: "Initialise → gates → measurement as standard circuit flow; small example circuits showing step-by-step quantum logic.",
+    },
+    {
+      time: "Week 6–8",
+      topic: "Circuits to applications & QML bridge",
+      sub: "How circuits become building blocks for optimisation, simulation, and quantum machine learning; conceptual examples in logistics, finance, and AI/ML feature maps.",
+    },
+  ],
+  takeawaysTitle: "By the End of 8 Weeks",
+  takeaways: [
+    "Read and draw quantum circuit diagrams with single and two-qubit gates",
+    "Explain qubits, superposition, interference, entanglement and measurement in plain language",
+    "Understand how quantum circuits turn into algorithms and QML models",
+  ],
+  note:
+    "No prior quantum background required. Basic familiarity with linear algebra and complex numbers is helpful but not mandatory.",
+  showClassDropdown: true,
+  courseOptions: [
+    "Quantum Computing",
+    "Physics",
+    "Computer Science",
+    "Data Science",
+    "AI & ML",
+    "Other",
+  ],
+  regSub: "One-time signup — you'll receive weekly session reminders every Sunday.",
+};
 
 const webinar1: WebinarData = {
   eyebrow: "Free Live Webinar · 28 June 2026 · 6:00 PM",
@@ -487,6 +591,7 @@ function WebinarSection({ data }: { data: WebinarData }) {
         <div className="hero-eyebrow">{data.eyebrow}</div>
         <h1>{data.heading}</h1>
         <p className="hero-sub">{data.subheading}</p>
+        {data.description && <p className="hero-desc">{data.description}</p>}
         <button type="button" className="hero-cta-btn" onClick={scrollToRegister}>
           🎯 Reserve Your Free Seat
         </button>
@@ -499,14 +604,16 @@ function WebinarSection({ data }: { data: WebinarData }) {
         </div>
       </div>
 
-      <div className="section">
-        <div className="section-title">Why Attend</div>
-        <ul className="reasons">
-          {data.whyAttend.map((r, i) => (
-            <li key={i}>{r}</li>
-          ))}
-        </ul>
-      </div>
+      {data.whyAttend && data.whyAttend.length > 0 && (
+        <div className="section">
+          <div className="section-title">Why Attend</div>
+          <ul className="reasons">
+            {data.whyAttend.map((r, i) => (
+              <li key={i}>{r}</li>
+            ))}
+          </ul>
+        </div>
+      )}
 
       <div className="section">
         <div className="section-title">Who Should Attend</div>
@@ -520,7 +627,7 @@ function WebinarSection({ data }: { data: WebinarData }) {
       </div>
 
       <div className="section">
-        <div className="section-title">Program Flow</div>
+        <div className="section-title">{data.agendaTitle ?? "Program Flow"}</div>
         <ul className="agenda">
           {data.agenda.map((item, i) => (
             <li className="agenda-item" key={i}>
@@ -536,7 +643,7 @@ function WebinarSection({ data }: { data: WebinarData }) {
 
       {data.takeaways && (
         <div className="section">
-          <div className="section-title">Key Takeaways</div>
+          <div className="section-title">{data.takeawaysTitle ?? "Key Takeaways"}</div>
           <div className="takeaways">
             {data.takeaways.map((t, i) => (
               <span className="takeaway-tag" key={i}>
@@ -544,6 +651,12 @@ function WebinarSection({ data }: { data: WebinarData }) {
               </span>
             ))}
           </div>
+        </div>
+      )}
+
+      {data.note && (
+        <div className="section">
+          <p className="callout-note">{data.note}</p>
         </div>
       )}
 
@@ -562,7 +675,7 @@ function WebinarSection({ data }: { data: WebinarData }) {
         ) : (
           <>
             <h2>Register for the Free Webinar</h2>
-            <p className="reg-sub">Fill in your details below — takes less than a minute</p>
+            <p className="reg-sub">{data.regSub ?? "Fill in your details below — takes less than a minute"}</p>
             <div className="reg-form">
               <div className="form-row">
                 <div className="form-group">
@@ -679,21 +792,30 @@ export function Webinar() {
             className={`tab-btn ${activeTab === 0 ? "active" : ""}`}
             onClick={() => setActiveTab(0)}
           >
-            <span className="tab-label">Webinar 1 · 6:00 PM</span>
-            <span className="tab-title">IIT-JEE &amp; NEET Guidance</span>
+            <span className="tab-label">Program · Every Sunday, 11:00 AM</span>
+            <span className="tab-title">Quantum Circuits &amp; Foundation</span>
           </button>
           <button
             type="button"
             className={`tab-btn ${activeTab === 1 ? "active" : ""}`}
             onClick={() => setActiveTab(1)}
           >
+            <span className="tab-label">Webinar 1 · 6:00 PM</span>
+            <span className="tab-title">IIT-JEE &amp; NEET Guidance</span>
+          </button>
+          <button
+            type="button"
+            className={`tab-btn ${activeTab === 2 ? "active" : ""}`}
+            onClick={() => setActiveTab(2)}
+          >
             <span className="tab-label">Webinar 2 · 11:00 AM</span>
             <span className="tab-title">Quantum Computing</span>
           </button>
         </div>
 
-        {activeTab === 0 && <WebinarSection data={webinar1} />}
-        {activeTab === 1 && <WebinarSection data={webinar2} />}
+        {activeTab === 0 && <WebinarSection data={webinar0} />}
+        {activeTab === 1 && <WebinarSection data={webinar1} />}
+        {activeTab === 2 && <WebinarSection data={webinar2} />}
 
         <div className="courses-strip">
           <strong>From Srikanth&apos;s Academy — Academic &amp; Career Guidance Programs</strong>
