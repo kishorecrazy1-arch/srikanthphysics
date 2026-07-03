@@ -182,8 +182,9 @@ const styles = `
   }
   .agenda-item:last-child { border-bottom: none; }
   .agenda-time { font-size: 11px; font-weight: 700; color: #f5a623; letter-spacing: 0.5px; padding-top: 2px; }
-  .agenda-topic { font-size: 14px; color: #cfd8dc; line-height: 1.5; }
-  .agenda-sub { font-size: 12px; color: #546e7a; margin-top: 4px; line-height: 1.5; }
+  .agenda-topic { display: block; font-size: 14px; color: #cfd8dc; line-height: 1.5; }
+  .week-title { display: block; font-size: 14px; font-weight: 700; color: #cfd8dc; line-height: 1.5; }
+  .week-description { display: block; font-size: 12px; color: #546e7a; line-height: 1.5; margin-top: 5px; }
 
   /* KEY TAKEAWAYS */
   .takeaways { display: flex; flex-wrap: wrap; gap: 10px; }
@@ -632,10 +633,16 @@ function WebinarSection({ data }: { data: WebinarData }) {
           {data.agenda.map((item, i) => (
             <li className="agenda-item" key={i}>
               <span className="agenda-time">{item.time}</span>
-              <span className="agenda-topic">
-                {item.topic}
-                {item.sub && <span className="agenda-sub">{item.sub}</span>}
-              </span>
+              <div className="agenda-topic">
+                {item.sub ? (
+                  <>
+                    <div className="week-title">{item.topic}</div>
+                    <div className="week-description">{item.sub}</div>
+                  </>
+                ) : (
+                  item.topic
+                )}
+              </div>
             </li>
           ))}
         </ul>
