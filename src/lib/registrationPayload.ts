@@ -86,10 +86,11 @@ export function buildAdminNotificationHtml(fields: RegistrationDisplayFields): s
     ${row('Name', fields.name)}
     ${row('Email', fields.email)}
     ${row('Phone', fields.phone)}
-    ${row('Course/Batch', fields.course)}
-    ${row('Grade', fields.academicLevel)}
-    ${row('Institution / Academy', fields.institutionAcademy)}
-    ${row('Location', fields.location)}
+    ${row('Institution / Company', fields.institutionAcademy)}
+    ${row('Academic Level', fields.academicLevel)}
+    ${row('Courses', fields.course)}
+    ${row('City', fields.city)}
+    ${row('Country', fields.country)}
     ${row('Registered At', fields.timestamp)}
     ${row('Source', fields.referrer)}
   `.trim();
@@ -102,10 +103,11 @@ export function buildAdminNotificationText(fields: RegistrationDisplayFields): s
     `Name: ${fields.name}`,
     `Email: ${fields.email}`,
     `Phone: ${fields.phone}`,
-    `Course/Batch: ${fields.course}`,
-    `Grade: ${fields.academicLevel || 'Not provided'}`,
-    `Institution / Academy: ${fields.institutionAcademy || 'Not provided'}`,
-    `Location: ${fields.location || 'Not provided'}`,
+    `Institution / Company: ${fields.institutionAcademy || 'Not provided'}`,
+    `Academic Level: ${fields.academicLevel || 'Not provided'}`,
+    `Courses: ${fields.course || 'Not provided'}`,
+    `City: ${fields.city || 'Not provided'}`,
+    `Country: ${fields.country || 'Not provided'}`,
     `Registered At: ${fields.timestamp}`,
     `Source: ${fields.referrer || 'Not provided'}`,
   ]

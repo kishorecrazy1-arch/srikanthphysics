@@ -1,4 +1,9 @@
 import { useState } from "react";
+import {
+  buildAdminNotificationHtml,
+  buildAdminNotificationText,
+  buildRegistrationDisplayFields,
+} from "../lib/registrationPayload";
 
 const styles = `
   @import url('https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800&display=swap');
@@ -211,6 +216,7 @@ const styles = `
   .reg-sub { font-size: 13px; color: #b0bec5; text-align: center; margin-bottom: 24px; }
   .reg-form { display: flex; flex-direction: column; gap: 14px; }
   .form-row { display: grid; grid-template-columns: 1fr 1fr; gap: 14px; }
+  .form-group-full { grid-column: 1 / -1; }
   .form-group { display: flex; flex-direction: column; gap: 5px; }
   .form-group label { font-size: 11px; font-weight: 600; color: #90a4ae; letter-spacing: 0.5px; text-transform: uppercase; }
   .form-group input, .form-group select {
@@ -316,6 +322,7 @@ interface WebinarData {
   takeawaysTitle?: string;
   note?: string;
   showClassDropdown: boolean;
+  academicLevelOptions: { value: string; label: string }[];
   courseOptions: string[];
   regSub?: string;
 }
@@ -324,8 +331,10 @@ interface WebinarForm {
   name: string;
   phone: string;
   email: string;
-  studentClass: string;
+  institution: string;
+  academicLevel: string;
   city: string;
+  country: string;
   course: string;
 }
 
@@ -397,6 +406,18 @@ const webinar0: WebinarData = {
   note:
     "No prior quantum background required. Basic familiarity with linear algebra and complex numbers is helpful but not mandatory.",
   showClassDropdown: true,
+  academicLevelOptions: [
+    { value: "8", label: "8th" },
+    { value: "9", label: "9th" },
+    { value: "10", label: "10th" },
+    { value: "11", label: "11th" },
+    { value: "12", label: "12th" },
+    { value: "btech-1", label: "B.Tech 1" },
+    { value: "btech-2", label: "B.Tech 2" },
+    { value: "btech-3", label: "B.Tech 3" },
+    { value: "btech-4", label: "B.Tech 4" },
+    { value: "other", label: "Other" },
+  ],
   courseOptions: [
     "Quantum Computing",
     "Physics",
@@ -448,6 +469,13 @@ const webinar1: WebinarData = {
   ],
   takeaways: null,
   showClassDropdown: true,
+  academicLevelOptions: [
+    { value: "8", label: "8th" },
+    { value: "9", label: "9th" },
+    { value: "10", label: "10th" },
+    { value: "11", label: "11th" },
+    { value: "12", label: "12th" },
+  ],
   courseOptions: [
     "IIT-JEE",
     "NEET",
@@ -527,11 +555,22 @@ const webinar2: WebinarData = {
     "Physics intuition behind Quantum Algorithms",
     "Career guidance in Quantum Computing",
   ],
-  showClassDropdown: false,
+  showClassDropdown: true,
+  academicLevelOptions: [
+    { value: "8", label: "8th" },
+    { value: "9", label: "9th" },
+    { value: "10", label: "10th" },
+    { value: "11", label: "11th" },
+    { value: "12", label: "12th" },
+    { value: "btech-1", label: "B.Tech 1" },
+    { value: "btech-2", label: "B.Tech 2" },
+    { value: "btech-3", label: "B.Tech 3" },
+    { value: "btech-4", label: "B.Tech 4" },
+    { value: "other", label: "Other" },
+  ],
   courseOptions: ["Quantum Computing", "Physics", "Computer Science", "Data Science", "Other"],
 };
 
-const classOptions = ["8th", "9th", "10th", "11th", "12th"];
 const WEBHOOK_URL = "https://manasapadavala.app.n8n.cloud/webhook/demo-booking";
 
 function WebinarSection({ data }: { data: WebinarData }) {
@@ -539,8 +578,10 @@ function WebinarSection({ data }: { data: WebinarData }) {
     name: "",
     phone: "",
     email: "",
-    studentClass: "",
+    institution: "",
+    academicLevel: "",
     city: "",
+    country: "",
     course: "",
   });
   const [loading, setLoading] = useState(false);
@@ -563,16 +604,46 @@ function WebinarSection({ data }: { data: WebinarData }) {
     setError("");
     setLoading(true);
     try {
+      const timestamp = new Date().toLocaleString("en-IN", { timeZone: "Asia/Kolkata" });
+      const course = form.course.trim() || "General Interest";
+      const display = buildRegistrationDisplayFields({
+        name: form.name.trim(),
+        email: form.email.trim(),
+        phone: form.phone.trim(),
+        course,
+        grade: form.academicLevel,
+        institution: form.institution.trim(),
+        city: form.city.trim(),
+        country: form.country.trim(),
+        timestamp,
+        referrer: "webinar-page",
+        board: data.event,
+        event: data.event,
+      });
+
       await fetch(WEBHOOK_URL, {
         method: "POST",
         headers: { "Content-Type": "application/json" },
         body: JSON.stringify({
-          name: form.name,
-          phone: form.phone,
-          email: form.email,
-          grade: form.studentClass,
-          city: form.city,
-          course: form.course,
+          name: display.name,
+          email: display.email,
+          phone: display.phone,
+          course: display.course,
+          courses: display.course,
+          batch: display.course,
+          grade: display.grade,
+          academicLevel: display.academicLevel,
+          institution: display.institution,
+          institutionAcademy: display.institutionAcademy,
+          academy: display.institutionAcademy,
+          college: display.institutionAcademy,
+          collegeName: display.institutionAcademy,
+          city: display.city,
+          country: display.country,
+          location: display.location,
+          timestamp: display.timestamp,
+          adminNotificationHtml: buildAdminNotificationHtml(display),
+          adminNotificationText: buildAdminNotificationText(display),
           event: data.event,
           source: "webinar-page",
           referrer: "webinar-page",
@@ -707,7 +778,7 @@ function WebinarSection({ data }: { data: WebinarData }) {
                 </div>
               </div>
               <div className="form-row">
-                <div className="form-group">
+                <div className="form-group form-group-full">
                   <label>Email *</label>
                   <input
                     type="email"
@@ -717,38 +788,42 @@ function WebinarSection({ data }: { data: WebinarData }) {
                     onChange={handleChange}
                   />
                 </div>
-                <div className="form-group">
-                  <label>City</label>
+              </div>
+              <div className="form-row">
+                <div className="form-group form-group-full">
+                  <label>Institute / Company</label>
                   <input
                     type="text"
-                    name="city"
-                    placeholder="Your city"
-                    value={form.city}
+                    name="institution"
+                    placeholder="College, institute, or company name"
+                    value={form.institution}
                     onChange={handleChange}
                   />
                 </div>
               </div>
               <div className="form-row">
                 {data.showClassDropdown && (
-                  <div className="form-group">
-                    <label>Student Class</label>
+                  <div className="form-group form-group-full">
+                    <label>Academic Level</label>
                     <select
-                      name="studentClass"
-                      value={form.studentClass}
+                      name="academicLevel"
+                      value={form.academicLevel}
                       onChange={handleChange}
-                      className={!form.studentClass ? "placeholder-style" : ""}
+                      className={!form.academicLevel ? "placeholder-style" : ""}
                     >
-                      <option value="">Select class</option>
-                      {classOptions.map((c) => (
-                        <option key={c} value={c}>
-                          {c} Grade
+                      <option value="">Select academic level</option>
+                      {data.academicLevelOptions.map((level) => (
+                        <option key={level.value} value={level.value}>
+                          {level.label}
                         </option>
                       ))}
                     </select>
                   </div>
                 )}
-                <div className="form-group">
-                  <label>Interested Course</label>
+              </div>
+              <div className="form-row">
+                <div className="form-group form-group-full">
+                  <label>Courses</label>
                   <select
                     name="course"
                     value={form.course}
@@ -762,6 +837,28 @@ function WebinarSection({ data }: { data: WebinarData }) {
                       </option>
                     ))}
                   </select>
+                </div>
+              </div>
+              <div className="form-row">
+                <div className="form-group">
+                  <label>City</label>
+                  <input
+                    type="text"
+                    name="city"
+                    placeholder="Your city"
+                    value={form.city}
+                    onChange={handleChange}
+                  />
+                </div>
+                <div className="form-group">
+                  <label>Country</label>
+                  <input
+                    type="text"
+                    name="country"
+                    placeholder="Your country"
+                    value={form.country}
+                    onChange={handleChange}
+                  />
                 </div>
               </div>
               {error && <p className="error-msg">{error}</p>}
