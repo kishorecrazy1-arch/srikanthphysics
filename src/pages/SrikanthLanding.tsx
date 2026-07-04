@@ -60,7 +60,7 @@ export function SrikanthLanding() {
             onClick={() => navigate('/webinar')}
             className="mb-8 w-full sm:w-auto flex items-center justify-center gap-2 bg-yellow-400 text-blue-900 px-6 py-3 rounded-xl font-bold text-sm sm:text-base hover:bg-yellow-300 transition-colors shadow-lg"
           >
-            🎯 Free Live Webinar · 28 June 2026 — Reserve Your Seat →
+            🎯 Free Live Webinar — Reserve Your Seat →
           </button>
 
           <div className="grid lg:grid-cols-2 gap-12 items-center">
