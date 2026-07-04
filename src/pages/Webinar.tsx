@@ -323,7 +323,6 @@ interface WebinarData {
   note?: string;
   showClassDropdown: boolean;
   academicLevelOptions: { value: string; label: string }[];
-  courseOptions: string[];
   regSub?: string;
 }
 
@@ -335,7 +334,6 @@ interface WebinarForm {
   academicLevel: string;
   city: string;
   country: string;
-  course: string;
 }
 
 const webinar0: WebinarData = {
@@ -418,14 +416,6 @@ const webinar0: WebinarData = {
     { value: "btech-4", label: "B.Tech 4" },
     { value: "other", label: "Other" },
   ],
-  courseOptions: [
-    "Quantum Computing",
-    "Physics",
-    "Computer Science",
-    "Data Science",
-    "AI & ML",
-    "Other",
-  ],
   regSub: "One-time signup — you'll receive weekly session reminders every Sunday.",
 };
 
@@ -475,18 +465,6 @@ const webinar1: WebinarData = {
     { value: "10", label: "10th" },
     { value: "11", label: "11th" },
     { value: "12", label: "12th" },
-  ],
-  courseOptions: [
-    "IIT-JEE",
-    "NEET",
-    "Foundation (8th–10th)",
-    "CBSE",
-    "ICSE",
-    "IGCSE",
-    "IB",
-    "AQA",
-    "Advanced Placement",
-    "IMAT",
   ],
 };
 
@@ -568,7 +546,6 @@ const webinar2: WebinarData = {
     { value: "btech-4", label: "B.Tech 4" },
     { value: "other", label: "Other" },
   ],
-  courseOptions: ["Quantum Computing", "Physics", "Computer Science", "Data Science", "Other"],
 };
 
 const WEBHOOK_URL = "https://manasapadavala.app.n8n.cloud/webhook/demo-booking";
@@ -582,7 +559,6 @@ function WebinarSection({ data }: { data: WebinarData }) {
     academicLevel: "",
     city: "",
     country: "",
-    course: "",
   });
   const [loading, setLoading] = useState(false);
   const [submitted, setSubmitted] = useState(false);
@@ -597,20 +573,27 @@ function WebinarSection({ data }: { data: WebinarData }) {
   };
 
   const handleSubmit = async () => {
-    if (!form.name || !form.phone || !form.email) {
-      setError("Please fill in Name, Phone and Email.");
+    if (
+      !form.name.trim() ||
+      !form.phone.trim() ||
+      !form.email.trim() ||
+      !form.institution.trim() ||
+      !form.academicLevel ||
+      !form.city.trim() ||
+      !form.country.trim()
+    ) {
+      setError("Please fill in all required fields.");
       return;
     }
     setError("");
     setLoading(true);
     try {
       const timestamp = new Date().toLocaleString("en-IN", { timeZone: "Asia/Kolkata" });
-      const course = form.course.trim() || "General Interest";
       const display = buildRegistrationDisplayFields({
         name: form.name.trim(),
         email: form.email.trim(),
         phone: form.phone.trim(),
-        course,
+        course: data.event,
         grade: form.academicLevel,
         institution: form.institution.trim(),
         city: form.city.trim(),
@@ -764,6 +747,7 @@ function WebinarSection({ data }: { data: WebinarData }) {
                     placeholder="Your full name"
                     value={form.name}
                     onChange={handleChange}
+                    required
                   />
                 </div>
                 <div className="form-group">
@@ -774,6 +758,7 @@ function WebinarSection({ data }: { data: WebinarData }) {
                     placeholder="+91 XXXXX XXXXX"
                     value={form.phone}
                     onChange={handleChange}
+                    required
                   />
                 </div>
               </div>
@@ -786,30 +771,33 @@ function WebinarSection({ data }: { data: WebinarData }) {
                     placeholder="your@email.com"
                     value={form.email}
                     onChange={handleChange}
+                    required
                   />
                 </div>
               </div>
               <div className="form-row">
                 <div className="form-group form-group-full">
-                  <label>Institute / Company</label>
+                  <label>Institute / Company *</label>
                   <input
                     type="text"
                     name="institution"
                     placeholder="College, institute, or company name"
                     value={form.institution}
                     onChange={handleChange}
+                    required
                   />
                 </div>
               </div>
               <div className="form-row">
                 {data.showClassDropdown && (
                   <div className="form-group form-group-full">
-                    <label>Academic Level</label>
+                    <label>Academic Level *</label>
                     <select
                       name="academicLevel"
                       value={form.academicLevel}
                       onChange={handleChange}
                       className={!form.academicLevel ? "placeholder-style" : ""}
+                      required
                     >
                       <option value="">Select academic level</option>
                       {data.academicLevelOptions.map((level) => (
@@ -822,42 +810,26 @@ function WebinarSection({ data }: { data: WebinarData }) {
                 )}
               </div>
               <div className="form-row">
-                <div className="form-group form-group-full">
-                  <label>Courses</label>
-                  <select
-                    name="course"
-                    value={form.course}
-                    onChange={handleChange}
-                    className={!form.course ? "placeholder-style" : ""}
-                  >
-                    <option value="">Select course (optional)</option>
-                    {data.courseOptions.map((c) => (
-                      <option key={c} value={c}>
-                        {c}
-                      </option>
-                    ))}
-                  </select>
-                </div>
-              </div>
-              <div className="form-row">
                 <div className="form-group">
-                  <label>City</label>
+                  <label>City *</label>
                   <input
                     type="text"
                     name="city"
                     placeholder="Your city"
                     value={form.city}
                     onChange={handleChange}
+                    required
                   />
                 </div>
                 <div className="form-group">
-                  <label>Country</label>
+                  <label>Country *</label>
                   <input
                     type="text"
                     name="country"
                     placeholder="Your country"
                     value={form.country}
                     onChange={handleChange}
+                    required
                   />
                 </div>
               </div>
