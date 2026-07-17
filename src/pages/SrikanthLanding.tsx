@@ -22,6 +22,35 @@ export function SrikanthLanding() {
     return () => clearInterval(timer);
   }, []);
 
+  const resultVideos = [
+    {
+      id: 'ap-physics',
+      title: 'AP Physics',
+      subtitle: 'Advanced Placement Physics Results',
+      description:
+        'Perfect 5/5 scores in AP Physics C: Mechanics and top-band results in AP Physics 1 from students in India and the USA.',
+      videoSrc: '/media/videos/ap-physics-results.mp4',
+      highlights: [
+        '5/5 — AP Physics C: Mechanics',
+        '5/5 — AP Physics 1 (USA)',
+        'Top 10–20% performance bands globally',
+      ],
+    },
+    {
+      id: 'iit-jee',
+      title: 'IIT / JEE',
+      subtitle: 'IIT-JEE & Competitive Exam Results',
+      description:
+        'Strong JEE Mains and Advanced outcomes with deep conceptual training, mock tests, and personalised mentoring.',
+      videoSrc: '/media/videos/iit-jee-results.mp4',
+      highlights: [
+        '98.17+ percentile achievers',
+        'AIR top 500 selections',
+        'IIT, NIT & top institute placements',
+      ],
+    },
+  ];
+
   const testimonials = [
     {
       text: "I scored 156/180 in NEET Physics thanks to Srikanth's Academy. The daily quizzes kept me consistent, and the AI adapted perfectly to my learning pace. Best decision ever!",
@@ -448,6 +477,60 @@ export function SrikanthLanding() {
         </div>
       </section>
 
+      <section className="py-20 bg-gray-50" id="results">
+        <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
+          <div className="text-center mb-16">
+            <h2 className="text-4xl md:text-5xl font-bold text-gray-900 mb-4">
+              Results
+            </h2>
+            <p className="text-xl text-gray-600 max-w-3xl mx-auto">
+              Watch how Srikanth&apos;s Academy students perform in Advanced Placement Physics and IIT/JEE
+            </p>
+          </div>
+
+          <div className="grid lg:grid-cols-2 gap-10">
+            {resultVideos.map((result) => (
+              <div
+                key={result.id}
+                id={`results-${result.id}`}
+                className="bg-white rounded-2xl shadow-xl border border-gray-100 overflow-hidden"
+              >
+                <div className="bg-gradient-to-r from-blue-800 to-blue-600 px-6 py-5">
+                  <h3 className="text-2xl font-bold text-white">{result.title}</h3>
+                  <p className="text-blue-100 mt-1">{result.subtitle}</p>
+                </div>
+
+                <div className="p-6">
+                  <div className="aspect-video rounded-xl overflow-hidden bg-gray-900 mb-5">
+                    <video
+                      className="w-full h-full object-cover"
+                      controls
+                      playsInline
+                      preload="metadata"
+                      poster="/media/srikanth%20sir%20photo.PNG"
+                    >
+                      <source src={result.videoSrc} type="video/mp4" />
+                      Your browser does not support the video tag.
+                    </video>
+                  </div>
+
+                  <p className="text-gray-600 leading-relaxed mb-5">{result.description}</p>
+
+                  <ul className="space-y-2">
+                    {result.highlights.map((highlight) => (
+                      <li key={highlight} className="flex items-start gap-2 text-gray-800">
+                        <CheckCircle className="w-5 h-5 text-green-500 flex-shrink-0 mt-0.5" />
+                        <span>{highlight}</span>
+                      </li>
+                    ))}
+                  </ul>
+                </div>
+              </div>
+            ))}
+          </div>
+        </div>
+      </section>
+
       <section className="py-20 bg-gradient-to-r from-blue-800 to-blue-600">
         <div className="max-w-4xl mx-auto px-4 sm:px-6 lg:px-8 text-center">
           <Rocket className="w-20 h-20 text-white mx-auto mb-6 animate-bounce" />
@@ -507,6 +590,9 @@ export function SrikanthLanding() {
               <ul className="space-y-2 text-gray-400">
                 <li className="hover:text-white cursor-pointer">About Us</li>
                 <li className="hover:text-white cursor-pointer">Meet Srikanth Sir</li>
+                <li className="hover:text-white cursor-pointer">
+                  <a href="#results">Results</a>
+                </li>
                 <li className="hover:text-white cursor-pointer">Success Stories</li>
                 <li className="hover:text-white cursor-pointer">Blog & Articles</li>
                 <li className="hover:text-white cursor-pointer">Contact Us</li>
